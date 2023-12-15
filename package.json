@@ -1,0 +1,20 @@
+{
+  "name": "eat",
+  "version": "0.0.1",
+  "description": "Ethereum Archeology Tools",
+  "main": "index.js",
+  "author": "rootminus0x1 <rootminus0x1@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/graphit.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "dotenv": "^16.3.1",
+    "dotenv-expand": "^10.0.0",
+    "ethers": "^6.9.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
