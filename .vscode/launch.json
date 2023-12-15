@@ -10,14 +10,11 @@
       "name": "debug TS",
       "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
       "args": ["${workspaceFolder}/src/graphit.ts"],
-      "runtimeArgs": ["-r", "ts-node/register"],
       "sourceMaps": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }

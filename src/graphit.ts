@@ -2,7 +2,6 @@ console.log('hello!');
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
-dotenvExpand.expand(dotenv.config());
 
 /*
 import { ethers } from 'ethers';
@@ -24,6 +23,7 @@ async function exploreAddress(name: string, address: string, depth: number) {
 
 */
 async function main() {
+    dotenvExpand.expand(dotenv.config());
     //    provider = new ethers.JsonRpcProvider(process.env.MAINNET_RPC_URL);
     //    console.log(`${process.env.MAINNET_RPC_URL}, block: ${await provider.getBlockNumber()}`);
     console.log(`${process.env.MAINNET_RPC_URL}`);
