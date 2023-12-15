@@ -1,10 +1,10 @@
-console.log("hello!");
+console.log('hello!');
 
-/*
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
+/*
 import { ethers } from 'ethers';
 
 let provider: ethers.JsonRpcProvider;
@@ -24,16 +24,17 @@ async function exploreAddress(name: string, address: string, depth: number) {
 
 */
 async function main() {
-//    provider = new ethers.JsonRpcProvider(process.env.MAINNET_RPC_URL);
-//    console.log(`${process.env.MAINNET_RPC_URL}, block: ${await provider.getBlockNumber()}`);
+    //    provider = new ethers.JsonRpcProvider(process.env.MAINNET_RPC_URL);
+    //    console.log(`${process.env.MAINNET_RPC_URL}, block: ${await provider.getBlockNumber()}`);
+    console.log(`${process.env.MAINNET_RPC_URL}`);
 
     let root = '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB'; // it's a proxy to market
-//    await exploreAddress('root', root, 0);
+    //    await exploreAddress('root', root, 0);
 
     // TODO: discover if the proxy holds stuff or the thing pointed to
 
-//    let balance = ethers.parseEther('1.0');
-const balance = 0;
+    //    let balance = ethers.parseEther('1.0');
+    const balance = 0;
     console.log('hello world', balance);
 }
 
