@@ -1,3 +1,4 @@
+import { log } from 'console';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
@@ -56,7 +57,6 @@ async function delve(address: string): Promise<BCAddress | undefined> {
         address,
         found?.name || address.slice(0, 5) + '...' + address.slice(-3),
         AddressTypes.unknown,
-        found?.logic,
     );
 
     // what kind of address
@@ -101,17 +101,36 @@ async function delve(address: string): Promise<BCAddress | undefined> {
                 }
                 // ERC1967 proxies must have a fallback function and possibly
                 // * another function to set the implementation, e.g. upgradeTo
+                // generates an Upgraded & AdminChanged event
+                //     event Upgraded(address indexed implementation);
+                //     event AdminChanged(address previousAdmin, address newAdmin);
+                // there is no read contract to access
                 if (!abiResolved && abi.fallback) {
-                    // TODO add other checks - fallback is necessary but not sufficient
-                    // TODO: find a way of getting this programmatically
-                    // TODO: make sure all paths result in a valid output, add else's
-                    if (result.logic) {
-                        //cl(`${address} => ${addressp}`);
-                        const esContractp = await etherscan.getContract(result.logic);
-                        if (esContractp) abi = esContractp.interface;
+                    // TODO add other checks - fallback is necessary but not sufficient, add a check for Upgraded event
+                    // Get historical transactions for the proxy contract
+                    const events = await jsonRpc.getLogs({
+                        address: address,
+                        topics: [ethers.id('Upgraded(address)')],
+                        fromBlock: 0,
+                        toBlock: 'latest',
+                    });
+                    if (events.length > 0) {
+                        // get the latest event's first topic as the proxy implementation
+                        const topic = events[events.length - 1]?.topics.at(1);
+                        if (topic) {
+                            // TODO: this should be a decoding of the topics according to event Upgraded(address indexed implementation)
+                            result.logic = '0x' + topic.slice(-40);
+                        }
+                    } else {
+                        result.logic = found?.logic;
                     }
-                    // const rpcContract = new ethers.Contract(address, contractInterface, jsonRpc);
-                    // const results = await rpcContract.implementation();
+                    if (result.logic) {
+                        const esContractp = await etherscan.getContract(result.logic);
+                        if (esContractp) {
+                            abi = esContractp.interface;
+                            abiResolved = true;
+                        }
+                    }
                 }
 
                 const rpcContract = new ethers.Contract(address, abi, jsonRpc);
@@ -246,12 +265,10 @@ async function main() {
     givenContractData.push({
         address: '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB',
         name: 'Market',
-        logic: '0x679de4a3836d916fc86c6d9944c98a694f68adb4',
     });
     givenContractData.push({
         address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84',
         name: 'stETH',
-        logic: '0x17144556fd3424edc8fc8a4c940b2d04936d17eb',
         terminate: true,
     });
     givenContractData.push({
@@ -274,7 +291,6 @@ async function main() {
     givenContractData.push({
         address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0',
         name: 'stETHTreasury',
-        logic: '0x969fcabb703052155c4cc3b24458e77b2d56b29a',
     });
     givenContractData.push({
         address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2',
