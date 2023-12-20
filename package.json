@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node -r ts-node/register src/graphit.ts",
-    "start": "ts-node src/graphit.ts"
+    "start": "ts-node src/graphit.ts > graph.md"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
