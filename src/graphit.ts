@@ -39,7 +39,6 @@ class EtherscanHttp {
                 .join('&')
                 .toString();
 
-        console.error(url);
         const response = await fetch(url);
         if (response.status !== 200) {
             throw Error('something went wrong while querying');
@@ -210,7 +209,7 @@ async function getContractData(address: string): Promise<ContractData> {
                 const block = await jsonRpc.getBlock(receipt.blockHash);
                 if (block && block.timestamp) {
                     data.deployTimestamp = block.timestamp;
-                    console.error(`${data.address} deployed on ${asDatetime(block.timestamp)}`);
+                    // console.error(`${data.address} deployed on ${asDatetime(block.timestamp)}`);
                 }
             }
             data.creator = createInfo.contractCreator;
@@ -297,26 +296,26 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                             const funcResults = await rpcContract[func.name]();
                             if (func.outputs.length == 1) {
                                 if (func.outputs[0].type === 'address') {
-                                    if (funcResults !== ZeroAddress) {
-                                        result.links.push({ to: funcResults, name: func.name });
-                                    }
+                                    result.links.push({ to: funcResults, name: func.name });
                                 } else {
                                     // address[]
                                     for (let index = 0; index < funcResults.length; index++) {
                                         const elem = funcResults[index];
-                                        if (elem !== ZeroAddress) {
-                                            result.links.push({ to: elem, name: `${func.name}[${index}]` });
-                                        }
+                                        result.links.push({ to: elem, name: `${func.name}[${index}]` });
                                     }
                                 }
                             } else {
-                                //                            // assume an array of results
-                                //                            for (const i of addressIndices) {
-                                //                                if (typeof results[i] === 'string') {
-                                //                                    outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
-                                //                                    promises.push(delve(address, outNode, outLink));
-                                //                                    //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
-                                //                                }
+                                /*
+                                // assume an array of results
+                                for (const i of addressIndices) {
+                                    if (typeof results[i] === 'string') {
+                                        outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
+                                        promises.push(delve(address, outNode, outLink));
+                                        //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
+                                    }
+                                }
+                                */
+                                console.error('array or results containing an address');
                             }
                         } catch (err) {
                             console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
@@ -383,7 +382,13 @@ const outputNodeMermaid = (
 };
 
 const useNodesInLinks = false; // TODO: add a style command line arg
+let zeroCount = 0;
 const outputLinkMermaid = (from: string, to: string, name: string) => {
+    // replace zero addresses
+    if (to === ZeroAddress) {
+        to = `addressZero${zeroCount++}`;
+        cl(`${to}((0x0))`);
+    }
     if (useNodesInLinks) {
         const nodeid = `${from}-${name}`;
         cl(`${nodeid}[${name}]:::link`);
@@ -410,6 +415,8 @@ async function main() {
         //'0xa84360896cE9152d1780c546305BB54125F962d9', // FxETHTwapOracle
         '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF', // GnosisSafe (just has a list of owners)
         '0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA', // "           "
+        '0xE62B71cf983019BFf55bC83B48601ce8419650CC', // AccessControlledOffchainAggregator
+        '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196', // "           "
     ];
 
     cl('```mermaid');
@@ -428,6 +435,7 @@ async function main() {
             const stopper = stop.includes(address);
             const bcAddress = await delve(address, !stopper);
             for (let link of bcAddress.links) {
+                // don't follow zero addresses
                 if (link.to !== ZeroAddress) {
                     addresses.push(link.to);
                 }
