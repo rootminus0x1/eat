@@ -1,8 +1,7 @@
-import { log } from 'console';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
-import { ethers, EtherscanPlugin, Result, ZeroAddress } from 'ethers';
+import { ethers, ZeroAddress } from 'ethers';
 
 // import { EtherscanHttp } from 'src/etherscan';
 
@@ -175,6 +174,22 @@ class BCAddress {
     public links: { to: string; name: string }[] = [];
     public contract?: BCContract; // extra contract info
     public implementations: BCContract[] = []; // historical implementation logics
+
+    public asMermaid(stopper: boolean) {
+        let implementation = this.implementations?.at(0);
+        outputNodeMermaid(
+            this.address,
+            this.name,
+            this.type,
+            stopper,
+            implementation?.address,
+            implementation?.name,
+            this.token,
+        );
+        for (let link of this.links) {
+            outputLinkMermaid(implementation?.address || this.address, link.to, link.name);
+        }
+    }
 }
 
 type ContractData = {
@@ -223,7 +238,6 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
             let abi = contractData.abi;
             let rpcContract: ethers.Contract;
             // lookup the ERC20 token name, if it exists
-
             const erc20Token = new ethers.Contract(
                 address,
                 ['function name() view returns (string)', 'function symbol() view returns (string)'],
@@ -234,12 +248,6 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                 const erc20Symbol = await erc20Token.symbol();
                 if (erc20Name || erc20Symbol) result.token = `${erc20Symbol} (${erc20Name})`;
             } catch (error) {}
-            /*
-            if (abi && hasFunction(abi, 'name', [], ['string'])) {
-                rpcContract = new ethers.Contract(address, abi, jsonRpc);
-                const erc20Name = await rpcContract['name']();
-            }
-            */
             if (contractData.source && contractData.source.Proxy > 0) {
                 // It's a proxy
                 const implementationData = await getContractData(contractData.source.Implementation);
@@ -268,46 +276,53 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                 rpcContract = new ethers.Contract(address, abi, jsonRpc);
                 // Explore each function in the contract's interface and check it's return
 
-                const funcPromises: Promise<void>[] = [];
+                let functions: ethers.FunctionFragment[] = [];
                 abi.forEachFunction((func) => {
                     // must be parameterless view or pure function
                     if (
                         func.inputs.length == 0 &&
                         (func.stateMutability === 'view' || func.stateMutability === 'pure')
                     ) {
-                        // that returns one or more addresses
-                        const addressIndices = func.outputs.reduce((indices, elem, index) => {
-                            if (elem.type === 'address') indices.push(index);
-                            return indices;
-                        }, [] as number[]);
-                        if (addressIndices.length > 0) {
-                            const promise = (async () => {
-                                try {
-                                    const results = await rpcContract[func.name]();
-                                    if (typeof results === 'string') {
-                                        // && func.outputs.length == 1 && addressIndices.length == 1) {
-                                        // only one result && it's the address
-                                        if (results !== ZeroAddress) {
-                                            result.links.push({ to: results, name: func.name });
-                                        }
-                                    } else {
-                                        //                            // assume an array of results
-                                        //                            for (const i of addressIndices) {
-                                        //                                if (typeof results[i] === 'string') {
-                                        //                                    outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
-                                        //                                    promises.push(delve(address, outNode, outLink));
-                                        //                                    //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
-                                        //                                }
-                                    }
-                                } catch (err) {
-                                    console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
-                                }
-                            })();
-                            funcPromises.push(promise);
-                        }
+                        functions.push(func);
                     }
                 });
-                await Promise.all(funcPromises);
+                for (let func of functions) {
+                    // that returns one or more addresses
+                    const addressIndices = func.outputs.reduce((indices, elem, index) => {
+                        if (elem.type === 'address' || elem.type === 'address[]') indices.push(index);
+                        return indices;
+                    }, [] as number[]);
+                    if (addressIndices.length > 0) {
+                        try {
+                            const funcResults = await rpcContract[func.name]();
+                            if (func.outputs.length == 1) {
+                                if (func.outputs[0].type === 'address') {
+                                    if (funcResults !== ZeroAddress) {
+                                        result.links.push({ to: funcResults, name: func.name });
+                                    }
+                                } else {
+                                    // address[]
+                                    for (let index = 0; index < funcResults.length; index++) {
+                                        const elem = funcResults[index];
+                                        if (elem !== ZeroAddress) {
+                                            result.links.push({ to: elem, name: `${func.name}[${index}]` });
+                                        }
+                                    }
+                                }
+                            } else {
+                                //                            // assume an array of results
+                                //                            for (const i of addressIndices) {
+                                //                                if (typeof results[i] === 'string') {
+                                //                                    outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
+                                //                                    promises.push(delve(address, outNode, outLink));
+                                //                                    //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
+                                //                                }
+                            }
+                        } catch (err) {
+                            console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
+                        }
+                    }
+                }
             }
         } else {
             result.type = AddressTypes.address;
@@ -390,7 +405,12 @@ async function main() {
     let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
     //let start = ['0x4eEfea49e4D876599765d5375cF7314cD14C9d38']; // RebalancePoolRegistry
 
-    let stop = ['0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', '0xa84360896cE9152d1780c546305BB54125F962d9'];
+    let stop = [
+        '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', // stETH
+        //'0xa84360896cE9152d1780c546305BB54125F962d9', // FxETHTwapOracle
+        '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF', // GnosisSafe (just has a list of owners)
+        '0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA', // "           "
+    ];
 
     cl('```mermaid');
     cl('---');
@@ -404,23 +424,15 @@ async function main() {
     let address: string | undefined;
     while ((address = addresses.shift())) {
         if (!done.has(address)) {
+            done.add(address);
             const stopper = stop.includes(address);
             const bcAddress = await delve(address, !stopper);
-            done.add(address);
-            let implementation = bcAddress.implementations?.at(0);
-            outputNodeMermaid(
-                bcAddress.address,
-                bcAddress.name,
-                bcAddress.type,
-                stopper,
-                implementation?.address,
-                implementation?.name,
-                bcAddress.token,
-            );
             for (let link of bcAddress.links) {
-                outputLinkMermaid(implementation?.address || bcAddress.address, link.to, link.name);
-                addresses.push(link.to);
+                if (link.to !== ZeroAddress) {
+                    addresses.push(link.to);
+                }
             }
+            bcAddress.asMermaid(stopper);
         }
     }
 
