@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import { Buffer } from 'buffer';
+
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
@@ -38,6 +41,26 @@ class EtherscanHttp {
                 .map(([k, v]) => [k, encodeURIComponent(v)].join('='))
                 .join('&')
                 .toString();
+        const cacheDir = './eat-cache';
+        const cachePath = cacheDir + '/' + Buffer.from(url).toString('base64');
+
+        // ensure the cache directory exists
+        try {
+            // Check if the directory already exists
+            await fs.promises.access(cacheDir);
+        } catch (error: any) {
+            // If the directory doesn't exist, create it
+            if (error.code === 'ENOENT') {
+                await fs.promises.mkdir(cacheDir, { recursive: true });
+            } else {
+                // If there was an error other than the directory not existing, throw the error
+                throw error;
+            }
+        }
+        if (fs.existsSync(cachePath)) {
+            const resultString = fs.readFileSync(cachePath, 'utf-8');
+            return JSON.parse(resultString);
+        }
 
         const response = await fetch(url);
         if (response.status !== 200) {
@@ -45,6 +68,7 @@ class EtherscanHttp {
         }
         const json = await response.json();
         if (json.message === 'OK' && json.status === '1' && json.result !== 'Max rate limit reached') {
+            fs.writeFileSync(cachePath, JSON.stringify(json.result));
             return json.result;
         } else {
             return undefined;
@@ -305,17 +329,25 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                                     }
                                 }
                             } else {
-                                /*
                                 // assume an array of results
-                                for (const i of addressIndices) {
-                                    if (typeof results[i] === 'string') {
-                                        outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
-                                        promises.push(delve(address, outNode, outLink));
-                                        //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
+                                for (const outputIndex of addressIndices) {
+                                    if (func.outputs[outputIndex].type === 'address') {
+                                        result.links.push({
+                                            to: funcResults[outputIndex],
+                                            name: `${func.name}.${func.outputs[outputIndex].name}`,
+                                        });
+                                    } else {
+                                        // address[]
+                                        for (let index = 0; index < funcResults[outputIndex].length; index++) {
+                                            const elem = funcResults[outputIndex][index];
+                                            result.links.push({
+                                                to: elem,
+                                                name: `${func.name}.${func.outputs[outputIndex].name}[${index}]`,
+                                            });
+                                        }
                                     }
                                 }
-                                */
-                                console.error('array or results containing an address');
+                                //console.error('array or results containing an address');
                             }
                         } catch (err) {
                             console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
@@ -382,11 +414,10 @@ const outputNodeMermaid = (
 };
 
 const useNodesInLinks = false; // TODO: add a style command line arg
-let zeroCount = 0;
 const outputLinkMermaid = (from: string, to: string, name: string) => {
     // replace zero addresses
     if (to === ZeroAddress) {
-        to = `addressZero${zeroCount++}`;
+        to = `${from}-${name}0x0`;
         cl(`${to}((0x0))`);
     }
     if (useNodesInLinks) {
@@ -409,6 +440,7 @@ async function main() {
     // TODO: read this from command lin
     let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
     //let start = ['0x4eEfea49e4D876599765d5375cF7314cD14C9d38']; // RebalancePoolRegistry
+    //let start = ['0xc6dEe5913e010895F3702bc43a40d661B13a40BD']; // BoostableRebalancePool (has array outputs with addresses)
 
     let stop = [
         '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', // stETH
@@ -428,8 +460,9 @@ async function main() {
 
     const done = new Set<string>();
     let addresses = start;
-    let address: string | undefined;
-    while ((address = addresses.shift())) {
+    while (addresses.length) {
+        const address = addresses[0];
+        addresses.shift();
         if (!done.has(address)) {
             done.add(address);
             const stopper = stop.includes(address);

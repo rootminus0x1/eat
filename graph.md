@@ -1,6 +1,6 @@
 ```mermaid
 ---
-title: contract graph as of 2023-12-23T14:58:23.000Z
+title: contract graph as of 2023-12-23T16:55:59.000Z
 ---
 flowchart TB
 
@@ -60,8 +60,8 @@ click 0x4eEfea49e4D876599765d5375cF7314cD14C9d38 "https://etherscan.io/address/0
 
 0x4eEfea49e4D876599765d5375cF7314cD14C9d38 -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-addressZero0((0x0))
-0x4eEfea49e4D876599765d5375cF7314cD14C9d38 -- pendingOwner --> addressZero0
+0x4eEfea49e4D876599765d5375cF7314cD14C9d38-pendingOwner0x0((0x0))
+0x4eEfea49e4D876599765d5375cF7314cD14C9d38 -- pendingOwner --> 0x4eEfea49e4D876599765d5375cF7314cD14C9d38-pendingOwner0x0
 
 0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752["<b>ReservePool</b>"]:::contract
 click 0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752 "https://etherscan.io/address/0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752#code"
@@ -88,13 +88,13 @@ click 0x969fcabb703052155c4cc3b24458e77b2d56b29a "https://etherscan.io/address/0
 
 0x969fcabb703052155c4cc3b24458e77b2d56b29a -- priceOracle --> 0xa84360896cE9152d1780c546305BB54125F962d9
 
-addressZero1((0x0))
-0x969fcabb703052155c4cc3b24458e77b2d56b29a -- rateProvider --> addressZero1
+0x969fcabb703052155c4cc3b24458e77b2d56b29a-rateProvider0x0((0x0))
+0x969fcabb703052155c4cc3b24458e77b2d56b29a -- rateProvider --> 0x969fcabb703052155c4cc3b24458e77b2d56b29a-rateProvider0x0
 
 0x969fcabb703052155c4cc3b24458e77b2d56b29a -- rebalancePool --> 0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb
 
-addressZero2((0x0))
-0x969fcabb703052155c4cc3b24458e77b2d56b29a -- strategy --> addressZero2
+0x969fcabb703052155c4cc3b24458e77b2d56b29a-strategy0x0((0x0))
+0x969fcabb703052155c4cc3b24458e77b2d56b29a -- strategy --> 0x969fcabb703052155c4cc3b24458e77b2d56b29a-strategy0x0
 
 0x969fcabb703052155c4cc3b24458e77b2d56b29a -- xToken --> 0xe063F04f280c60aECa68b38341C2eEcBeC703ae2
 
@@ -151,6 +151,9 @@ click 0x37303d55fd8570c070bedd9a0e64421f318bb01b "https://etherscan.io/address/0
 
 0x37303d55fd8570c070bedd9a0e64421f318bb01b -- fxn --> 0x365AccFCa291e7D3914637ABf1F7635dB165Bb09
 
+0x37303d55fd8570c070bedd9a0e64421f318bb01b-gauge.gauge0x0((0x0))
+0x37303d55fd8570c070bedd9a0e64421f318bb01b -- gauge.gauge --> 0x37303d55fd8570c070bedd9a0e64421f318bb01b-gauge.gauge0x0
+
 0x37303d55fd8570c070bedd9a0e64421f318bb01b -- getActiveRewardTokens[0] --> 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
 
 0x37303d55fd8570c070bedd9a0e64421f318bb01b -- market --> 0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB
@@ -174,6 +177,9 @@ click 0x37303d55fd8570c070bedd9a0e64421f318bb01b "https://etherscan.io/address/0
 0x37303d55fd8570c070bedd9a0e64421f318bb01b -- baseToken --> 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84
 
 0x37303d55fd8570c070bedd9a0e64421f318bb01b -- fxn --> 0x365AccFCa291e7D3914637ABf1F7635dB165Bb09
+
+0x37303d55fd8570c070bedd9a0e64421f318bb01b-gauge.gauge0x0((0x0))
+0x37303d55fd8570c070bedd9a0e64421f318bb01b -- gauge.gauge --> 0x37303d55fd8570c070bedd9a0e64421f318bb01b-gauge.gauge0x0
 
 0x37303d55fd8570c070bedd9a0e64421f318bb01b -- getActiveRewardTokens[0] --> 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
 
@@ -203,8 +209,8 @@ click 0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb "https://etherscan.io/address/0
 
 0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-addressZero3((0x0))
-0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb -- pendingOwner --> addressZero3
+0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb-pendingOwner0x0((0x0))
+0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb -- pendingOwner --> 0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb-pendingOwner0x0
 
 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0["wstETH (Wrapped liquid staked Ether 2.0)<br><b>WstETH</b>"]:::contract
 click 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0 "https://etherscan.io/address/0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0#code"
@@ -289,8 +295,8 @@ click 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 "https://etherscan.io/address/0
 
 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 -- admin --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-addressZero4((0x0))
-0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 -- future_admin --> addressZero4
+0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37-future_admin0x0((0x0))
+0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 -- future_admin --> 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37-future_admin0x0
 
 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 -- token --> 0x365AccFCa291e7D3914637ABf1F7635dB165Bb09
 
@@ -299,39 +305,39 @@ addressZero4((0x0))
 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea["<b>SmartWalletWhitelist</b>"]:::contract
 click 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea "https://etherscan.io/address/0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea#code"
 
-addressZero5((0x0))
-0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea -- checker --> addressZero5
+0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea-checker0x0((0x0))
+0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea -- checker --> 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea-checker0x0
 
-addressZero6((0x0))
-0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea -- future_checker --> addressZero6
+0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea-future_checker0x0((0x0))
+0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea -- future_checker --> 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea-future_checker0x0
 
 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419["<b>EACAggregatorProxy</b>"]:::contract
 click 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 "https://etherscan.io/address/0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419#code"
 
-addressZero7((0x0))
-0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- accessController --> addressZero7
+0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-accessController0x0((0x0))
+0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- accessController --> 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-accessController0x0
 
 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- aggregator --> 0xE62B71cf983019BFf55bC83B48601ce8419650CC
 
 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- owner --> 0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA
 
-addressZero8((0x0))
-0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- proposedAggregator --> addressZero8
+0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-proposedAggregator0x0((0x0))
+0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- proposedAggregator --> 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-proposedAggregator0x0
 
 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8["<b>EACAggregatorProxy</b>"]:::contract
 click 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 "https://etherscan.io/address/0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8#code"
 
-addressZero9((0x0))
-0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- accessController --> addressZero9
+0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-accessController0x0((0x0))
+0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- accessController --> 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-accessController0x0
 
 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- aggregator --> 0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196
 
 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- owner --> 0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA
 
-addressZero10((0x0))
-0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- proposedAggregator --> addressZero10
+0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-proposedAggregator0x0((0x0))
+0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- proposedAggregator --> 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-proposedAggregator0x0
 
 0xE62B71cf983019BFf55bC83B48601ce8419650CC["<b>AccessControlledOffchainAggregator</b><br><hr>"]:::contract
 click 0xE62B71cf983019BFf55bC83B48601ce8419650CC "https://etherscan.io/address/0xE62B71cf983019BFf55bC83B48601ce8419650CC#code"
