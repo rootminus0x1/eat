@@ -268,8 +268,6 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                 rpcContract = new ethers.Contract(address, abi, jsonRpc);
                 // Explore each function in the contract's interface and check it's return
 
-                const funcResults = new Map<string, any>(); // function name to results
-                const funcAddressIndices = new Map<string, number[]>(); // function name to indices of address returns
                 const funcPromises: Promise<void>[] = [];
                 abi.forEachFunction((func) => {
                     // must be parameterless view or pure function
@@ -283,11 +281,24 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                             return indices;
                         }, [] as number[]);
                         if (addressIndices.length > 0) {
-                            funcAddressIndices.set(func.name, addressIndices);
                             const promise = (async () => {
                                 try {
                                     const results = await rpcContract[func.name]();
-                                    funcResults.set(func.name, results);
+                                    if (typeof results === 'string') {
+                                        // && func.outputs.length == 1 && addressIndices.length == 1) {
+                                        // only one result && it's the address
+                                        if (results !== ZeroAddress) {
+                                            result.links.push({ to: results, name: func.name });
+                                        }
+                                    } else {
+                                        //                            // assume an array of results
+                                        //                            for (const i of addressIndices) {
+                                        //                                if (typeof results[i] === 'string') {
+                                        //                                    outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
+                                        //                                    promises.push(delve(address, outNode, outLink));
+                                        //                                    //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
+                                        //                                }
+                                    }
                                 } catch (err) {
                                     console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
                                 }
@@ -297,24 +308,6 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
                     }
                 });
                 await Promise.all(funcPromises);
-
-                for (let [name, results] of funcResults) {
-                    if (typeof results === 'string') {
-                        // && func.outputs.length == 1 && addressIndices.length == 1) {
-                        // only one result && it's the address
-                        if (results !== ZeroAddress) {
-                            result.links.push({ to: results, name: name });
-                        }
-                    } else {
-                        //                            // assume an array of results
-                        //                            for (const i of addressIndices) {
-                        //                                if (typeof results[i] === 'string') {
-                        //                                    outLink(address, results[i], `${func.name}.${func.outputs[i].name}`);
-                        //                                    promises.push(delve(address, outNode, outLink));
-                        //                                    //result.addLink(`${func.name}.${func.outputs[i].name}`, await delve(results[i]));
-                        //                                }
-                    }
-                }
             }
         } else {
             result.type = AddressTypes.address;
