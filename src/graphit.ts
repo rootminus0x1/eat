@@ -2,10 +2,126 @@ import { log } from 'console';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
-import { ethers, Result, ZeroAddress } from 'ethers';
+import { ethers, EtherscanPlugin, Result, ZeroAddress } from 'ethers';
+
+// import { EtherscanHttp } from 'src/etherscan';
+
+//////////////////////////////////////////////////////////////////
+// etherscan via http
+
+// fetch from 'node-fetch';
+
+type getContractCreationResponse = { contractAddress: string; contractCreator: string; txHash: string };
+
+type getSourceCodeResponse = {
+    SourceCode: string;
+    ABI: string;
+    ContractName: string;
+    CompilerVersion: string;
+    OptimizationUsed: number;
+    Runs: number;
+    ConstructorArguments: string;
+    EVMVersion: string;
+    Library: string;
+    LicenseType: string;
+    Proxy: number;
+    Implementation: string;
+    SwarmSource: string;
+};
+
+class EtherscanHttp {
+    constructor(public apikey: string, public baseUrl: string = 'https://api.etherscan.io/api') {}
+
+    private async fetchES(request: Object): Promise<any | undefined> {
+        const url =
+            `${this.baseUrl}?apikey=${this.apikey}&` +
+            Object.entries(request)
+                .map(([k, v]) => [k, encodeURIComponent(v)].join('='))
+                .join('&')
+                .toString();
+
+        console.error(url);
+        const response = await fetch(url);
+        if (response.status !== 200) {
+            throw Error('something went wrong while querying');
+        }
+        const json = await response.json();
+        if (json.message === 'OK' && json.status === '1' && json.result !== 'Max rate limit reached') {
+            return json.result;
+        } else {
+            return undefined;
+        }
+    }
+
+    public async getContractCreation(address: string[]): Promise<getContractCreationResponse[] | null> {
+        return await this.fetchES({
+            module: 'contract',
+            action: 'getcontractcreation',
+            contractaddresses: address.join(','),
+        });
+    }
+
+    public async getSourceCode(address: string): Promise<getSourceCodeResponse[] | null> {
+        return await this.fetchES({
+            module: 'contract',
+            action: 'getsourcecode',
+            address: address,
+        });
+    }
+}
+
+class EtherscanContract {
+    public interface;
+
+    constructor(
+        public address: string,
+        private etherscanProvider: ethers.EtherscanProvider,
+        private etherscanhttp: EtherscanHttp,
+        private ethersContract: ethers.Contract | null,
+    ) {
+        this.interface = ethersContract?.interface;
+    }
+
+    public async getContractCreation(): Promise<getContractCreationResponse | null> {
+        const response = await this.etherscanhttp.getContractCreation([this.address]);
+        if (response) {
+            return response[0];
+        }
+        return null;
+    }
+
+    public async getSourceCode(): Promise<getSourceCodeResponse | null> {
+        const response = await this.etherscanhttp.getSourceCode(this.address);
+        if (response) {
+            return response[0];
+        }
+        return null;
+    }
+}
+
+class EtherscanProvider {
+    private etherscanProvider: ethers.EtherscanProvider;
+    private etherscanhttp: EtherscanHttp;
+
+    constructor(network: ethers.Network, apikey: string | undefined) {
+        this.etherscanProvider = new ethers.EtherscanProvider(network, apikey);
+        this.etherscanhttp = new EtherscanHttp(apikey || '');
+    }
+
+    public async getContract(address: string): Promise<EtherscanContract | null> {
+        return new EtherscanContract(
+            address,
+            this.etherscanProvider,
+            this.etherscanhttp,
+            await this.etherscanProvider.getContract(address),
+        );
+    }
+}
+
+///////////////////////////////////////////////////////
 
 let jsonRpc: ethers.JsonRpcProvider;
-let etherscan: ethers.EtherscanProvider;
+let etherscan: EtherscanProvider;
 
 function asDatetime(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString();
@@ -16,21 +132,23 @@ function asTimestamp(datetime: string): number {
     return isNaN(parsedUnixTimestamp) ? 0 : Math.floor(parsedUnixTimestamp / 1000);
 }
 
-function hasFunction(abi: ethers.Interface, name: string, parameters: string[]): boolean {
+function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], outputTypes: string[]): boolean {
     abi.forEachFunction(async (func) => {
-        if (func.name === name && parameters.length == func.inputs.length) {
-            let mismatch = false;
-            for (let i = 0; i < parameters.length; i++) {
-                if (parameters[i] !== func.inputs.at(i)?.name) {
-                    mismatch = true;
-                    break;
-                }
-            }
-            if (!mismatch) return true;
-        }
+        if (
+            func.name === name &&
+            func.inputs.reduce((matches, input, index) => {
+                return matches && input.type == inputTypes[index];
+            }, true) &&
+            func.outputs.reduce((matches, output, index) => {
+                return matches && output.type == outputTypes[index];
+            }, true)
+        )
+            return true;
     });
     return false;
 }
+
+/////////////////////////////////////////////////////////////////////////
 
 enum AddressTypes {
     unknown,
@@ -39,102 +157,115 @@ enum AddressTypes {
     invalid,
 }
 
-class BCAddress {
-    constructor(public address: string, public name: string, public type: AddressTypes, public logic?: string) {}
-    public links: { to: string; name: string }[] = [];
+class BCContract {
+    constructor(public address: string) {}
+    public name?: string;
+    public deployTimestamp?: number;
+    public creator?: string;
 }
 
-// recursive decent into graph, aboiding duplicates
-const done = new Set<string>();
+class BCAddress {
+    constructor(public address: string) {
+        this.type = AddressTypes.unknown;
+        this.name = address.slice(0, 5) + '..' + address.slice(-3);
+    }
+    public name: string;
+    public type: AddressTypes;
+    public token?: string;
+    public links: { to: string; name: string }[] = [];
+    public contract?: BCContract; // extra contract info
+    public implementations: BCContract[] = []; // historical implementation logics
+}
 
-async function delve(address: string): Promise<BCAddress | undefined> {
-    // avoid duplicates
-    if (done.has(address)) return;
-    done.add(address);
+type ContractData = {
+    data: BCContract;
+    abi: ethers.Interface | undefined;
+    source: getSourceCodeResponse | null;
+};
 
-    let found = givenContractData.find((c) => c.address == address);
-    let result = new BCAddress(
-        address,
-        found?.name || address.slice(0, 5) + '...' + address.slice(-3),
-        AddressTypes.unknown,
-    );
+async function getContractData(address: string): Promise<ContractData> {
+    let data = new BCContract(address);
+    let contract = await etherscan.getContract(address);
+    let stuff: getSourceCodeResponse | null = null;
+    if (contract) {
+        let createInfo = await contract.getContractCreation();
+        if (createInfo) {
+            const receipt = await jsonRpc.getTransactionReceipt(createInfo.txHash);
+            if (receipt && receipt.blockHash) {
+                const block = await jsonRpc.getBlock(receipt.blockHash);
+                if (block && block.timestamp) {
+                    data.deployTimestamp = block.timestamp;
+                    console.error(`${data.address} deployed on ${asDatetime(block.timestamp)}`);
+                }
+            }
+            data.creator = createInfo.contractCreator;
+        }
+        stuff = await contract.getSourceCode();
+        if (stuff) {
+            data.name = stuff.ContractName;
+        }
+    }
+    return { data: data, abi: contract?.interface, source: stuff };
+}
+
+async function delve(address: string, follow: boolean): Promise<BCAddress> {
+    let result = new BCAddress(address);
 
     // what kind of address
-    if (ethers.isAddress(address) && !found?.terminate) {
+    if (ethers.isAddress(address)) {
         const code = await jsonRpc.getCode(address);
         if (code !== '0x') {
             result.type = AddressTypes.contract;
-            // get the abi
-            const esContract = await etherscan.getContract(address);
-            if (esContract) {
-                /* when was it deployed TODO: get this working
-                let deployTimestamp = 0;
-                const tx = esContract.deploymentTransaction();
-                if (tx) {
-                    const receipt = await jsonRpc.getTransactionReceipt(tx.hash);
-                    if (receipt && receipt.blockHash) {
-                        const block = await jsonRpc.getBlock(receipt.blockHash);
-                        if (block && block.timestamp) {
-                            deployTimestamp = block.timestamp;
-                            cl(`${address} deployed on ${asDatetime(deployTimestamp)}`);
-                        }
+            const contractData = await getContractData(address);
+            result.contract = contractData.data;
+            if (contractData.data.name) result.name = contractData.data.name;
+            // set up the ABI to use for following addresses
+            let abi = contractData.abi;
+            let rpcContract: ethers.Contract;
+            // lookup the ERC20 token name, if it exists
+
+            const erc20Token = new ethers.Contract(
+                address,
+                ['function name() view returns (string)', 'function symbol() view returns (string)'],
+                jsonRpc,
+            );
+            try {
+                const erc20Name = await erc20Token.name();
+                const erc20Symbol = await erc20Token.symbol();
+                if (erc20Name || erc20Symbol) result.token = `${erc20Symbol} (${erc20Name})`;
+            } catch (error) {}
+            /*
+            if (abi && hasFunction(abi, 'name', [], ['string'])) {
+                rpcContract = new ethers.Contract(address, abi, jsonRpc);
+                const erc20Name = await rpcContract['name']();
+            }
+            */
+            if (contractData.source && contractData.source.Proxy > 0) {
+                // It's a proxy
+                const implementationData = await getContractData(contractData.source.Implementation);
+                // replace the ABI to use for following addresses
+                abi = implementationData.abi;
+                result.implementations.push(implementationData.data);
+                // TODO: get the update history
+                // Get historical transactions for the proxy contract
+                const events = await jsonRpc.getLogs({
+                    address: address,
+                    topics: [ethers.id('Upgraded(address)')],
+                    fromBlock: 0,
+                    toBlock: 'latest',
+                });
+                if (events.length > 0) {
+                    // TODO: iterate the events and add them as implementations
+                    // get the latest event's first topic as the proxy implementation
+                    const topic = events[events.length - 1]?.topics.at(1);
+                    if (topic) {
+                        // TODO: this should be a decoding of the topics according to event Upgraded(address indexed implementation)
+                        // result.logic = '0x' + topic.slice(-40);
                     }
                 }
-                */
-
-                let abi = esContract.interface;
-                // is this contract a proxy or a normal contract?
-                // TODO: break proxy logic out of this - it is only about getting the correct abi
-                // ERC897 proxies - see https://eips.ethereum.org/EIPS/eip-897
-                let abiResolved = false; // TODO: what if a proxy refers to another proxy!
-                if (!abiResolved && hasFunction(abi, 'proxyType', []) && hasFunction(abi, 'implementation', [])) {
-                    const rpcContract: any = new ethers.Contract(address, abi, jsonRpc);
-                    let proxyType = await rpcContract.proxyType();
-                    if (proxyType > 0) {
-                        let addressp = await rpcContract.implementation();
-                        const esContract = await etherscan.getContract(addressp);
-                        if (esContract) {
-                            abi = esContract.interface;
-                            abiResolved = true;
-                        }
-                    }
-                }
-                // ERC1967 proxies must have a fallback function and possibly
-                // * another function to set the implementation, e.g. upgradeTo
-                // generates an Upgraded & AdminChanged event
-                //     event Upgraded(address indexed implementation);
-                //     event AdminChanged(address previousAdmin, address newAdmin);
-                // there is no read contract to access
-                if (!abiResolved && abi.fallback) {
-                    // TODO add other checks - fallback is necessary but not sufficient, add a check for Upgraded event
-                    // Get historical transactions for the proxy contract
-                    const events = await jsonRpc.getLogs({
-                        address: address,
-                        topics: [ethers.id('Upgraded(address)')],
-                        fromBlock: 0,
-                        toBlock: 'latest',
-                    });
-                    if (events.length > 0) {
-                        // get the latest event's first topic as the proxy implementation
-                        const topic = events[events.length - 1]?.topics.at(1);
-                        if (topic) {
-                            // TODO: this should be a decoding of the topics according to event Upgraded(address indexed implementation)
-                            result.logic = '0x' + topic.slice(-40);
-                        }
-                    } else {
-                        result.logic = found?.logic;
-                    }
-                    if (result.logic) {
-                        const esContractp = await etherscan.getContract(result.logic);
-                        if (esContractp) {
-                            abi = esContractp.interface;
-                            abiResolved = true;
-                        }
-                    }
-                }
-
-                const rpcContract = new ethers.Contract(address, abi, jsonRpc);
-
+            }
+            if (abi && follow) {
+                rpcContract = new ethers.Contract(address, abi, jsonRpc);
                 // Explore each function in the contract's interface and check it's return
 
                 const funcResults = new Map<string, any>(); // function name to results
@@ -154,12 +285,6 @@ async function delve(address: string): Promise<BCAddress | undefined> {
                         if (addressIndices.length > 0) {
                             funcAddressIndices.set(func.name, addressIndices);
                             const promise = (async () => {
-                                if (
-                                    address === '0xBF1Ce0Bc4EdaAD8e576b3b55e19c4C15Cf6999eb' &&
-                                    func.selector === '0xa479e508'
-                                ) {
-                                    console.error(`calling ${address} ${func.name} ${func.selector}`);
-                                }
                                 try {
                                     const results = await rpcContract[func.name]();
                                     funcResults.set(func.name, results);
@@ -208,23 +333,42 @@ function cl(what: string) {
     console.log(what);
 }
 
-const outputNodeMermaid = (address: string, name: string, type: AddressTypes, logic?: string) => {
+const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
+    let result = name;
+    result = logicName ? `<b>${logicName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
+    result = tokenName ? `${tokenName}<br>${result}` : result;
+    return result;
+};
+
+const makeStopper = (name: string, stopper: boolean): string => {
+    return stopper ? `${name}<br><hr>` : name;
+};
+
+const outputNodeMermaid = (
+    address: string,
+    name: string,
+    type: AddressTypes,
+    stopper: boolean,
+    logic?: string,
+    logicName?: string,
+    tokenName?: string,
+) => {
     if (type === AddressTypes.contract) {
         if (logic) {
-            cl(`${address}[[${name}]]:::contract`);
+            cl(`${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
             cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
-            cl(`${logic}[${name}]:::contract`);
+            cl(`${logic}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
             cl(`click ${logic} "https://etherscan.io/address/${logic}#code"`);
             cl(`${address} o--o ${logic}`);
         } else {
-            cl(`${address}[${name}]:::contract`);
+            cl(`${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
             cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
         }
     } else if (type === AddressTypes.address) {
-        cl(`${address}([${name}]):::address`);
+        cl(`${address}(["${makeStopper(name, stopper)}"]):::address`);
         cl(`click ${address} "https://etherscan.io/address/${address}"`);
     } else {
-        cl(`${address}(${name}?):::address`);
+        cl(`${address}("${makeStopper(name, stopper)}"):::address`);
         cl(`click ${address} "https://etherscan.io/address/${address}"`);
     }
     cl('');
@@ -242,90 +386,18 @@ const outputLinkMermaid = (from: string, to: string, name: string) => {
     cl('');
 };
 
-/////////////////////////////////////////////////////////////////////////
-// names
-// TODO: read this from a file
-type ContractData = {
-    address: string;
-    name: string;
-    logic?: string;
-    terminate?: boolean;
-};
-
-const givenContractData: ContractData[] = [];
-
 async function main() {
     dotenvExpand.expand(dotenv.config());
     jsonRpc = new ethers.JsonRpcProvider(process.env.MAINNET_RPC_URL);
-    etherscan = new ethers.EtherscanProvider(new ethers.Network('mainnet', 1), process.env.ETHERSCAN_API_KEY);
+    etherscan = new EtherscanProvider(new ethers.Network('mainnet', 1), process.env.ETHERSCAN_API_KEY);
 
     const asOf = asDatetime((await jsonRpc.getBlock(await jsonRpc.getBlockNumber()))?.timestamp || 0);
 
-    // TODO: read this from file
-    givenContractData.push({
-        address: '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB',
-        name: 'Market',
-    });
-    givenContractData.push({
-        address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84',
-        name: 'stETH',
-        terminate: true,
-    });
-    givenContractData.push({
-        address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726',
-        name: 'FractionalToken',
-        logic: '0x2a906eab9b088e6753670bc8d3840f9473745748',
-    });
-    givenContractData.push({
-        address: '0x0084C2e1B1823564e597Ff4848a88D61ac63D703',
-        name: 'PlatformFeeSplitter',
-    });
-    givenContractData.push({
-        address: '0x4eEfea49e4D876599765d5375cF7314cD14C9d38',
-        name: 'RebalancePoolRegistry',
-    });
-    givenContractData.push({
-        address: '0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752',
-        name: 'ReservePool',
-    });
-    givenContractData.push({
-        address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0',
-        name: 'stETHTreasury',
-    });
-    givenContractData.push({
-        address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2',
-        name: 'LeveragedToken',
-        logic: '0x92d0cb7e56806bf977e7f5296ea2fe84b475fe83',
-    });
-    /*
-    givenContractData.push({
-        address: '0xBF1Ce0Bc4EdaAD8e576b3b55e19c4C15Cf6999eb',
-        name: 'EVMScriptRegistry',
-        //        inaccessible: true,
-    });
-    givenContractData.push({
-        address: '0xa29b819654cE6224A222bb5f586920105E2D7E0E',
-        name: 'LegacyOracle',
-        //        inaccessible: true,
-    });
-    */
-    givenContractData.push({
-        address: '0xa84360896cE9152d1780c546305BB54125F962d9',
-        name: 'FxETHTwapOracle',
-        terminate: true,
-    });
-    givenContractData.push({
-        address: '0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb',
-        name: 'RebalancePoolSplitter',
-    });
-    givenContractData.push({
-        address: '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF',
-        name: 'GnosisSafe',
-        logic: '0xd9db270c1b5e3bd161e8c8503c55ceabee709552',
-    });
+    // TODO: read this from command lin
+    let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
+    //let start = ['0x4eEfea49e4D876599765d5375cF7314cD14C9d38']; // RebalancePoolRegistry
 
-    // TODO: read this from command line
-    const root = '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB';
+    let stop = ['0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', '0xa84360896cE9152d1780c546305BB54125F962d9'];
 
     cl('```mermaid');
     cl('---');
@@ -334,15 +406,27 @@ async function main() {
     cl('flowchart TB');
     cl('');
 
-    let childAddresses = givenContractData.map((cd) => cd.address); // follow them all
+    const done = new Set<string>();
+    let addresses = start;
     let address: string | undefined;
-    while ((address = childAddresses.shift())) {
-        const bcAddress = await delve(address);
-        if (bcAddress) {
-            outputNodeMermaid(bcAddress.address, bcAddress.name, bcAddress.type, bcAddress.logic);
+    while ((address = addresses.shift())) {
+        if (!done.has(address)) {
+            const stopper = stop.includes(address);
+            const bcAddress = await delve(address, !stopper);
+            done.add(address);
+            let implementation = bcAddress.implementations?.at(0);
+            outputNodeMermaid(
+                bcAddress.address,
+                bcAddress.name,
+                bcAddress.type,
+                stopper,
+                implementation?.address,
+                implementation?.name,
+                bcAddress.token,
+            );
             for (let link of bcAddress.links) {
-                outputLinkMermaid(bcAddress.logic || bcAddress.address, link.to, link.name);
-                childAddresses.push(link.to);
+                outputLinkMermaid(implementation?.address || bcAddress.address, link.to, link.name);
+                addresses.push(link.to);
             }
         }
     }
