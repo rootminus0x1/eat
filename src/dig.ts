@@ -313,7 +313,7 @@ async function getContractData(address: string): Promise<ContractData> {
     return { data: data, abi: contract?.interface, source: stuff };
 }
 
-async function delve(address: string, follow: boolean): Promise<BCAddress> {
+async function dig(address: string, follow: boolean): Promise<BCAddress> {
     let result = new BCAddress(address);
 
     // what kind of address
@@ -472,7 +472,7 @@ async function main() {
             done.add(address);
             const stopper = stop.includes(address);
             const promise = (async (): Promise<void> => {
-                const bcAddress = await delve(address, !stopper);
+                const bcAddress = await dig(address, !stopper);
                 for (let link of bcAddress.links) {
                     // don't follow zero addresses
                     if (link.to !== ZeroAddress) {

@@ -1,14 +1,14 @@
 {
   "name": "eat",
   "version": "0.0.1",
-  "description": "Ethereum Archeology Tools",
+  "description": "Ethereum Archaeology Tools",
   "main": "index.js",
   "author": "rootminus0x1 <rootminus0x1@gmail.com>",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node -r ts-node/register src/graphit.ts",
-    "start": "ts-node src/graphit.ts > graph.md"
+    "devdig": "ts-node -r ts-node/register src/dig.ts",
+    "dig": "ts-node src/dig.ts > graph.md"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
