@@ -189,6 +189,8 @@ const makeStopper = (name: string, stopper: boolean): string => {
     return stopper ? `${name}<br><hr>` : name;
 };
 
+const useSubgraphForProxy = false;
+const mergeProxyandLogic = true;
 const outputNodeMermaid = (
     address: string,
     name: string,
@@ -200,12 +202,24 @@ const outputNodeMermaid = (
 ) => {
     if (type === AddressTypes.contract) {
         if (logic) {
-            const logicid = `${address}-${logic}`;
-            cl(`${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
-            cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
-            cl(`${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
-            cl(`click ${logicid} "https://etherscan.io/address/${logic}#code"`);
-            cl(`${address} o--o ${logicid}`);
+            if (mergeProxyandLogic) {
+                cl(`${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
+                cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
+            } else {
+                const logicid = `${address}-${logic}`;
+                if (useSubgraphForProxy) {
+                    cl(`subgraph ${address}-subgraph [" "]`);
+                }
+                cl(`${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
+                cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
+                cl(`${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
+                cl(`click ${logicid} "https://etherscan.io/address/${logic}#code"`);
+                cl(`${address} o--o ${logicid}`);
+                if (useSubgraphForProxy) {
+                    cl('end');
+                    cl(`style ${address}-subgraph stroke-width:0px,fill:#ffffff`);
+                }
+            }
         } else {
             cl(`${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
             cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
@@ -223,7 +237,7 @@ const outputNodeMermaid = (
 const useNodesInLinks = false; // TODO: add a style command line arg
 const outputLinkMermaid = (from: string, to: string, name: string, logic?: string) => {
     // TODO: put this v into a single place for this function and outputNodeMermaid
-    const fromid = logic ? `${from}-${logic}` : from;
+    const fromid = logic && !mergeProxyandLogic ? `${from}-${logic}` : from;
     // replace zero addresses
     if (to === ZeroAddress) {
         to = `${fromid}-${name}0x0`;
@@ -237,6 +251,33 @@ const outputLinkMermaid = (from: string, to: string, name: string, logic?: strin
         cl(`${fromid} -- ${name} --> ${to}`);
     }
     cl('');
+};
+
+const outputHeaderMermaid = (asOf: string): void => {
+    cl('```mermaid');
+    cl('---');
+    cl(`title: contract graph as of ${asOf}`);
+    cl('---');
+    cl('%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%');
+    //%%{init: {"flowchart": {"htmlLabels": false}} }%%
+    //%%{ init: { 'flowchart': { 'curve': 'stepBefore' } } }%%
+
+    cl('flowchart TB');
+    /*
+    cl('');
+    cl('graphStyle marginY 100px;');
+    */
+    cl('');
+};
+
+const outputFooterMermaid = (): void => {
+    /*
+    cl('classDef contract font:11px Roboto');
+    cl('classDef address font:11px Roboto');
+    cl('classDef proxy fill:#ffffff,font:11px Roboto');
+    cl('classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
+    */
+    cl('```');
 };
 
 enum AddressTypes {
@@ -456,12 +497,7 @@ async function main() {
         '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196', // "           "
     ];
 
-    cl('```mermaid');
-    cl('---');
-    cl(`title: contract graph as of ${asOf}`);
-    cl('---');
-    cl('flowchart TB');
-    cl('');
+    outputHeaderMermaid(asOf);
 
     const done = new Set<string>();
     let addresses = start;
@@ -485,15 +521,7 @@ async function main() {
         }
     }
 
-    cl('');
-    /*
-    cl('classDef contract font:11px Roboto');
-    cl('classDef address font:11px Roboto');
-    cl('classDef proxy fill:#ffffff,font:11px Roboto');
-    cl('classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
-    */
-
-    cl('```');
+    outputFooterMermaid();
 }
 
 // use this pattern to be able to use async/await everywhere and properly handle errors.
