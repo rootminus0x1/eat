@@ -171,6 +171,73 @@ function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], 
 }
 
 /////////////////////////////////////////////////////////////////////////
+// mermaid graph
+//
+
+function cl(what: string) {
+    console.log(what);
+}
+
+const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
+    let result = name;
+    result = logicName ? `<b>${logicName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
+    result = tokenName ? `${tokenName}<br>${result}` : result;
+    return result;
+};
+
+const makeStopper = (name: string, stopper: boolean): string => {
+    return stopper ? `${name}<br><hr>` : name;
+};
+
+const outputNodeMermaid = (
+    address: string,
+    name: string,
+    type: AddressTypes,
+    stopper: boolean,
+    logic?: string,
+    logicName?: string,
+    tokenName?: string,
+) => {
+    if (type === AddressTypes.contract) {
+        if (logic) {
+            const logicid = `${address}-${logic}`;
+            cl(`${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
+            cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
+            cl(`${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
+            cl(`click ${logicid} "https://etherscan.io/address/${logic}#code"`);
+            cl(`${address} o--o ${logicid}`);
+        } else {
+            cl(`${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
+            cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
+        }
+    } else if (type === AddressTypes.address) {
+        cl(`${address}(["${makeStopper(name, stopper)}"]):::address`);
+        cl(`click ${address} "https://etherscan.io/address/${address}"`);
+    } else {
+        cl(`${address}("${makeStopper(name, stopper)}"):::address`);
+        cl(`click ${address} "https://etherscan.io/address/${address}"`);
+    }
+    cl('');
+};
+
+const useNodesInLinks = false; // TODO: add a style command line arg
+const outputLinkMermaid = (from: string, to: string, name: string, logic?: string) => {
+    // TODO: put this v into a single place for this function and outputNodeMermaid
+    const fromid = logic ? `${from}-${logic}` : from;
+    // replace zero addresses
+    if (to === ZeroAddress) {
+        to = `${fromid}-${name}0x0`;
+        cl(`${to}((0x0))`);
+    }
+    if (useNodesInLinks) {
+        const nodeid = `${fromid}-${name}`;
+        cl(`${nodeid}[${name}]:::link`);
+        cl(`${fromid} --- ${nodeid} --> ${to}`);
+    } else {
+        cl(`${fromid} -- ${name} --> ${to}`);
+    }
+    cl('');
+};
 
 enum AddressTypes {
     unknown,
@@ -210,7 +277,7 @@ class BCAddress {
             this.token,
         );
         for (let link of this.links) {
-            outputLinkMermaid(implementation?.address || this.address, link.to, link.name);
+            outputLinkMermaid(this.address, link.to, link.name, implementation?.address);
         }
     }
 }
@@ -253,6 +320,9 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
     if (ethers.isAddress(address)) {
         const code = await jsonRpc.getCode(address);
         if (code !== '0x') {
+            if (address === '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9') {
+                console.error(`address = ${address}`);
+            }
             result.type = AddressTypes.contract;
             const contractData = await getContractData(address);
             result.contract = contractData.data;
@@ -364,72 +434,6 @@ async function delve(address: string, follow: boolean): Promise<BCAddress> {
     return result;
 }
 
-/////////////////////////////////////////////////////////////////////////
-// mermaid graph
-//
-
-function cl(what: string) {
-    console.log(what);
-}
-
-const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
-    let result = name;
-    result = logicName ? `<b>${logicName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
-    result = tokenName ? `${tokenName}<br>${result}` : result;
-    return result;
-};
-
-const makeStopper = (name: string, stopper: boolean): string => {
-    return stopper ? `${name}<br><hr>` : name;
-};
-
-const outputNodeMermaid = (
-    address: string,
-    name: string,
-    type: AddressTypes,
-    stopper: boolean,
-    logic?: string,
-    logicName?: string,
-    tokenName?: string,
-) => {
-    if (type === AddressTypes.contract) {
-        if (logic) {
-            cl(`${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
-            cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
-            cl(`${logic}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
-            cl(`click ${logic} "https://etherscan.io/address/${logic}#code"`);
-            cl(`${address} o--o ${logic}`);
-        } else {
-            cl(`${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
-            cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
-        }
-    } else if (type === AddressTypes.address) {
-        cl(`${address}(["${makeStopper(name, stopper)}"]):::address`);
-        cl(`click ${address} "https://etherscan.io/address/${address}"`);
-    } else {
-        cl(`${address}("${makeStopper(name, stopper)}"):::address`);
-        cl(`click ${address} "https://etherscan.io/address/${address}"`);
-    }
-    cl('');
-};
-
-const useNodesInLinks = false; // TODO: add a style command line arg
-const outputLinkMermaid = (from: string, to: string, name: string) => {
-    // replace zero addresses
-    if (to === ZeroAddress) {
-        to = `${from}-${name}0x0`;
-        cl(`${to}((0x0))`);
-    }
-    if (useNodesInLinks) {
-        const nodeid = `${from}-${name}`;
-        cl(`${nodeid}[${name}]:::link`);
-        cl(`${from} --- ${nodeid} --> ${to}`);
-    } else {
-        cl(`${from} -- ${name} --> ${to}`);
-    }
-    cl('');
-};
-
 async function main() {
     dotenvExpand.expand(dotenv.config());
     jsonRpc = new ethers.JsonRpcProvider(process.env.MAINNET_RPC_URL);
@@ -441,6 +445,7 @@ async function main() {
     let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
     //let start = ['0x4eEfea49e4D876599765d5375cF7314cD14C9d38']; // RebalancePoolRegistry
     //let start = ['0xc6dEe5913e010895F3702bc43a40d661B13a40BD']; // BoostableRebalancePool (has array outputs with addresses)
+    //let start = ['0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9']; // BoostableRebalancePool proxy
 
     let stop = [
         '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', // stETH
@@ -466,14 +471,17 @@ async function main() {
         if (!done.has(address)) {
             done.add(address);
             const stopper = stop.includes(address);
-            const bcAddress = await delve(address, !stopper);
-            for (let link of bcAddress.links) {
-                // don't follow zero addresses
-                if (link.to !== ZeroAddress) {
-                    addresses.push(link.to);
+            const promise = (async (): Promise<void> => {
+                const bcAddress = await delve(address, !stopper);
+                for (let link of bcAddress.links) {
+                    // don't follow zero addresses
+                    if (link.to !== ZeroAddress) {
+                        addresses.push(link.to);
+                    }
                 }
-            }
-            bcAddress.asMermaid(stopper);
+                bcAddress.asMermaid(stopper);
+            })();
+            await promise;
         }
     }
 
