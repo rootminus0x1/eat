@@ -1,4 +1,6 @@
 import * as fs from 'fs';
+import * as path from 'path';
+import * as yaml from 'js-yaml';
 import { Buffer } from 'buffer';
 
 import * as dotenv from 'dotenv';
@@ -174,8 +176,9 @@ function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], 
 // mermaid graph
 //
 
-function cl(what: string) {
-    console.log(what);
+function cl(f: fs.WriteStream, what: string) {
+    //console.log(what);
+    f.write(what + '\n');
 }
 
 const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
@@ -192,6 +195,7 @@ const makeStopper = (name: string, stopper: boolean): string => {
 const useSubgraphForProxy = false;
 const mergeProxyandLogic = true;
 const outputNodeMermaid = (
+    f: fs.WriteStream,
     address: string,
     name: string,
     type: AddressTypes,
@@ -203,81 +207,81 @@ const outputNodeMermaid = (
     if (type === AddressTypes.contract) {
         if (logic) {
             if (mergeProxyandLogic) {
-                cl(`${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
-                cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
+                cl(f, `${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
+                cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
             } else {
                 const logicid = `${address}-${logic}`;
                 if (useSubgraphForProxy) {
-                    cl(`subgraph ${address}-subgraph [" "]`);
+                    cl(f, `subgraph ${address}-subgraph [" "]`);
                 }
-                cl(`${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
-                cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
-                cl(`${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
-                cl(`click ${logicid} "https://etherscan.io/address/${logic}#code"`);
-                cl(`${address} o--o ${logicid}`);
+                cl(f, `${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
+                cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
+                cl(f, `${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
+                cl(f, `click ${logicid} "https://etherscan.io/address/${logic}#code"`);
+                cl(f, `${address} o--o ${logicid}`);
                 if (useSubgraphForProxy) {
-                    cl('end');
-                    cl(`style ${address}-subgraph stroke-width:0px,fill:#ffffff`);
+                    cl(f, 'end');
+                    cl(f, `style ${address}-subgraph stroke-width:0px,fill:#ffffff`);
                 }
             }
         } else {
-            cl(`${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
-            cl(`click ${address} "https://etherscan.io/address/${address}#code"`);
+            cl(f, `${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
+            cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
         }
     } else if (type === AddressTypes.address) {
-        cl(`${address}(["${makeStopper(name, stopper)}"]):::address`);
-        cl(`click ${address} "https://etherscan.io/address/${address}"`);
+        cl(f, `${address}(["${makeStopper(name, stopper)}"]):::address`);
+        cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     } else {
-        cl(`${address}("${makeStopper(name, stopper)}"):::address`);
-        cl(`click ${address} "https://etherscan.io/address/${address}"`);
+        cl(f, `${address}("${makeStopper(name, stopper)}"):::address`);
+        cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     }
-    cl('');
+    cl(f, '');
 };
 
 const useNodesInLinks = false; // TODO: add a style command line arg
-const outputLinkMermaid = (from: string, to: string, name: string, logic?: string) => {
+const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: string, logic?: string) => {
     // TODO: put this v into a single place for this function and outputNodeMermaid
     const fromid = logic && !mergeProxyandLogic ? `${from}-${logic}` : from;
     // replace zero addresses
     if (to === ZeroAddress) {
         to = `${fromid}-${name}0x0`;
-        cl(`${to}((0x0))`);
+        cl(f, `${to}((0x0))`);
     }
     if (useNodesInLinks) {
         const nodeid = `${fromid}-${name}`;
-        cl(`${nodeid}[${name}]:::link`);
-        cl(`${fromid} --- ${nodeid} --> ${to}`);
+        cl(f, `${nodeid}[${name}]:::link`);
+        cl(f, `${fromid} --- ${nodeid} --> ${to}`);
     } else {
-        cl(`${fromid} -- ${name} --> ${to}`);
+        cl(f, `${fromid} -- ${name} --> ${to}`);
     }
-    cl('');
+    cl(f, '');
 };
 
-const outputHeaderMermaid = (asOf: string): void => {
-    cl('```mermaid');
-    cl('---');
-    cl(`title: contract graph as of ${asOf}`);
-    cl('---');
-    cl('%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%');
+const outputHeaderMermaid = (f: fs.WriteStream, asOf: string): void => {
+    cl(f, '```mermaid');
+    cl(f, '---');
+    cl(f, `title: contract graph as of ${asOf}`);
+    cl(f, '---');
+    cl(f, '%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%');
     //%%{init: {"flowchart": {"htmlLabels": false}} }%%
     //%%{ init: { 'flowchart': { 'curve': 'stepBefore' } } }%%
 
-    cl('flowchart TB');
+    cl(f, 'flowchart TB');
     /*
-    cl('');
-    cl('graphStyle marginY 100px;');
+    cl(f, '');
+    cl(f, 'graphStyle marginY 100px;');
     */
-    cl('');
+    cl(f, '');
 };
 
-const outputFooterMermaid = (): void => {
+const outputFooterMermaid = (f: fs.WriteStream): void => {
     /*
-    cl('classDef contract font:11px Roboto');
-    cl('classDef address font:11px Roboto');
-    cl('classDef proxy fill:#ffffff,font:11px Roboto');
-    cl('classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
+    cl(f, 'classDef contract font:11px Roboto');
+    cl(f, 'classDef address font:11px Roboto');
+    cl(f, 'classDef proxy fill:#ffffff,font:11px Roboto');
+    cl(f, 'classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
     */
-    cl('```');
+    cl(f, '```');
 };
 
 enum AddressTypes {
@@ -306,9 +310,10 @@ class BCAddress {
     public contract?: BCContract; // extra contract info
     public implementations: BCContract[] = []; // historical implementation logics
 
-    public asMermaid(stopper: boolean) {
-        let implementation = this.implementations?.at(0);
+    public asMermaid(f: fs.WriteStream, stopper: boolean) {
+        let implementation = this.implementations?.[0];
         outputNodeMermaid(
+            f,
             this.address,
             this.name,
             this.type,
@@ -318,7 +323,7 @@ class BCAddress {
             this.token,
         );
         for (let link of this.links) {
-            outputLinkMermaid(this.address, link.to, link.name, implementation?.address);
+            outputLinkMermaid(f, this.address, link.to, link.name, implementation?.address);
         }
     }
 }
@@ -361,9 +366,6 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
     if (ethers.isAddress(address)) {
         const code = await jsonRpc.getCode(address);
         if (code !== '0x') {
-            if (address === '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9') {
-                console.error(`address = ${address}`);
-            }
             result.type = AddressTypes.contract;
             const contractData = await getContractData(address);
             result.contract = contractData.data;
@@ -399,7 +401,7 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 if (events.length > 0) {
                     // TODO: iterate the events and add them as implementations
                     // get the latest event's first topic as the proxy implementation
-                    const topic = events[events.length - 1]?.topics.at(1);
+                    const topic = events[events.length - 1]?.topics[1];
                     if (topic) {
                         // TODO: this should be a decoding of the topics according to event Upgraded(address indexed implementation)
                         // result.logic = '0x' + topic.slice(-40);
@@ -482,6 +484,13 @@ async function main() {
 
     const asOf = asDatetime((await jsonRpc.getBlock(await jsonRpc.getBlockNumber()))?.timestamp || 0);
 
+    const args = process.argv.slice(2);
+    let configFileName = args[0];
+    const config: any = yaml.load(fs.readFileSync(configFileName).toString());
+
+    const outputFileName = path.basename(configFileName, path.extname(configFileName)) + '.md';
+    const outputFile = fs.createWriteStream(outputFileName, { encoding: 'utf-8' });
+
     // TODO: read this from command lin
     let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
     //let start = ['0x4eEfea49e4D876599765d5375cF7314cD14C9d38']; // RebalancePoolRegistry
@@ -497,16 +506,16 @@ async function main() {
         '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196', // "           "
     ];
 
-    outputHeaderMermaid(asOf);
+    outputHeaderMermaid(outputFile, asOf);
 
     const done = new Set<string>();
-    let addresses = start;
+    let addresses = config.start;
     while (addresses.length) {
         const address = addresses[0];
         addresses.shift();
         if (!done.has(address)) {
             done.add(address);
-            const stopper = stop.includes(address);
+            const stopper = config.stopafter.includes(address);
             const promise = (async (): Promise<void> => {
                 const bcAddress = await dig(address, !stopper);
                 for (let link of bcAddress.links) {
@@ -515,13 +524,14 @@ async function main() {
                         addresses.push(link.to);
                     }
                 }
-                bcAddress.asMermaid(stopper);
+                bcAddress.asMermaid(outputFile, stopper);
             })();
             await promise;
         }
     }
 
-    outputFooterMermaid();
+    outputFooterMermaid(outputFile);
+    outputFile.end();
 }
 
 // use this pattern to be able to use async/await everywhere and properly handle errors.
