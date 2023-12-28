@@ -7,8 +7,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "devdig": "ts-node -r ts-node/register src/dig.ts",
-    "dig": "ts-node src/dig.ts > graph.md"
+    "test": "ts-node src/dig.ts test/aladdin-fx-market.yml",
+    "devdig": "ts-node -r ts-node/register src/dig.ts"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
