@@ -5,16 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "debug dig",
       "type": "node",
       "request": "launch",
-      "name": "debug TS",
       "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
-      "args": ["${workspaceFolder}/src/graphit.ts"],
+      "args": ["${workspaceFolder}/src/dig.ts", "${workspaceFolder}/test/aladdin-fx-market.yml"],
       "sourceMaps": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "skipFiles": ["<node_internals>/**"]
+
     }
   ]
 }
+
+  // TODO: add inputs for variable .yml files
+  // as per https://stackoverflow.com/questions/48273346/vscode-command-for-user-input-in-debug-launch-config
