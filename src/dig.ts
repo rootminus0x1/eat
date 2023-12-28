@@ -485,11 +485,13 @@ async function main() {
     const asOf = asDatetime((await jsonRpc.getBlock(await jsonRpc.getBlockNumber()))?.timestamp || 0);
 
     const args = process.argv.slice(2);
-    let configFileName = args[0];
-    const config: any = yaml.load(fs.readFileSync(configFileName).toString());
+    let configFilePath = path.resolve(args[0]);
 
-    const outputFileName = path.basename(configFileName, path.extname(configFileName)) + '.md';
-    const outputFile = fs.createWriteStream(outputFileName, { encoding: 'utf-8' });
+    const config: any = yaml.load(fs.readFileSync(configFilePath).toString());
+
+    const outputFilePath =
+        path.dirname(configFilePath) + '/' + path.basename(configFilePath, path.extname(configFilePath)) + '.md';
+    const outputFile = fs.createWriteStream(outputFilePath, { encoding: 'utf-8' });
 
     // TODO: read this from command lin
     let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
