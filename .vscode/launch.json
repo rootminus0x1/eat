@@ -9,16 +9,29 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
-      "args": ["${workspaceFolder}/src/dig.ts", "${workspaceFolder}/test/aladdin-fx-market.yml"],
+      // "args": ["${file}", "${input:dig.debug.args}"],
+      "args": ["${workspaceFolder}/src/dig.ts", "${input:dig.debug.args}"],
       "sourceMaps": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "skipFiles": ["<node_internals>/**"]
-
+    }
+  ],
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "dig.debug.args",
+      "description": "What type of component do you want to create?",
+      "options": ["${workspaceFolder}/test/aladdin-fx-market.yml"],
+      "default": "debug.yml"
+    },
+    {
+      // keep this here for future use
+      "type": "promptString",
+      "id": "componentName",
+      "description": "Name your component.",
+      "default": "my-new-component"
     }
   ]
 }
-
-  // TODO: add inputs for variable .yml files
-  // as per https://stackoverflow.com/questions/48273346/vscode-command-for-user-input-in-debug-launch-config
