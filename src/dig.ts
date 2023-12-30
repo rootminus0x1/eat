@@ -492,22 +492,6 @@ async function main() {
     const outputFilePath =
         path.dirname(configFilePath) + '/' + path.basename(configFilePath, path.extname(configFilePath)) + '.md';
     const outputFile = fs.createWriteStream(outputFilePath, { encoding: 'utf-8' });
-
-    // TODO: read this from command lin
-    let start = ['0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB']; // Market
-    //let start = ['0x4eEfea49e4D876599765d5375cF7314cD14C9d38']; // RebalancePoolRegistry
-    //let start = ['0xc6dEe5913e010895F3702bc43a40d661B13a40BD']; // BoostableRebalancePool (has array outputs with addresses)
-    //let start = ['0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9']; // BoostableRebalancePool proxy
-
-    let stop = [
-        '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', // stETH
-        //'0xa84360896cE9152d1780c546305BB54125F962d9', // FxETHTwapOracle
-        '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF', // GnosisSafe (just has a list of owners)
-        '0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA', // "           "
-        '0xE62B71cf983019BFf55bC83B48601ce8419650CC', // AccessControlledOffchainAggregator
-        '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196', // "           "
-    ];
-
     outputHeaderMermaid(outputFile, asOf);
 
     const done = new Set<string>();
