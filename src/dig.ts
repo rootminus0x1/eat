@@ -6,6 +6,8 @@ import { Buffer } from 'buffer';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
+// import { ethers } from 'hardhat';
+
 import { ethers, ZeroAddress } from 'ethers';
 
 // import { EtherscanHttp } from 'src/etherscan';
@@ -95,16 +97,7 @@ class EtherscanHttp {
 }
 
 class EtherscanContract {
-    public interface;
-
-    constructor(
-        public address: string,
-        private etherscanProvider: ethers.EtherscanProvider,
-        private etherscanhttp: EtherscanHttp,
-        private ethersContract: ethers.Contract | null,
-    ) {
-        this.interface = ethersContract?.interface;
-    }
+    constructor(public address: string, private etherscanhttp: EtherscanHttp) {}
 
     public async getContractCreation(): Promise<getContractCreationResponse | null> {
         const response = await this.etherscanhttp.getContractCreation([this.address]);
@@ -124,21 +117,14 @@ class EtherscanContract {
 }
 
 class EtherscanProvider {
-    private etherscanProvider: ethers.EtherscanProvider;
     private etherscanhttp: EtherscanHttp;
 
     constructor(network: ethers.Network, apikey: string | undefined) {
-        this.etherscanProvider = new ethers.EtherscanProvider(network, apikey);
         this.etherscanhttp = new EtherscanHttp(apikey || '');
     }
 
     public async getContract(address: string): Promise<EtherscanContract | null> {
-        return new EtherscanContract(
-            address,
-            this.etherscanProvider,
-            this.etherscanhttp,
-            await this.etherscanProvider.getContract(address),
-        );
+        return new EtherscanContract(address, this.etherscanhttp);
     }
 }
 
@@ -151,6 +137,7 @@ function asDatetime(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString();
 }
 
+/*
 function asTimestamp(datetime: string): number {
     const parsedUnixTimestamp = new Date(datetime).getTime();
     return isNaN(parsedUnixTimestamp) ? 0 : Math.floor(parsedUnixTimestamp / 1000);
@@ -171,6 +158,7 @@ function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], 
     });
     return false;
 }
+*/
 
 /////////////////////////////////////////////////////////////////////////
 // mermaid graph
@@ -330,7 +318,6 @@ class BCAddress {
 
 type ContractData = {
     data: BCContract;
-    abi: ethers.Interface | undefined;
     source: getSourceCodeResponse | null;
 };
 
@@ -338,6 +325,7 @@ async function getContractData(address: string): Promise<ContractData> {
     let data = new BCContract(address);
     let contract = await etherscan.getContract(address);
     let stuff: getSourceCodeResponse | null = null;
+    let abi: Object = {};
     if (contract) {
         let createInfo = await contract.getContractCreation();
         if (createInfo) {
@@ -356,7 +344,7 @@ async function getContractData(address: string): Promise<ContractData> {
             data.name = stuff.ContractName;
         }
     }
-    return { data: data, abi: contract?.interface, source: stuff };
+    return { data: data, source: stuff };
 }
 
 async function dig(address: string, follow: boolean): Promise<BCAddress> {
@@ -371,7 +359,7 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
             result.contract = contractData.data;
             if (contractData.data.name) result.name = contractData.data.name;
             // set up the ABI to use for following addresses
-            let abi = contractData.abi;
+            let abi = contractData.source?.ABI;
             let rpcContract: ethers.Contract;
             // lookup the ERC20 token name, if it exists
             const erc20Token = new ethers.Contract(
@@ -388,7 +376,7 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 // It's a proxy
                 const implementationData = await getContractData(contractData.source.Implementation);
                 // replace the ABI to use for following addresses
-                abi = implementationData.abi;
+                abi = implementationData.source?.ABI;
                 result.implementations.push(implementationData.data);
                 // TODO: get the update history
                 // Get historical transactions for the proxy contract
@@ -413,7 +401,7 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 // Explore each function in the contract's interface and check it's return
 
                 let functions: ethers.FunctionFragment[] = [];
-                abi.forEachFunction((func) => {
+                rpcContract.interface.forEachFunction((func) => {
                     // must be parameterless view or pure function
                     if (
                         func.inputs.length == 0 &&
