@@ -6,7 +6,10 @@ import { Buffer } from 'buffer';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
-import { ethers, ZeroAddress } from 'ethers';
+import { ethers } from 'hardhat';
+import { reset } from '@nomicfoundation/hardhat-network-helpers';
+
+import { Contract, Network, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
 // import { EtherscanHttp } from 'src/etherscan';
 
@@ -95,16 +98,7 @@ class EtherscanHttp {
 }
 
 class EtherscanContract {
-    public interface;
-
-    constructor(
-        public address: string,
-        private etherscanProvider: ethers.EtherscanProvider,
-        private etherscanhttp: EtherscanHttp,
-        private ethersContract: ethers.Contract | null,
-    ) {
-        this.interface = ethersContract?.interface;
-    }
+    constructor(public address: string, private etherscanhttp: EtherscanHttp) {}
 
     public async getContractCreation(): Promise<getContractCreationResponse | null> {
         const response = await this.etherscanhttp.getContractCreation([this.address]);
@@ -124,33 +118,26 @@ class EtherscanContract {
 }
 
 class EtherscanProvider {
-    private etherscanProvider: ethers.EtherscanProvider;
     private etherscanhttp: EtherscanHttp;
 
-    constructor(network: ethers.Network, apikey: string | undefined) {
-        this.etherscanProvider = new ethers.EtherscanProvider(network, apikey);
+    constructor(network: Network, apikey: string | undefined) {
         this.etherscanhttp = new EtherscanHttp(apikey || '');
     }
 
     public async getContract(address: string): Promise<EtherscanContract | null> {
-        return new EtherscanContract(
-            address,
-            this.etherscanProvider,
-            this.etherscanhttp,
-            await this.etherscanProvider.getContract(address),
-        );
+        return new EtherscanContract(address, this.etherscanhttp);
     }
 }
 
 ///////////////////////////////////////////////////////
 
-let jsonRpc: ethers.JsonRpcProvider;
 let etherscan: EtherscanProvider;
 
 function asDatetime(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString();
 }
 
+/*
 function asTimestamp(datetime: string): number {
     const parsedUnixTimestamp = new Date(datetime).getTime();
     return isNaN(parsedUnixTimestamp) ? 0 : Math.floor(parsedUnixTimestamp / 1000);
@@ -171,6 +158,7 @@ function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], 
     });
     return false;
 }
+*/
 
 /////////////////////////////////////////////////////////////////////////
 // mermaid graph
@@ -257,10 +245,10 @@ const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: st
     cl(f, '');
 };
 
-const outputHeaderMermaid = (f: fs.WriteStream, asOf: string): void => {
+const outputHeaderMermaid = (f: fs.WriteStream, blockNumber: number, asOf: string): void => {
     cl(f, '```mermaid');
     cl(f, '---');
-    cl(f, `title: contract graph as of ${asOf}`);
+    cl(f, `title: contract graph as of block ${blockNumber}, ${asOf}`);
     cl(f, '---');
     cl(f, '%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%');
     //%%{init: {"flowchart": {"htmlLabels": false}} }%%
@@ -330,7 +318,6 @@ class BCAddress {
 
 type ContractData = {
     data: BCContract;
-    abi: ethers.Interface | undefined;
     source: getSourceCodeResponse | null;
 };
 
@@ -338,12 +325,13 @@ async function getContractData(address: string): Promise<ContractData> {
     let data = new BCContract(address);
     let contract = await etherscan.getContract(address);
     let stuff: getSourceCodeResponse | null = null;
+    let abi: Object = {};
     if (contract) {
         let createInfo = await contract.getContractCreation();
         if (createInfo) {
-            const receipt = await jsonRpc.getTransactionReceipt(createInfo.txHash);
+            const receipt = await ethers.provider.getTransactionReceipt(createInfo.txHash);
             if (receipt && receipt.blockHash) {
-                const block = await jsonRpc.getBlock(receipt.blockHash);
+                const block = await ethers.provider.getBlock(receipt.blockHash);
                 if (block && block.timestamp) {
                     data.deployTimestamp = block.timestamp;
                     // console.error(`${data.address} deployed on ${asDatetime(block.timestamp)}`);
@@ -356,7 +344,7 @@ async function getContractData(address: string): Promise<ContractData> {
             data.name = stuff.ContractName;
         }
     }
-    return { data: data, abi: contract?.interface, source: stuff };
+    return { data: data, source: stuff };
 }
 
 async function dig(address: string, follow: boolean): Promise<BCAddress> {
@@ -364,20 +352,20 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
 
     // what kind of address
     if (ethers.isAddress(address)) {
-        const code = await jsonRpc.getCode(address);
+        const code = await ethers.provider.getCode(address);
         if (code !== '0x') {
             result.type = AddressTypes.contract;
             const contractData = await getContractData(address);
             result.contract = contractData.data;
             if (contractData.data.name) result.name = contractData.data.name;
             // set up the ABI to use for following addresses
-            let abi = contractData.abi;
-            let rpcContract: ethers.Contract;
+            let abi = contractData.source?.ABI;
+            let rpcContract: Contract;
             // lookup the ERC20 token name, if it exists
             const erc20Token = new ethers.Contract(
                 address,
                 ['function name() view returns (string)', 'function symbol() view returns (string)'],
-                jsonRpc,
+                ethers.provider,
             );
             try {
                 const erc20Name = await erc20Token.name();
@@ -388,11 +376,11 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 // It's a proxy
                 const implementationData = await getContractData(contractData.source.Implementation);
                 // replace the ABI to use for following addresses
-                abi = implementationData.abi;
+                abi = implementationData.source?.ABI;
                 result.implementations.push(implementationData.data);
                 // TODO: get the update history
                 // Get historical transactions for the proxy contract
-                const events = await jsonRpc.getLogs({
+                const events = await ethers.provider.getLogs({
                     address: address,
                     topics: [ethers.id('Upgraded(address)')],
                     fromBlock: 0,
@@ -409,11 +397,11 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 }
             }
             if (abi && follow) {
-                rpcContract = new ethers.Contract(address, abi, jsonRpc);
+                rpcContract = new ethers.Contract(address, abi, ethers.provider);
                 // Explore each function in the contract's interface and check it's return
 
-                let functions: ethers.FunctionFragment[] = [];
-                abi.forEachFunction((func) => {
+                let functions: FunctionFragment[] = [];
+                rpcContract.interface.forEachFunction((func) => {
                     // must be parameterless view or pure function
                     if (
                         func.inputs.length == 0 &&
@@ -479,20 +467,18 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
 
 async function main() {
     dotenvExpand.expand(dotenv.config());
-    jsonRpc = new ethers.JsonRpcProvider(process.env.MAINNET_RPC_URL);
-    etherscan = new EtherscanProvider(new ethers.Network('mainnet', 1), process.env.ETHERSCAN_API_KEY);
-
-    const asOf = asDatetime((await jsonRpc.getBlock(await jsonRpc.getBlockNumber()))?.timestamp || 0);
-
     const args = process.argv.slice(2);
     let configFilePath = path.resolve(args[0]);
-
     const config: any = yaml.load(fs.readFileSync(configFilePath).toString());
-
     const outputFilePath =
         path.dirname(configFilePath) + '/' + path.basename(configFilePath, path.extname(configFilePath)) + '.md';
     const outputFile = fs.createWriteStream(outputFilePath, { encoding: 'utf-8' });
-    outputHeaderMermaid(outputFile, asOf);
+
+    await reset(process.env.MAINNET_RPC_URL, config.block);
+    let block = await ethers.provider.getBlockNumber();
+    etherscan = new EtherscanProvider(new ethers.Network('mainnet', 1), process.env.ETHERSCAN_API_KEY);
+
+    outputHeaderMermaid(outputFile, block, asDatetime((await ethers.provider.getBlock(block))?.timestamp || 0));
 
     const done = new Set<string>();
     let addresses = config.start;
