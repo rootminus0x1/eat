@@ -6,9 +6,9 @@ import { Buffer } from 'buffer';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 
-// import { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 
-import { ethers, ZeroAddress } from 'ethers';
+import { Contract, Network, JsonRpcProvider, FunctionFragment, ZeroAddress } from 'ethers';
 
 // import { EtherscanHttp } from 'src/etherscan';
 
@@ -119,7 +119,7 @@ class EtherscanContract {
 class EtherscanProvider {
     private etherscanhttp: EtherscanHttp;
 
-    constructor(network: ethers.Network, apikey: string | undefined) {
+    constructor(network: Network, apikey: string | undefined) {
         this.etherscanhttp = new EtherscanHttp(apikey || '');
     }
 
@@ -130,7 +130,7 @@ class EtherscanProvider {
 
 ///////////////////////////////////////////////////////
 
-let jsonRpc: ethers.JsonRpcProvider;
+let jsonRpc: JsonRpcProvider;
 let etherscan: EtherscanProvider;
 
 function asDatetime(timestamp: number): string {
@@ -360,7 +360,7 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
             if (contractData.data.name) result.name = contractData.data.name;
             // set up the ABI to use for following addresses
             let abi = contractData.source?.ABI;
-            let rpcContract: ethers.Contract;
+            let rpcContract: Contract;
             // lookup the ERC20 token name, if it exists
             const erc20Token = new ethers.Contract(
                 address,
@@ -400,7 +400,7 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 rpcContract = new ethers.Contract(address, abi, jsonRpc);
                 // Explore each function in the contract's interface and check it's return
 
-                let functions: ethers.FunctionFragment[] = [];
+                let functions: FunctionFragment[] = [];
                 rpcContract.interface.forEachFunction((func) => {
                     // must be parameterless view or pure function
                     if (
