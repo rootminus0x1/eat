@@ -1,5 +1,7 @@
 .env
-.yarn/
-node_modules
 
+.yarn/
+node_modules/
+
+cache/
 eat-cache/
