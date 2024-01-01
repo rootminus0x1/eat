@@ -143,15 +143,11 @@ export class Delver {
 
     // TODO: get rid of the variables - they are all actions, maybe?
     constructor(
-        public runName: string,
         public setup: DelveSetup,
         public independents: Variable[],
         public actions: string[],
         calculationFilter?: string[],
     ) {
-        // set up the file names consistently
-        runName = runName + '.' + [...independents.map((v) => v.name)].slice(1).join('_x_'); // TODO: get this passed in
-
         // initialise the datatable
         // reset all the variables to their initial values
         this.setup.reset();
@@ -179,9 +175,11 @@ export class Delver {
             }
         }
 
-        const keyFields = [...this.independents.map((v) => v.name), ...(actions.length ? ['actionName'] : [])];
+        const keyFields = [...this.independents.map((v) => v.name), 'actionName'];
         const dataFields = [
-            ...(actions.length ? ['actionResult', 'gasUsed(wei)', 'gasUsed(price=50gweix$2500)'] : []),
+            'actionResult',
+            'gasUsed(wei)',
+            'gasUsed(price=50gweix$2500)',
             'whatChanged',
             ...this.calculations.map((state) => state.name),
         ];
@@ -305,14 +303,18 @@ export class Delver {
     }
 
     public async done(fileRoot: string) {
-        const fileType = '.csv';
+        // TODO: get this passed in?
+        let independents = this.independents.map((v) => v.name).join('_x_');
+        if (independents !== '') independents = '-' + independents;
+        const prefix = `${fileRoot}${independents}`;
+        const suffix = '.csv';
 
-        const dataFilePath = `${fileRoot}-${this.runName}-data${fileType}`;
-        const dataSlimFilePath = `${fileRoot}-${this.runName}-data-slim${fileType}`;
-        const deltaFilePath = `${fileRoot}-${this.runName}-delta${fileType}`;
-        const deltaSlimFilePath = `${fileRoot}-${this.runName}-delta-slim${fileType}`;
-        const parametersFilePath = `${fileRoot}-${this.runName}-parameters${fileType}`;
-        const errorsFilePath = `${fileRoot}-${this.runName}-errors${fileType}`;
+        const dataFilePath = `${prefix}-data${suffix}`;
+        const dataSlimFilePath = `${prefix}-data-slim${suffix}`;
+        const deltaFilePath = `${prefix}-delta${suffix}`;
+        const deltaSlimFilePath = `${prefix}-delta-slim${suffix}`;
+        const parametersFilePath = `${prefix}-parameters${suffix}`;
+        const errorsFilePath = `${prefix}-errors${suffix}`;
 
         fs.writeFileSync(errorsFilePath, toCSV(this.runErrors));
         fs.writeFileSync(parametersFilePath, toCSV(this.runParameters));

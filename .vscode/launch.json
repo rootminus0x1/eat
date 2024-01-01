@@ -21,7 +21,7 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
-      "args": ["${workspaceFolder}/src/delve-main.ts", ["${workspaceFolder}/test/delve/aladdin-fx.yml"],
+      "args": ["${workspaceFolder}/src/delve-main.ts", "${workspaceFolder}/test/delve/aladdin-fx.yml"],
       "sourceMaps": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",

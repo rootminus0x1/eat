@@ -47,11 +47,13 @@ async function main() {
     });
     */
 
+    let ethPrice = setup.defVariable('ethPrice', parseEther('2000'));
+
     setup.defCalculation('FractionalToken.nav', async () => {
         return treasury['getCurrentNav']().then((res) => res._fNav);
     });
 
-    let delver = new Delver('ethPrice', setup, [], []);
+    let delver = new Delver(setup, [ethPrice], []);
     await delver.data();
 
     await delver.done(config.outputFileRoot);
