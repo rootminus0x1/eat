@@ -14,6 +14,9 @@ import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'eth
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 
+import { GraphContract, GraphNode, GraphNodeType } from './graphnode';
+import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
+
 function asDatetime(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString();
 }
@@ -40,159 +43,6 @@ function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], 
     return false;
 }
 */
-
-/////////////////////////////////////////////////////////////////////////
-// mermaid graph
-//
-
-function cl(f: fs.WriteStream, what: string) {
-    //console.log(what);
-    f.write(what + '\n');
-}
-
-const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
-    let result = name;
-    result = logicName ? `<b>${logicName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
-    result = tokenName ? `${tokenName}<br>${result}` : result;
-    return result;
-};
-
-const makeStopper = (name: string, stopper: boolean): string => {
-    return stopper ? `${name}<br><hr>` : name;
-};
-
-const useSubgraphForProxy = false;
-const mergeProxyandLogic = true;
-const outputNodeMermaid = (
-    f: fs.WriteStream,
-    address: string,
-    name: string,
-    type: GraphNodeType,
-    stopper: boolean,
-    logic?: string,
-    logicName?: string,
-    tokenName?: string,
-) => {
-    if (type === GraphNodeType.contract) {
-        if (logic) {
-            if (mergeProxyandLogic) {
-                cl(f, `${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
-                cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-            } else {
-                const logicid = `${address}-${logic}`;
-                if (useSubgraphForProxy) {
-                    cl(f, `subgraph ${address}-subgraph [" "]`);
-                }
-                cl(f, `${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
-                cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-                cl(f, `${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
-                cl(f, `click ${logicid} "https://etherscan.io/address/${logic}#code"`);
-                cl(f, `${address} o--o ${logicid}`);
-                if (useSubgraphForProxy) {
-                    cl(f, 'end');
-                    cl(f, `style ${address}-subgraph stroke-width:0px,fill:#ffffff`);
-                }
-            }
-        } else {
-            cl(f, `${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
-            cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-        }
-    } else if (type === GraphNodeType.address) {
-        cl(f, `${address}(["${makeStopper(name, stopper)}"]):::address`);
-        cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
-    } else {
-        cl(f, `${address}("${makeStopper(name, stopper)}"):::address`);
-        cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
-    }
-    cl(f, '');
-};
-
-const useNodesInLinks = false; // TODO: add a style command line arg
-const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: string, logic?: string) => {
-    // TODO: put this v into a single place for this function and outputNodeMermaid
-    const fromid = logic && !mergeProxyandLogic ? `${from}-${logic}` : from;
-    // replace zero addresses
-    if (to === ZeroAddress) {
-        to = `${fromid}-${name}0x0`;
-        cl(f, `${to}((0x0))`);
-    }
-    if (useNodesInLinks) {
-        const nodeid = `${fromid}-${name}`;
-        cl(f, `${nodeid}[${name}]:::link`);
-        cl(f, `${fromid} --- ${nodeid} --> ${to}`);
-    } else {
-        cl(f, `${fromid} -- ${name} --> ${to}`);
-    }
-    cl(f, '');
-};
-
-const outputHeaderMermaid = (f: fs.WriteStream, blockNumber: number, asOf: string): void => {
-    cl(f, '```mermaid');
-    cl(f, '---');
-    cl(f, `title: contract graph as of block ${blockNumber}, ${asOf}`);
-    cl(f, '---');
-    cl(f, '%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%');
-    //%%{init: {"flowchart": {"htmlLabels": false}} }%%
-    //%%{ init: { 'flowchart': { 'curve': 'stepBefore' } } }%%
-
-    cl(f, 'flowchart TB');
-    /*
-    cl(f, '');
-    cl(f, 'graphStyle marginY 100px;');
-    */
-    cl(f, '');
-};
-
-const outputFooterMermaid = (f: fs.WriteStream): void => {
-    /*
-    cl(f, 'classDef contract font:11px Roboto');
-    cl(f, 'classDef address font:11px Roboto');
-    cl(f, 'classDef proxy fill:#ffffff,font:11px Roboto');
-    cl(f, 'classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
-    */
-    cl(f, '```');
-};
-
-enum GraphNodeType {
-    unknown,
-    contract,
-    address,
-    invalid,
-}
-
-class GraphContract {
-    constructor(public address: string, public name: string) {}
-}
-
-class GraphNode {
-    constructor(public address: string) {
-        this.type = GraphNodeType.unknown;
-        this.name = address.slice(0, 5) + '..' + address.slice(-3);
-    }
-    public name: string;
-    public type: GraphNodeType;
-    public token?: string;
-    public links: { to: string; name: string }[] = [];
-    public contract?: GraphContract; // extra contract info
-    public implementations: GraphContract[] = []; // historical implementation logics
-
-    public asMermaid(f: fs.WriteStream, stopper: boolean) {
-        let implementation = this.implementations?.[0];
-        outputNodeMermaid(
-            f,
-            this.address,
-            this.name,
-            this.type,
-            stopper,
-            implementation?.address,
-            implementation?.name,
-            this.token,
-        );
-        for (let link of this.links) {
-            outputLinkMermaid(f, this.address, link.to, link.name, implementation?.address);
-        }
-    }
-}
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
@@ -421,14 +271,14 @@ async function main() {
             done.add(address);
             const stopper = config.stopafter.includes(address);
             const promise = (async (): Promise<void> => {
-                const GraphNode = await dig(address, !stopper);
-                for (let link of GraphNode.links) {
+                const graphNode = await dig(address, !stopper);
+                for (let link of graphNode.links) {
                     // don't follow zero addresses
                     if (link.to !== ZeroAddress) {
                         addresses.push(link.to);
                     }
                 }
-                GraphNode.asMermaid(outputFile, stopper);
+                outputGraphNodeMermaid(outputFile, graphNode, stopper);
             })();
             await promise;
         }
