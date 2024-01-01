@@ -1,2 +1,2 @@
-ethPrice,actionName,actionResult,gasUsed(wei),gasUsed(price=50gweix$2500),whatChanged,fToken.nav
-2000,,-,0,$0.0,,+1.028175138984398448
+ethPrice,actionName,actionResult,gasUsed(wei),gasUsed(price=50gweix$2500),whatChanged,fMinter.fToken,fToken.nav
+2000,,-,0,$0.0,,0.0,+1.028175138984398448
