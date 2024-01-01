@@ -9,9 +9,9 @@ import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
 import { getConfig } from './config';
+import { EatContract } from './eatcontract';
 import { GraphContract, GraphNode, GraphNodeType } from './graphnode';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
-import { EatContract } from './eatcontract';
 
 function asDatetime(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString();
@@ -164,8 +164,7 @@ async function dig(address: string, follow: boolean): Promise<GraphNode> {
 
 async function main() {
     const config = getConfig();
-    const outputFilePath = config.outputFileRoot + '.md';
-    const outputFile = fs.createWriteStream(outputFilePath, { encoding: 'utf-8' });
+    const outputFile = fs.createWriteStream(config.outputFileRoot + '.md', { encoding: 'utf-8' });
 
     await reset(process.env.MAINNET_RPC_URL, config.block);
     let block = await ethers.provider.getBlockNumber();
