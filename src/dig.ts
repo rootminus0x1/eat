@@ -1,7 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as yaml from 'js-yaml';
-import { Buffer } from 'buffer';
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
@@ -11,6 +8,7 @@ import { ethers } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
+import { getConfig } from './config';
 import { GraphContract, GraphNode, GraphNodeType } from './graphnode';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
 import { EatContract } from './eatcontract';
@@ -165,11 +163,8 @@ async function dig(address: string, follow: boolean): Promise<GraphNode> {
 }
 
 async function main() {
-    const args = process.argv.slice(2);
-    let configFilePath = path.resolve(args[0]);
-    const config: any = yaml.load(fs.readFileSync(configFilePath).toString());
-    const outputFilePath =
-        path.dirname(configFilePath) + '/' + path.basename(configFilePath, path.extname(configFilePath)) + '.md';
+    const config = getConfig();
+    const outputFilePath = config.outputFileRoot + '.md';
     const outputFile = fs.createWriteStream(outputFilePath, { encoding: 'utf-8' });
 
     await reset(process.env.MAINNET_RPC_URL, config.block);
