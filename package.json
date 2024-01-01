@@ -7,14 +7,17 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "test": "ts-node src/dig.ts test/aladdin-fx-market.yml",
+    "dig": "ts-node src/dig.ts test/dig/aladdin-fx-market.yml",
+    "delve": "ts-node src/delve-main.ts test/delve/aladdin-fx.yml",
     "devdig": "ts-node -r ts-node/register src/dig.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@types/crypto-js": "^4.2.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.4",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.3.1",
     "dotenv-expand": "^10.0.0",
     "ethers": "^6.9.0",
@@ -23,5 +26,6 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
-  }
+  },
+  "dependencies": {}
 }

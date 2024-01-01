@@ -67,6 +67,7 @@ async function dig(address: string, follow: boolean): Promise<GraphNode> {
                 const erc20Symbol = await erc20Token.symbol();
                 if (erc20Name || erc20Symbol) result.token = `${erc20Symbol} (${erc20Name})`;
             } catch (error) {}
+            // TODO: do something with constructor arguments and initialize calls (for logics)
             if (source && source.Proxy > 0) {
                 // It's a proxy
                 const implementation = new EatContract(source.Implementation);
