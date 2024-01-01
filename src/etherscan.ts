@@ -1,6 +1,5 @@
-import * as fs from 'fs';
+import * as fs from 'fs'; // for the http cache
 
-//////////////////////////////////////////////////////////////////
 // etherscan via http
 
 export type getContractCreationResponse = { contractAddress: string; contractCreator: string; txHash: string };
@@ -81,37 +80,3 @@ export class EtherscanHttp {
         });
     }
 }
-
-export class EtherscanContract {
-    constructor(public address: string, private etherscanhttp: EtherscanHttp) {}
-
-    public async getContractCreation(): Promise<getContractCreationResponse | null> {
-        const response = await this.etherscanhttp.getContractCreation([this.address]);
-        if (response) {
-            return response[0];
-        }
-        return null;
-    }
-
-    public async getSourceCode(): Promise<getSourceCodeResponse | null> {
-        const response = await this.etherscanhttp.getSourceCode(this.address);
-        if (response) {
-            return response[0];
-        }
-        return null;
-    }
-}
-
-export class EtherscanProvider {
-    private etherscanhttp: EtherscanHttp;
-
-    constructor(apikey: string | undefined) {
-        this.etherscanhttp = new EtherscanHttp(apikey || '');
-    }
-
-    public async getContract(address: string): Promise<EtherscanContract | null> {
-        return new EtherscanContract(address, this.etherscanhttp);
-    }
-}
-
-///////////////////////////////////////////////////////

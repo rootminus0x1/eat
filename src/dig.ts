@@ -5,15 +5,14 @@ import { Buffer } from 'buffer';
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
+dotenvExpand.expand(dotenv.config());
 
 import { ethers } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
-import { EtherscanProvider, getSourceCodeResponse } from './etherscan';
-
-let etherscan: EtherscanProvider;
+import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 
 function asDatetime(timestamp: number): string {
     return new Date(timestamp * 1000).toISOString();
@@ -161,6 +160,10 @@ enum GraphNodeType {
     invalid,
 }
 
+class GraphContract {
+    constructor(public address: string, public name: string) {}
+}
+
 class GraphNode {
     constructor(public address: string) {
         this.type = GraphNodeType.unknown;
@@ -170,8 +173,8 @@ class GraphNode {
     public type: GraphNodeType;
     public token?: string;
     public links: { to: string; name: string }[] = [];
-    public contract?: BCContract; // extra contract info
-    public implementations: BCContract[] = []; // historical implementation logics
+    public contract?: GraphContract; // extra contract info
+    public implementations: GraphContract[] = []; // historical implementation logics
 
     public asMermaid(f: fs.WriteStream, stopper: boolean) {
         let implementation = this.implementations?.[0];
@@ -191,19 +194,62 @@ class GraphNode {
     }
 }
 
-// TODO: merge BCContract and ContractData into new EatContract, which can be used by delve, too
-class BCContract {
+let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
+
+class EatContract {
     constructor(public address: string) {}
-    public name?: string;
-    public deployTimestamp?: number;
-    public creator?: string;
+
+    private contractCreationCache: getContractCreationResponse | null | undefined = undefined;
+    public async contractCreation(): Promise<getContractCreationResponse | null> {
+        if (this.contractCreationCache === undefined) {
+            const response = await etherscanHttp.getContractCreation([this.address]);
+            this.contractCreationCache = response ? response[0] : null;
+        }
+        return this.contractCreationCache;
+    }
+
+    private getSourceCodeCache: getSourceCodeResponse | null | undefined = undefined;
+    public async sourceCode(): Promise<getSourceCodeResponse | null> {
+        if (this.getSourceCodeCache === undefined) {
+            const response = await etherscanHttp.getSourceCode(this.address);
+            this.getSourceCodeCache = response ? response[0] : null;
+        }
+        return this.getSourceCodeCache;
+    }
+
+    public async name(): Promise<string> {
+        let source = await this.sourceCode();
+        return source?.ContractName || '';
+    }
+
+    public async creator(): Promise<string> {
+        let createInfo = await this.contractCreation();
+        return createInfo?.contractCreator || '';
+    }
+
+    private deployTimestampCache: number | null | undefined = undefined;
+    public async deployTimestamp(): Promise<number | null> {
+        if (this.deployTimestampCache === undefined) {
+            this.deployTimestampCache = null;
+            let createInfo = await this.contractCreation();
+            if (createInfo) {
+                const receipt = await ethers.provider.getTransactionReceipt(createInfo.txHash);
+                if (receipt && receipt.blockHash) {
+                    const block = await ethers.provider.getBlock(receipt.blockHash);
+                    if (block && block.timestamp) {
+                        this.deployTimestampCache = block.timestamp;
+                    }
+                }
+            }
+        }
+        return this.deployTimestampCache;
+    }
+
+    // TODO: add this as it's more useful than ethers.interface
+    // public async abi():
 }
 
-type ContractData = {
-    data: BCContract;
-    source: getSourceCodeResponse | null;
-};
-
+/*
 async function getContractData(address: string): Promise<ContractData> {
     let data = new BCContract(address);
     let contract = await etherscan.getContract(address);
@@ -229,6 +275,7 @@ async function getContractData(address: string): Promise<ContractData> {
     }
     return { data: data, source: stuff };
 }
+*/
 
 async function dig(address: string, follow: boolean): Promise<GraphNode> {
     let result = new GraphNode(address);
@@ -238,11 +285,13 @@ async function dig(address: string, follow: boolean): Promise<GraphNode> {
         const code = await ethers.provider.getCode(address);
         if (code !== '0x') {
             result.type = GraphNodeType.contract;
-            const contractData = await getContractData(address);
-            result.contract = contractData.data;
-            if (contractData.data.name) result.name = contractData.data.name;
+            const contract = new EatContract(address);
+            result.contract = new GraphContract(contract.address, await contract.name());
+            if (await contract.name()) result.name = await contract.name();
             // set up the ABI to use for following addresses
-            let abi = contractData.source?.ABI;
+            // TODO: put a lot f this into the EatConract
+            let source = await contract.sourceCode();
+            let abi = source?.ABI;
             let rpcContract: Contract;
             // lookup the ERC20 token name, if it exists
             const erc20Token = new ethers.Contract(
@@ -255,12 +304,13 @@ async function dig(address: string, follow: boolean): Promise<GraphNode> {
                 const erc20Symbol = await erc20Token.symbol();
                 if (erc20Name || erc20Symbol) result.token = `${erc20Symbol} (${erc20Name})`;
             } catch (error) {}
-            if (contractData.source && contractData.source.Proxy > 0) {
+            if (source && source.Proxy > 0) {
                 // It's a proxy
-                const implementationData = await getContractData(contractData.source.Implementation);
+                const implementation = new EatContract(source.Implementation);
                 // replace the ABI to use for following addresses
-                abi = implementationData.source?.ABI;
-                result.implementations.push(implementationData.data);
+                // TODO: merge this abi with the proxy abi, maybe later when searching the functions
+                abi = (await implementation.sourceCode())?.ABI;
+                result.implementations.push(new GraphContract(implementation.address, await implementation.name()));
                 // TODO: get the update history
                 // Get historical transactions for the proxy contract
                 const events = await ethers.provider.getLogs({
@@ -350,7 +400,6 @@ async function dig(address: string, follow: boolean): Promise<GraphNode> {
 }
 
 async function main() {
-    dotenvExpand.expand(dotenv.config());
     const args = process.argv.slice(2);
     let configFilePath = path.resolve(args[0]);
     const config: any = yaml.load(fs.readFileSync(configFilePath).toString());
@@ -360,7 +409,6 @@ async function main() {
 
     await reset(process.env.MAINNET_RPC_URL, config.block);
     let block = await ethers.provider.getBlockNumber();
-    etherscan = new EtherscanProvider(process.env.ETHERSCAN_API_KEY);
 
     outputHeaderMermaid(outputFile, block, asDatetime((await ethers.provider.getBlock(block))?.timestamp || 0));
 
