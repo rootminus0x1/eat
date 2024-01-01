@@ -68,13 +68,13 @@ const outputNodeMermaid = (
     f: fs.WriteStream,
     address: string,
     name: string,
-    type: AddressTypes,
+    type: GraphNodeType,
     stopper: boolean,
     logic?: string,
     logicName?: string,
     tokenName?: string,
 ) => {
-    if (type === AddressTypes.contract) {
+    if (type === GraphNodeType.contract) {
         if (logic) {
             if (mergeProxyandLogic) {
                 cl(f, `${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
@@ -98,7 +98,7 @@ const outputNodeMermaid = (
             cl(f, `${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
             cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
         }
-    } else if (type === AddressTypes.address) {
+    } else if (type === GraphNodeType.address) {
         cl(f, `${address}(["${makeStopper(name, stopper)}"]):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     } else {
@@ -154,27 +154,20 @@ const outputFooterMermaid = (f: fs.WriteStream): void => {
     cl(f, '```');
 };
 
-enum AddressTypes {
+enum GraphNodeType {
     unknown,
     contract,
     address,
     invalid,
 }
 
-class BCContract {
-    constructor(public address: string) {}
-    public name?: string;
-    public deployTimestamp?: number;
-    public creator?: string;
-}
-
-class BCAddress {
+class GraphNode {
     constructor(public address: string) {
-        this.type = AddressTypes.unknown;
+        this.type = GraphNodeType.unknown;
         this.name = address.slice(0, 5) + '..' + address.slice(-3);
     }
     public name: string;
-    public type: AddressTypes;
+    public type: GraphNodeType;
     public token?: string;
     public links: { to: string; name: string }[] = [];
     public contract?: BCContract; // extra contract info
@@ -196,6 +189,14 @@ class BCAddress {
             outputLinkMermaid(f, this.address, link.to, link.name, implementation?.address);
         }
     }
+}
+
+// TODO: merge BCContract and ContractData into new EatContract, which can be used by delve, too
+class BCContract {
+    constructor(public address: string) {}
+    public name?: string;
+    public deployTimestamp?: number;
+    public creator?: string;
 }
 
 type ContractData = {
@@ -229,14 +230,14 @@ async function getContractData(address: string): Promise<ContractData> {
     return { data: data, source: stuff };
 }
 
-async function dig(address: string, follow: boolean): Promise<BCAddress> {
-    let result = new BCAddress(address);
+async function dig(address: string, follow: boolean): Promise<GraphNode> {
+    let result = new GraphNode(address);
 
     // what kind of address
     if (ethers.isAddress(address)) {
         const code = await ethers.provider.getCode(address);
         if (code !== '0x') {
-            result.type = AddressTypes.contract;
+            result.type = GraphNodeType.contract;
             const contractData = await getContractData(address);
             result.contract = contractData.data;
             if (contractData.data.name) result.name = contractData.data.name;
@@ -340,10 +341,10 @@ async function dig(address: string, follow: boolean): Promise<BCAddress> {
                 }
             }
         } else {
-            result.type = AddressTypes.address;
+            result.type = GraphNodeType.address;
         }
     } else {
-        result.type = AddressTypes.invalid;
+        result.type = GraphNodeType.invalid;
     }
     return result;
 }
@@ -372,14 +373,14 @@ async function main() {
             done.add(address);
             const stopper = config.stopafter.includes(address);
             const promise = (async (): Promise<void> => {
-                const bcAddress = await dig(address, !stopper);
-                for (let link of bcAddress.links) {
+                const GraphNode = await dig(address, !stopper);
+                for (let link of GraphNode.links) {
                     // don't follow zero addresses
                     if (link.to !== ZeroAddress) {
                         addresses.push(link.to);
                     }
                 }
-                bcAddress.asMermaid(outputFile, stopper);
+                GraphNode.asMermaid(outputFile, stopper);
             })();
             await promise;
         }
