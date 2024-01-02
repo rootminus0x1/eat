@@ -1,4 +1,4 @@
-import { Contract } from 'ethers';
+import { BaseContract, Contract } from 'ethers';
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
@@ -8,7 +8,7 @@ import { EatContract } from './eatcontract';
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;
     address: string;
-    as: (signer: SignerWithAddress) => T; // TODO: this function should be connect, but typescript can't work out which connect to use
+    connect: (signer: SignerWithAddress) => T;
 };
 
 export type UserWithAddress = SignerWithAddress & { name: string; address: string };
@@ -28,8 +28,8 @@ export async function deploy<T extends Contract>(
     return Object.assign(contract as T, {
         name: factoryName,
         address: address,
-        as: (signer: SignerWithAddress): T => {
-            return contract.connect(signer) as T;
+        connect: (signer: SignerWithAddress): T => {
+            return new BaseContract(contract.target, contract.interface, signer) as T;
         },
     }) as ContractWithAddress<T>;
 }
@@ -67,8 +67,8 @@ export async function getContract(address: string, signer: SignerWithAddress): P
     return Object.assign(econtract, {
         name: name,
         address: address,
-        as: (signer: SignerWithAddress): Contract => {
-            return econtract.connect(signer) as Contract;
+        connect: (signer: SignerWithAddress): BaseContract => {
+            return new BaseContract(econtract.target, econtract.interface, signer);
         },
     }) as ContractWithAddress<Contract>;
 }

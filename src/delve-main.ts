@@ -287,9 +287,9 @@ async function main() {
     // define the actions
     let fMint = system.defAction('fMinter.mint(100)', async () => {
         // TODO: access the Calculation for this
-        await baseToken.as(fMinter).approve(market.address, MaxUint256);
+        await baseToken.connect(fMinter).approve(market.address, MaxUint256);
         let fNav = await treasury.getCurrentNav().then((res) => res._fNav);
-        return market.as(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+        return market.connect(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
     });
 
     /////////////////////////
