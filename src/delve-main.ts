@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { parseEther } from 'ethers';
+import { parseEther, MaxUint256 } from 'ethers';
 
 import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
@@ -38,6 +38,9 @@ async function main() {
     let treasury = await getContract('0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0', deployer);
     let fToken = await getContract('0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726', deployer);
     let market = await getContract('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
+    let baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
+
+    // await baseToken.connect(fMinter).deposit({ value: parseEther('1000') });
 
     /*
     // define types
@@ -47,22 +50,24 @@ async function main() {
 
     let fMint = setup.defAction('fMinter.mint(100)', async () => {
         // TODO: access the Calculation for this
-        // let fNav = await treasury["getCurrentNav"]().then((res) => res._fNav);
-        //return market.mintFToken(parseEther('100'), fMinter.address, 0n);
-        return market['mintFToken'](parseEther('100'), fMinter.address, 0n);
-        // return market.connect(fMinter)["mintFToken"]((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+        await baseToken.connect(fMinter).approve(market.address, MaxUint256);
+        let fNav = await treasury.getCurrentNav().then((res) => res._fNav);
+        return market.connect(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
     });
 
     // TODO: set up variables from config, and access it via setup (maybe rename setup)
     let ethPrice = setup.defVariable('ethPrice', parseEther('2000'));
 
     setup.defCalculation('FractionalToken.nav', async () => {
-        return treasury['getCurrentNav']().then((res) => res._fNav);
+        return treasury.getCurrentNav().then((res) => res._fNav);
     });
 
     // TODO: setup should do this automatically for all things of type token holder
     setup.defCalculation('fMinter.FractionalToken', async () => {
-        return fToken['balanceOf'](fMinter.address);
+        return fToken.balanceOf(fMinter.address);
+    });
+    setup.defCalculation('fMinter.BaseToken', async () => {
+        return baseToken.balanceOf(fMinter.address);
     });
 
     let delver = new Delver(setup, [ethPrice], [fMint]);

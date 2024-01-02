@@ -4,8 +4,14 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
 import { EatContract } from './eatcontract';
+import { connect } from 'http2';
 
-export type ContractWithAddress<T extends Contract> = T & { name: string; address: string };
+export type ContractWithAddress<T extends Contract> = T & {
+    name: string;
+    address: string;
+    connect: (signer: SignerWithAddress) => any;
+};
+
 export type UserWithAddress = SignerWithAddress & { name: string; address: string };
 
 export async function deploy<T extends Contract>(
@@ -18,11 +24,12 @@ export async function deploy<T extends Contract>(
     await contract.waitForDeployment();
     let address = await contract.getAddress();
 
-    //console.log("%s = %s", address, factoryName);
-
     return Object.assign(contract as T, {
         name: factoryName,
         address: address,
+        connect: (signer: SignerWithAddress): any => {
+            return contract.connect(signer);
+        },
     }) as ContractWithAddress<T>;
 }
 

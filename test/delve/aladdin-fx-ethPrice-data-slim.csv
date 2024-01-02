@@ -1,3 +1,3 @@
 ethPrice,actionName,actionResult,gasUsed(wei),"gasUsed$(50gweix$2,500)",whatChanged
 2000,,-,0,$0.0,
-2000,fMinter.mint(100),ALLOWANCE_EXCEEDED,0,$0.0,
+2000,fMinter.mint(100),BALANCE_EXCEEDED,0,$0.0,
