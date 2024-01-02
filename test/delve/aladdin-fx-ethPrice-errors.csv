@@ -1,1 +1,2 @@
 code,message
+ALLOWANCE_EXCEEDED,VM Exception while processing transaction: reverted with reason string 'ALLOWANCE_EXCEEDED'

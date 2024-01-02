@@ -12,17 +12,9 @@ import { getConfig } from './config';
 import { EatContract } from './eatcontract';
 import { GraphContract, GraphNode, GraphNodeType } from './graphnode';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
-
-function asDatetime(timestamp: number): string {
-    return new Date(timestamp * 1000).toISOString();
-}
+import { asDatetime } from './datetime';
 
 /*
-function asTimestamp(datetime: string): number {
-    const parsedUnixTimestamp = new Date(datetime).getTime();
-    return isNaN(parsedUnixTimestamp) ? 0 : Math.floor(parsedUnixTimestamp / 1000);
-}
-
 function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], outputTypes: string[]): boolean {
     abi.forEachFunction(async (func) => {
         if (

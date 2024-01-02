@@ -27,7 +27,7 @@ export async function deploy<T extends Contract>(
 }
 
 // TODO: see if we can merge/use this with dig
-export async function getContract(address: string): Promise<ContractWithAddress<Contract>> {
+export async function getContract(address: string, signer: SignerWithAddress): Promise<ContractWithAddress<Contract>> {
     const contract = new EatContract(address);
     const source = await contract.sourceCode();
     if (!source) throw Error(`unable to locate contract ABI: ${address}`);
@@ -39,7 +39,7 @@ export async function getContract(address: string): Promise<ContractWithAddress<
         if (!source2) throw Error(`unable to locate implementation contract ABI: ${source.Implementation}`);
         abi = source2.ABI; // TODO: merge the contract ABIs, exclude constructor, etc.
     }
-    return Object.assign(new ethers.Contract(address, abi, ethers.provider), {
+    return Object.assign(new ethers.Contract(address, abi, signer), {
         name: source.ContractName,
         address: address,
     }) as ContractWithAddress<Contract>;

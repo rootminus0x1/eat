@@ -198,12 +198,17 @@ export class Delver {
 
     private formatError(e: any): string {
         let message = e.message || 'undefined error';
-        let code = this.runErrorsMap.get(message) || ''; // have we encountered this error text before?
-        if (code === '') {
+        let code = this.runErrorsMap.get(message); // have we encountered this error text before?
+        if (code === undefined) {
             // first time this message has occurred - generate the code
             const patterns: [RegExp, (match: string) => string][] = [
+                // specific messages
+                [/^(contract runner does not support sending transactions)/, (match) => match[1]],
+                // specific messages with extra info
+                [/^(.+)\s\(.+"method":\s"([^"]+)"/, (match) => match[1] + ': ' + match[2]], // method in quotes
+                // more generic messages
                 [/'([^']+)'$/, (match) => match[1]], // message in quotes
-                [/:\s([^:]+)$/, (match) => match[1]], // message after ':'
+                [/:\s([^:]+)$/, (match) => match[1]], // message after last ':'
             ];
             for (const [pattern, processor] of patterns) {
                 const matches = message.match(pattern);
@@ -212,15 +217,15 @@ export class Delver {
                     break;
                 }
             }
-            if (code === '') {
+            if (code === undefined) {
                 //const hash = createHash("sha256").update(message).digest("base64");
                 const hash = crypto.SHA3(message, { outputLength: 32 }).toString(crypto.enc.Base64);
                 code = 'ERR: '.concat(hash);
             }
+            // TODO: ensure the code/message combination is unique
+            this.runErrorsMap.set(message, code);
+            this.runErrors.addRow([code, message]);
         }
-        // TODO: ensure the code/message combination is unique
-        this.runErrorsMap.set(message, code);
-        this.runErrors.addRow([code, message]);
         return code;
     }
 
