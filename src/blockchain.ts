@@ -34,7 +34,9 @@ export async function deploy<T extends Contract>(
 }
 
 // TODO: see if we can merge/use this with dig
+// maybe by rolling all of this into EatContract
 export async function getContract(address: string, signer: SignerWithAddress): Promise<ContractWithAddress<Contract>> {
+    // look up etherscan
     const contract = new EatContract(address);
     const source = await contract.sourceCode();
     if (!source) throw Error(`unable to locate contract ABI: ${address}`);
@@ -45,9 +47,22 @@ export async function getContract(address: string, signer: SignerWithAddress): P
         const source2 = await implementation.sourceCode();
         if (!source2) throw Error(`unable to locate implementation contract ABI: ${source.Implementation}`);
         abi = source2.ABI; // TODO: merge the contract ABIs, exclude constructor, etc.
+        name = source2.ContractName;
     }
+    // look up the ERC20 name
+    const erc20Token = new ethers.Contract(
+        address,
+        ['function name() view returns (string)', 'function symbol() view returns (string)'],
+        ethers.provider,
+    );
+    try {
+        const erc20Name = await erc20Token.name();
+        const erc20Symbol = await erc20Token.symbol();
+        if (erc20Name && erc20Symbol) name = erc20Symbol;
+    } catch (error) {}
+    // put it all together
     return Object.assign(new ethers.Contract(address, abi, signer), {
-        name: source.ContractName,
+        name: name,
         address: address,
     }) as ContractWithAddress<Contract>;
 }

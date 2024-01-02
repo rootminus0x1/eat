@@ -16,8 +16,12 @@ type TypeNameFunction = { name: string; calc: InstanceCalculationFunction };
 type RelationCalculationFunction = (a: any, b: any) => Promise<bigint>;
 type RelationNameFunction = { name: string; calc: RelationCalculationFunction };
 
-// TODO: define an interface that DelveSetup users should use, that DelveSetup implements
+// TODO: define an interface that PAMSystem users should use, that PAMSystem implements
+// TODO: maybe split this into two: one that deals with strings (either values or errors)
+//       and another that knows about ethereum, blockchain, etc. - how would deltas be done?
 export class PAMSystem {
+    // TODO: merge variables and actions? call them pokes
+    // TODO: rename calculations to measures
     public variables = new Map<string, { variable: Variable; initial: bigint }>();
     public calculations = new Map<string, CalculationFunction>(); // insertion order is retained in Map
     public actions = new Map<string, ActionFunction>(); // insertion order is retained in Map
