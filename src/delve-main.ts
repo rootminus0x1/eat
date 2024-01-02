@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { parseEther, MaxUint256 } from 'ethers';
+import { parseEther, formatEther, MaxUint256, Wallet } from 'ethers';
 
 import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
@@ -40,8 +40,10 @@ async function main() {
     let market = await getContract('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
     let baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
 
-    // await baseToken.connect(fMinter).deposit({ value: parseEther('1000') });
-
+    let stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+    if (!(await (baseToken.connect(stEthWhale) as any).transfer(fMinter.address, parseEther('10')))) {
+        throw Error('could not get enough stETH, find another whale');
+    }
     /*
     // define types
     let tokenHolder = setup.defType('tokenHolder');
