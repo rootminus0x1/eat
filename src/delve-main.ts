@@ -9,17 +9,17 @@ import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { getConfig } from './config';
 import { ContractWithAddress, UserWithAddress, deploy, getContract } from './blockchain';
-import { asDatetime } from './datetime';
+import { asDateString, asDate } from './datetime';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
-import { addUser } from './delve';
+import { addUser, getEthPrice } from './delve';
 
 async function main() {
     const config = getConfig();
 
     await reset(process.env.MAINNET_RPC_URL, config.block);
-    const block = await ethers.provider.getBlockNumber();
-    const dt = asDatetime((await ethers.provider.getBlock(block))?.timestamp || 0);
-    console.log(`${network.name} ${block} ${dt}`);
+    const blockNumber = await ethers.provider.getBlockNumber();
+    const timestamp = (await ethers.provider.getBlock(blockNumber))?.timestamp || 0;
+    console.log(`${network.name} ${blockNumber} ${asDateString(timestamp)} UX:${timestamp}`);
 
     /* replacement contracts
     // FractionalToken.sol
@@ -295,13 +295,16 @@ async function main() {
     /////////////////////////
     // define the variables
     // TODO: set up variables from config, and access it via system
-    let ethPrice = system.defVariable('ethPrice', parseEther('2000'));
+    let ethPrice = system.defVariable('ethPrice', await getEthPrice(timestamp));
 
     /////////////////////////
     // define the calculations
     // TODO: generate all the non-parameter functions for all the contracts from the ABI
     system.defCalculation(`${fToken.name}.nav`, async () => {
         return treasury.getCurrentNav().then((res) => res._fNav);
+    });
+    system.defCalculation(`${baseToken.name}.nav`, async () => {
+        return treasury.getCurrentNav().then((res) => res._baseNav);
     });
     //system.defCalculation(`${xToken.name}.nav`, async () => {
     //    return treasury.getCurrentNav().then((res) => res._xNav);

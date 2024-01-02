@@ -53,7 +53,7 @@ export class EtherscanHttp {
 
         const response = await fetch(url);
         if (response.status !== 200) {
-            throw Error('something went wrong while querying');
+            throw Error('something went wrong while querying etherscan');
         }
         const json = await response.json();
         if (json.message === 'OK' && json.status === '1' && json.result !== 'Max rate limit reached') {

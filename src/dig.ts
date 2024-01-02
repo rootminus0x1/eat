@@ -12,7 +12,7 @@ import { getConfig } from './config';
 import { EatContract } from './eatcontract';
 import { GraphContract, GraphNode, GraphNodeType } from './graphnode';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
-import { asDatetime } from './datetime';
+import { asDateString } from './datetime';
 
 /*
 function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], outputTypes: string[]): boolean {
@@ -162,7 +162,7 @@ async function main() {
     await reset(process.env.MAINNET_RPC_URL, config.block);
     let block = await ethers.provider.getBlockNumber();
 
-    outputHeaderMermaid(outputFile, block, asDatetime((await ethers.provider.getBlock(block))?.timestamp || 0));
+    outputHeaderMermaid(outputFile, block, asDateString((await ethers.provider.getBlock(block))?.timestamp || 0));
 
     const done = new Set<string>();
     let addresses = config.start;

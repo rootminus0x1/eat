@@ -4,7 +4,6 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
 import { EatContract } from './eatcontract';
-import { connect } from 'http2';
 
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;
