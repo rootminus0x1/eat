@@ -96,27 +96,7 @@ async function main() {
       return market.connect(xHolderRedeemer).redeem(0n, parseEther('100'), xHolderRedeemer.address, 0n);
     });
 
-    system.defCalculation('FractionalToken.nav', async () => {
-      return treasury.getCurrentNav().then((res) => res._fNav);
-    });
-    system.defCalculation('LeveragedToken.nav', async () => {
-      return treasury.getCurrentNav().then((res) => res._xNav);
-    });
-    system.defCalculation('treasury.collateralRatio', async () => {
-      return treasury.collateralRatio();
-    });
-    system.defCalculation('treasury.totalBaseToken', async () => {
-      return treasury.totalBaseToken();
-    });
 
-    let token = system.defType('token', [
-      {
-        name: 'supply',
-        calc: (token: any) => {
-          return token.totalSupply();
-        },
-      },
-    ]);
 
     let owner = system.defType('owner');
 
@@ -246,9 +226,25 @@ async function main() {
 
     let system = new PAMSystem();
 
-    // define types
+    /////////////////////////
+    // define types, relations between types and their actions
     let tokenHolder = system.defType('tokenHolder');
-    let token = system.defType('token');
+    let token = system.defType('token', [
+        {
+            name: 'supply',
+            calc: (token: any) => {
+                return token.totalSupply();
+            },
+        },
+    ]);
+    system.defRelation(tokenHolder, token, [
+        {
+            name: 'has',
+            calc: (a: any, b: any) => {
+                return b.balanceOf(a);
+            },
+        },
+    ]);
 
     // TODO: make all users part of system and add them via config
     let deployer = await getUser('deployer'); // deploys all the contracts
@@ -314,17 +310,18 @@ async function main() {
 
     /////////////////////////
     // define the calculations
-    system.defRelation(tokenHolder, token, [
-        {
-            name: 'has',
-            calc: (a: any, b: any) => {
-                return b.balanceOf(a);
-            },
-        },
-    ]);
-
-    system.defCalculation('FractionalToken.nav', async () => {
+    // TODO: generate all the non-parameter functions for all the contracts from the ABI
+    system.defCalculation(`${fToken.name}.nav`, async () => {
         return treasury.getCurrentNav().then((res) => res._fNav);
+    });
+    //system.defCalculation(`${xToken.name}.nav`, async () => {
+    //    return treasury.getCurrentNav().then((res) => res._xNav);
+    //});
+    system.defCalculation(`${treasury.name}.collateralRatio`, async () => {
+        return treasury.collateralRatio();
+    });
+    system.defCalculation(`${treasury.name}.totalBaseToken`, async () => {
+        return treasury.totalBaseToken();
     });
 
     let delver = new PAMRunner(system, [ethPrice], [fMint]);
