@@ -179,7 +179,7 @@ export class Delver {
         const dataFields = [
             'actionResult',
             'gasUsed(wei)',
-            'gasUsed(price=50gweix$2500)',
+            'gasUsed$(50gweix$2,500)',
             'whatChanged',
             ...this.calculations.map((state) => state.name),
         ];
