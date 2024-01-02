@@ -17,7 +17,7 @@ type RelationCalculationFunction = (a: any, b: any) => Promise<bigint>;
 type RelationNameFunction = { name: string; calc: RelationCalculationFunction };
 
 // TODO: define an interface that DelveSetup users should use, that DelveSetup implements
-export class DelveSetup {
+export class PAMSystem {
     public variables = new Map<string, { variable: Variable; initial: bigint }>();
     public calculations = new Map<string, CalculationFunction>(); // insertion order is retained in Map
     public actions = new Map<string, ActionFunction>(); // insertion order is retained in Map
@@ -123,8 +123,8 @@ type CalculationState = {
     prevText: string;
 };
 
-// each Delver uses a DelveSetup
-export class Delver {
+// each PAMRunner uses a PAMSystem
+export class PAMRunner {
     // what to show
     private calculations: CalculationState[] = [];
 
@@ -143,23 +143,23 @@ export class Delver {
 
     // TODO: get rid of the variables - they are all actions, maybe?
     constructor(
-        public setup: DelveSetup,
+        public system: PAMSystem,
         public independents: Variable[],
         public actions: string[],
         calculationFilter?: string[],
     ) {
         // initialise the datatable
         // reset all the variables to their initial values
-        this.setup.reset();
+        this.system.reset();
 
         // default calculations to sorted (case-insensitive) list
         for (let calcName of calculationFilter ||
-            [...this.setup.calculations.keys()].sort((a, b) =>
+            [...this.system.calculations.keys()].sort((a, b) =>
                 a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0,
             )) {
             // TODO: ensure the calculations ae properly aliased (the ones from system should already be)
             // maybe we don't allow selection because we have slim, deltas, slim-deltas reports and
-            let calcFn = this.setup.calculations.get(calcName);
+            let calcFn = this.system.calculations.get(calcName);
             if (calcFn) {
                 this.calculations.push({
                     name: calcName,
@@ -187,7 +187,7 @@ export class Delver {
         this.runData = new DataTable(keyFields, dataFields);
         this.runDelta = new DataTable(keyFields, dataFields);
 
-        const parameters = Array.from(this.setup.variables.values()).filter((v) => !this.hasIndependent(v.variable));
+        const parameters = Array.from(this.system.variables.values()).filter((v) => !this.hasIndependent(v.variable));
         this.runParameters = new DataTable(
             [],
             parameters.map((v) => v.variable.name),
@@ -254,7 +254,7 @@ export class Delver {
 
             let result = '-'; // no action
             let actionGas = 0n;
-            const fn = this.setup.actions.get(action);
+            const fn = this.system.actions.get(action);
             if (fn) {
                 try {
                     let tx = await fn();
