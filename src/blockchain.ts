@@ -9,7 +9,7 @@ import { connect } from 'http2';
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;
     address: string;
-    connect: (signer: SignerWithAddress) => any;
+    as: (signer: SignerWithAddress) => T; // TODO: this function should be connect, but typescript can't work out which connect to use
 };
 
 export type UserWithAddress = SignerWithAddress & { name: string; address: string };
@@ -24,17 +24,20 @@ export async function deploy<T extends Contract>(
     await contract.waitForDeployment();
     let address = await contract.getAddress();
 
+    // TODO: if the contract is a ERC20 token, get it's name from there
+
     return Object.assign(contract as T, {
         name: factoryName,
         address: address,
-        connect: (signer: SignerWithAddress): any => {
-            return contract.connect(signer);
+        as: (signer: SignerWithAddress): T => {
+            return contract.connect(signer) as T;
         },
     }) as ContractWithAddress<T>;
 }
 
 // TODO: see if we can merge/use this with dig
 // maybe by rolling all of this into EatContract
+// TODO: merge the addition of connect with the above, also the ERC20 name
 export async function getContract(address: string, signer: SignerWithAddress): Promise<ContractWithAddress<Contract>> {
     // look up etherscan
     const contract = new EatContract(address);
@@ -61,9 +64,13 @@ export async function getContract(address: string, signer: SignerWithAddress): P
         if (erc20Name && erc20Symbol) name = erc20Symbol;
     } catch (error) {}
     // put it all together
-    return Object.assign(new ethers.Contract(address, abi, signer), {
+    const econtract = new ethers.Contract(address, abi, signer);
+    return Object.assign(econtract, {
         name: name,
         address: address,
+        as: (signer: SignerWithAddress): Contract => {
+            return econtract.connect(signer) as Contract;
+        },
     }) as ContractWithAddress<Contract>;
 }
 
@@ -76,7 +83,7 @@ export async function getUser(name: string): Promise<UserWithAddress> {
     return Object.assign(signer, { name: name }) as UserWithAddress;
 }
 
-/*
+/* find a block given a date/time
 export type NamedAddress = { name: string; address: string }
 
 export type User = NamedAddress & SignerWithAddress;

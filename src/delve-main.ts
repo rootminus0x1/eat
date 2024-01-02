@@ -8,9 +8,10 @@ import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { getConfig } from './config';
-import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } from './blockchain';
+import { ContractWithAddress, UserWithAddress, deploy, getContract } from './blockchain';
 import { asDatetime } from './datetime';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
+import { addUser } from './delve';
 
 async function main() {
     const config = getConfig();
@@ -247,27 +248,15 @@ async function main() {
     ]);
 
     // TODO: make all users part of system and add them via config
-    let deployer = await getUser('deployer'); // deploys all the contracts
-    let admin = await getUser('admin'); // bao admin
-    let liquidator = await getUser('liquidator'); // bot that liquidates the rebalancePool (somehow)
-
-    let fMinter = await getUser('fMinter'); // user who mints fTokens
-    system.defThing(fMinter, tokenHolder);
-
-    let rebalanceUser = await getUser('rebalanceUser'); // mints fTokens and deposits in rebalancePool
-    system.defThing(rebalanceUser, tokenHolder);
-
-    let fHolderLiquidator = await getUser('fHolderLiquidator'); // user who mints/liquidates fTokens
-    system.defThing(fHolderLiquidator, tokenHolder);
-
-    let fHolderRedeemer = await getUser('fHolderRedeemer'); // user who mint/redeems fTokens
-    system.defThing(fHolderRedeemer, tokenHolder);
-
-    let xMinter = await getUser('xMinter'); // user who mint/redeems xTokens
-    system.defThing(xMinter, tokenHolder);
-
-    let xHolderRedeemer = await getUser('xHolderRedeemer'); // user who mint/redeems xTokens
-    system.defThing(xHolderRedeemer, tokenHolder);
+    let deployer = await addUser(system, 'deployer'); // deploys all the contracts
+    let admin = await addUser(system, 'admin'); // bao admin
+    let liquidator = await addUser(system, 'liquidator'); // bot that liquidates the rebalancePool (somehow)
+    let fMinter = await addUser(system, 'fMinter', [tokenHolder]); // user who mints fTokens
+    let rebalanceUser = await addUser(system, 'rebalanceUser', [tokenHolder]); // mints fTokens and deposits in rebalancePool
+    let fHolderLiquidator = await addUser(system, 'fHolderLiquidator', [tokenHolder]); // user who mints/liquidates fTokens
+    let fHolderRedeemer = await addUser(system, 'fHolderRedeemer', [tokenHolder]); // user who mint/redeems fTokens
+    let xMinter = await addUser(system, 'xMinter', [tokenHolder]); // user who mint/redeems xTokens
+    let xHolderRedeemer = await addUser(system, 'xHolderRedeemer', [tokenHolder]); // user who mint/redeems xTokens
 
     let beta = system.defVariable('beta', parseEther('0.1'));
     let baseTokenCap = system.defVariable('baseTokenCap', parseEther('200'));
@@ -298,9 +287,9 @@ async function main() {
     // define the actions
     let fMint = system.defAction('fMinter.mint(100)', async () => {
         // TODO: access the Calculation for this
-        await baseToken.connect(fMinter).approve(market.address, MaxUint256);
+        await baseToken.as(fMinter).approve(market.address, MaxUint256);
         let fNav = await treasury.getCurrentNav().then((res) => res._fNav);
-        return market.connect(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+        return market.as(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
     });
 
     /////////////////////////
