@@ -1,0 +1,58 @@
+import * as fs from 'fs';
+
+import * as dotenv from 'dotenv';
+import * as dotenvExpand from 'dotenv-expand';
+dotenvExpand.expand(dotenv.config());
+
+import { ethers } from 'hardhat';
+import { reset } from '@nomicfoundation/hardhat-network-helpers';
+import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
+
+import { getConfig } from './config';
+import { EatContract } from './eatcontract';
+import { GraphNode, GraphNodeType } from './graphnode';
+import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
+import { asDateString } from './datetime';
+
+import { dig } from './dig';
+
+async function main() {
+    const config = getConfig();
+    const outputFile = fs.createWriteStream(config.outputFileRoot + '.md', { encoding: 'utf-8' });
+
+    await reset(process.env.MAINNET_RPC_URL, config.block);
+    let block = await ethers.provider.getBlockNumber();
+
+    outputHeaderMermaid(outputFile, block, asDateString((await ethers.provider.getBlock(block))?.timestamp || 0));
+
+    const done = new Set<string>();
+    let addresses = config.start;
+    while (addresses.length) {
+        const address = addresses[0];
+        addresses.shift();
+        if (!done.has(address)) {
+            done.add(address);
+            const stopper = config.stopafter.includes(address);
+            const promise = (async (): Promise<void> => {
+                const graphNode = await dig(address, !stopper);
+                for (let link of graphNode.links) {
+                    // don't follow zero addresses
+                    if (link.to !== ZeroAddress) {
+                        addresses.push(link.to);
+                    }
+                }
+                outputGraphNodeMermaid(outputFile, graphNode, stopper);
+            })();
+            await promise;
+        }
+    }
+
+    outputFooterMermaid(outputFile);
+    outputFile.end();
+}
+
+// use this pattern to be able to use async/await everywhere and properly handle errors.
+main().catch((error) => {
+    console.error('Error: %s', error);
+    process.exitCode = 1;
+});
