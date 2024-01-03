@@ -22,22 +22,15 @@ async function main() {
     console.log(`${network.name} ${blockNumber} ${asDateString(timestamp)} UX:${timestamp}`);
 
     /* replacement contracts
-    // FractionalToken.sol
-    let fToken: ContractWithAddress<FractionalToken>;
     // FxVault.sol
     // HarvestableTreasury.sol
     // LeveragedToken.sol
     let xToken: ContractWithAddress<LeveragedToken>;
-    // Market.sol
-    // TODO: Aladdin uses FxMarket, not Market, with 0 as RebalancePoolRegistry
-    let market: ContractWithAddress<Market>;
     // RebalancePool.sol
     let rebalancePool: ContractWithAddress<RebalancePool>;
     // ReservePool.sol
     let reservePool: ContractWithAddress<ReservePool>;
     // StableCoinMath.sol
-    // Treasury.sol
-    let treasury: ContractWithAddress<Treasury>;
     // WrappedTokenTreasury.sol
 
     // oracle/FxETHTwapOracle.sol
@@ -53,7 +46,6 @@ async function main() {
 
 
     let index = system.defVariable('index', parseEther('0'));
-    let ethPrice = system.defVariable('ethPrice', parseEther('2000'));
 
     // stability mode triggers
     let stabilityRatio = system.defVariable('stabilityRatio', parseEther('1.3'));
@@ -230,14 +222,8 @@ async function main() {
     /////////////////////////
     // define types, relations between types and their actions
     let tokenHolder = system.defType('tokenHolder');
-    let token = system.defType('token', [
-        {
-            name: 'supply',
-            calc: (token: any) => {
-                return token.totalSupply();
-            },
-        },
-    ]);
+    let token = system.defType('token');
+    // TODO: add those relations to delve - initialise function?
     system.defRelation(tokenHolder, token, [
         {
             name: 'has',
@@ -270,6 +256,7 @@ async function main() {
     // TODO: make all contracts part of system and add them via config
     let treasury = await addContract(system, '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0', deployer);
     let fToken = await addContract(system, '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726', deployer);
+    let xToken = await addContract(system, '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2', deployer);
     let market = await addContract(system, '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
 
     let baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
@@ -303,9 +290,9 @@ async function main() {
     system.defCalculation(`${baseToken.name}.nav`, async () => {
         return treasury.getCurrentNav().then((res) => res._baseNav);
     });
-    //system.defCalculation(`${xToken.name}.nav`, async () => {
-    //    return treasury.getCurrentNav().then((res) => res._xNav);
-    //});
+    system.defCalculation(`${xToken.name}.nav`, async () => {
+        return treasury.getCurrentNav().then((res) => res._xNav);
+    });
 
     let delver = new PAMRunner(system, [ethPrice], [fMint]);
     await delver.data();
