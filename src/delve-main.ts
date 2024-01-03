@@ -24,8 +24,6 @@ async function main() {
     /* replacement contracts
     // FxVault.sol
     // HarvestableTreasury.sol
-    // RebalancePool.sol
-    let rebalancePool: ContractWithAddress<RebalancePool>;
     // ReservePool.sol
     let reservePool: ContractWithAddress<ReservePool>;
     // StableCoinMath.sol
@@ -175,12 +173,12 @@ async function main() {
         }
 */
 
-    let system = new PAMSystem();
+    const system = new PAMSystem();
 
     /////////////////////////
     // define types, relations between types and their actions
-    let tokenHolder = system.defType('tokenHolder');
-    let token = system.defType('token');
+    const tokenHolder = system.defType('tokenHolder');
+    const token = system.defType('token');
     // TODO: add those relations to delve - initialise function?
     system.defRelation(tokenHolder, token, [
         {
@@ -191,37 +189,46 @@ async function main() {
         },
     ]);
 
-    // TODO: make all users part of system and add them via config
-    let deployer = await addUser(system, 'deployer'); // deploys all the contracts
-    let admin = await addUser(system, 'admin'); // bao admin
-    let liquidator = await addUser(system, 'liquidator'); // bot that liquidates the rebalancePool (somehow)
-    let fMinter = await addUser(system, 'fMinter', [tokenHolder]); // user who mints fTokens
-    let rebalanceUser = await addUser(system, 'rebalanceUser', [tokenHolder]); // mints fTokens and deposits in rebalancePool
-    let fHolderLiquidator = await addUser(system, 'fHolderLiquidator', [tokenHolder]); // user who mints/liquidates fTokens
-    let fHolderRedeemer = await addUser(system, 'fHolderRedeemer', [tokenHolder]); // user who mint/redeems fTokens
-    let xMinter = await addUser(system, 'xMinter', [tokenHolder]); // user who mint/redeems xTokens
-    let xHolderRedeemer = await addUser(system, 'xHolderRedeemer', [tokenHolder]); // user who mint/redeems xTokens
-
-    let beta = system.defVariable('beta', parseEther('0.1'));
-    let baseTokenCap = system.defVariable('baseTokenCap', parseEther('200'));
-    let initialCollateral = system.defVariable('initialCollateral', parseEther('100'));
-    let fees = system.defVariable('fees', 0n); // 1n to switch them on, 0n to switch them off
-    //let additionalCollateral = (baseTokenCap - initialCollateral) / 100n;
+    const beta = system.defVariable('beta', parseEther('0.1'));
+    const baseTokenCap = system.defVariable('baseTokenCap', parseEther('200'));
+    const initialCollateral = system.defVariable('initialCollateral', parseEther('100'));
+    const fees = system.defVariable('fees', 0n); // 1n to switch them on, 0n to switch them off
+    //const additionalCollateral = (baseTokenCap - initialCollateral) / 100n;
 
     // TODO: this is the first deployed contract
     //const oracle = await deploy('MockFxPriceOracle', deployer);
 
     // TODO: make all contracts part of system and add them via config
-    let treasury = await addContract(system, '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0', deployer);
-    let fToken = await addContract(system, '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726', deployer);
-    let xToken = await addContract(system, '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2', deployer);
-    let market = await addContract(system, '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
+    // TODO: make all users part of system and add them via config
+    const deployer = await addUser(system, 'deployer'); // deploys all the contracts
 
-    let baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
+    const treasury = await addContract(system, '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0', deployer);
+    const fToken = await addContract(system, '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726', deployer);
+    const xToken = await addContract(system, '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2', deployer);
+    const market = await addContract(system, '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
+    const rebalancePoolRegistry = await addContract(system, '0x4eEfea49e4D876599765d5375cF7314cD14C9d38', deployer);
+    let rebalancePools = [];
+    let rebalanceUsers = [];
+    let liquidators = [];
+    // get all the rebalance pools
+    const rebalancePoolAddresses = await rebalancePoolRegistry.getPools();
+    for (const [index, rebalancePoolAddress] of rebalancePoolAddresses.target) {
+        rebalancePools.push(await addContract(system, rebalancePoolAddress, deployer));
+        rebalanceUsers.push(await addUser(system, `rebalanceUser${index}`, [tokenHolder])); // mints fTokens and deposits in rebalancePool
+        liquidators.push(await addUser(system, `liquidator${index}`)); // bot that liquidates the rebalancePool (somehow)
+    }
+    const admin = await addUser(system, 'admin'); // bao admin
+    const fMinter = await addUser(system, 'fMinter', [tokenHolder]); // user who mints fTokens
+    const fHolderLiquidator = await addUser(system, 'fHolderLiquidator', [tokenHolder]); // user who mints/liquidates fTokens
+    const fHolderRedeemer = await addUser(system, 'fHolderRedeemer', [tokenHolder]); // user who mint/redeems fTokens
+    const xMinter = await addUser(system, 'xMinter', [tokenHolder]); // user who mint/redeems xTokens
+    const xHolderRedeemer = await addUser(system, 'xHolderRedeemer', [tokenHolder]); // user who mint/redeems xTokens
+
+    const baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
     system.defThing(baseToken, token);
 
     // get some stETH for some users and let market use it
-    let stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
     for (const user of [fMinter, xMinter]) {
         if (!(await (baseToken.connect(stEthWhale) as any).transfer(user.address, parseEther('10')))) {
             throw Error('could not get enough stETH, find another whale');
@@ -231,21 +238,21 @@ async function main() {
 
     /////////////////////////
     // define the actions
-    let fMint = system.defAction('fMinter.mint(100)', async () => {
+    const fMint = system.defAction('fMinter.mint(100)', async () => {
         // TODO: access the Calculation for this
-        let fNav = await treasury.getCurrentNav().then((res) => res._fNav);
+        const fNav = await treasury.getCurrentNav().then((res) => res._fNav);
         return market.connect(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
     });
 
-    let xMint = system.defAction('xMinter.mint(100)', async () => {
-        let xNav = await treasury.getCurrentNav().then((res) => res._xNav);
+    const xMint = system.defAction('xMinter.mint(100)', async () => {
+        const xNav = await treasury.getCurrentNav().then((res) => res._xNav);
         return market.connect(xMinter).mintXToken((xNav * parseEther('100')) / ethPrice.value, xMinter.address, 0n);
     });
 
     /////////////////////////
     // define the variables
     // TODO: set up variables from config, and access it via system
-    let ethPrice = system.defVariable('ethPrice', await getEthPrice(timestamp));
+    const ethPrice = system.defVariable('ethPrice', await getEthPrice(timestamp));
 
     /////////////////////////
     // define the calculations
@@ -260,7 +267,7 @@ async function main() {
         return treasury.getCurrentNav().then((res) => res._xNav);
     });
 
-    let delver = new PAMRunner(system, [ethPrice], [fMint, xMint]);
+    const delver = new PAMRunner(system, [ethPrice], [fMint, xMint]);
     await delver.data();
 
     await delver.done(config.outputFileRoot);

@@ -56,7 +56,7 @@ export async function getContract(address: string, signer: SignerWithAddress): P
 
     let erc20 = await getERC20Fields(address);
 
-    if (source.Proxy) {
+    if (source.Proxy > 0 && source.Implementation !== '') {
         const implementation = new EatContract(source.Implementation);
         const implementationSource = await implementation.sourceCode();
         if (!implementationSource)
