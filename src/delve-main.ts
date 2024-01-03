@@ -24,8 +24,6 @@ async function main() {
     /* replacement contracts
     // FxVault.sol
     // HarvestableTreasury.sol
-    // LeveragedToken.sol
-    let xToken: ContractWithAddress<LeveragedToken>;
     // RebalancePool.sol
     let rebalancePool: ContractWithAddress<RebalancePool>;
     // ReservePool.sol
@@ -73,11 +71,7 @@ async function main() {
       const balance = await fToken.balanceOf(fHolderLiquidator);
       return market.connect(fHolderLiquidator).liquidate(balance, fHolderLiquidator.address, 0n);
     });
-    let fMint = system.defAction('fMinter.mint(100)', async () => {
-      // TODO: access the Calculation for this
-      let fNav = await treasury.getCurrentNav().then((res) => res._fNav);
-      return market.connect(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
-    });
+
     let fRedeem = system.defAction('fHolderRedeemer.Redeem(100)', async () => {
       return market.connect(fHolderRedeemer).redeem(parseEther('100'), 0n, fHolderRedeemer.address, 0n);
     });
@@ -97,47 +91,12 @@ async function main() {
 
       system.defThing(platform, owner);
 
-
-
-
-      xToken = await deploy('LeveragedToken', deployer);
-      system.defThing(xToken, token);
-
-      // TODO: upgradeable and constructors are incompatible (right?), so the constructor should be removed
-      // and the ratio passed into the initialise function, or maybe the Market.mint() function?
-      // both of these functions only get called once (check this), although the market can be changed so
-      // could be called on each market... seems like an arbitrary thing that should maybe be designed out?
-      treasury = await deploy('Treasury', deployer, parseEther('0.5')); // 50/50 split between f & x tokens
-      market = await deploy('Market', deployer);
-
       rebalancePool = await deploy('RebalancePool', deployer);
       system.defThing(rebalancePool, owner);
       system.defThing(rebalancePool, token);
       reservePool = await deploy('ReservePool', deployer, market.address, fToken.address);
       system.defThing(reservePool, owner);
 
-
-      await fToken.initialize(treasury.address, 'Fractional ETH', 'fETH');
-      await xToken.initialize(treasury.address, fToken.address, 'Leveraged ETH', 'xETH');
-
-      await treasury.initialize(
-        market.address,
-        weth.address,
-        fToken.address,
-        xToken.address,
-        oracle.address,
-        beta.initialValue,
-        baseTokenCap.initialValue,
-        ZeroAddress, // rate provider - used to convert between wrapped and unwrapped, 0 address means 1:1 ratio
-      );
-
-      await market.initialize(treasury.address, platform.address);
-      await market.updateMarketConfig(
-        stabilityRatio.initialValue,
-        liquidationRatio.initialValue,
-        selfLiquidationRatio.initialValue,
-        recapRatio.initialValue,
-      );
 
       if (fees.initialValue !== 0n) {
         // implement fees
@@ -156,7 +115,6 @@ async function main() {
       // reserve pool
       await market.updateReservePool(reservePool.address);
 
-      system.initialise();
     });
 
     context('navsby', async () => {
@@ -262,18 +220,26 @@ async function main() {
     let baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
     system.defThing(baseToken, token);
 
+    // get some stETH for some users and let market use it
     let stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
-    if (!(await (baseToken.connect(stEthWhale) as any).transfer(fMinter.address, parseEther('10')))) {
-        throw Error('could not get enough stETH, find another whale');
+    for (const user of [fMinter, xMinter]) {
+        if (!(await (baseToken.connect(stEthWhale) as any).transfer(user.address, parseEther('10')))) {
+            throw Error('could not get enough stETH, find another whale');
+        }
+        await baseToken.connect(user).approve(market.address, MaxUint256);
     }
 
     /////////////////////////
     // define the actions
     let fMint = system.defAction('fMinter.mint(100)', async () => {
         // TODO: access the Calculation for this
-        await baseToken.connect(fMinter).approve(market.address, MaxUint256);
         let fNav = await treasury.getCurrentNav().then((res) => res._fNav);
         return market.connect(fMinter).mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+    });
+
+    let xMint = system.defAction('xMinter.mint(100)', async () => {
+        let xNav = await treasury.getCurrentNav().then((res) => res._xNav);
+        return market.connect(xMinter).mintXToken((xNav * parseEther('100')) / ethPrice.value, xMinter.address, 0n);
     });
 
     /////////////////////////
@@ -294,7 +260,7 @@ async function main() {
         return treasury.getCurrentNav().then((res) => res._xNav);
     });
 
-    let delver = new PAMRunner(system, [ethPrice], [fMint]);
+    let delver = new PAMRunner(system, [ethPrice], [fMint, xMint]);
     await delver.data();
 
     await delver.done(config.outputFileRoot);
