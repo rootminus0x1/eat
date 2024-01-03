@@ -11,7 +11,7 @@ import { getConfig } from './config';
 import { ContractWithAddress, UserWithAddress, deploy, getContract } from './blockchain';
 import { asDateString, asDate } from './datetime';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
-import { addUser, getEthPrice } from './delve';
+import { addContract, addUser, getEthPrice } from './delve';
 
 async function main() {
     const config = getConfig();
@@ -268,12 +268,9 @@ async function main() {
     //const oracle = await deploy('MockFxPriceOracle', deployer);
 
     // TODO: make all contracts part of system and add them via config
-    let treasury = await getContract('0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0', deployer);
-
-    let fToken = await getContract('0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726', deployer);
-    system.defThing(fToken, token);
-
-    let market = await getContract('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
+    let treasury = await addContract(system, '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0', deployer);
+    let fToken = await addContract(system, '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726', deployer);
+    let market = await addContract(system, '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB', deployer);
 
     let baseToken = await getContract('0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84', deployer);
     system.defThing(baseToken, token);
@@ -309,12 +306,6 @@ async function main() {
     //system.defCalculation(`${xToken.name}.nav`, async () => {
     //    return treasury.getCurrentNav().then((res) => res._xNav);
     //});
-    system.defCalculation(`${treasury.name}.collateralRatio`, async () => {
-        return treasury.collateralRatio();
-    });
-    system.defCalculation(`${treasury.name}.totalBaseToken`, async () => {
-        return treasury.totalBaseToken();
-    });
 
     let delver = new PAMRunner(system, [ethPrice], [fMint]);
     await delver.data();

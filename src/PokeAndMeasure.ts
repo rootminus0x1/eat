@@ -64,54 +64,66 @@ export class PAMSystem {
 
     // define a set of calculations to be applied to all things of a given type
     public typeFunctions = new Map<string, TypeNameFunction[]>();
-    public defType(type: string, calcForAll?: TypeNameFunction[]): string {
-        if (calcForAll) this.typeFunctions.set(type, calcForAll);
+    public defType(type: string, calcForAll: TypeNameFunction[] = []): string {
+        this.typeFunctions.set(type, calcForAll);
         return type;
     }
 
-    private thingTypes = new Map<string, any[]>();
+    private thingTypes = new Map<string, { name: string }[]>(); // map type -> all the named things having that type
     public defThing<T extends { name: string }>(that: T, type: string) {
-        this.thingTypes.set(type, [...(this.thingTypes.get(type) || []), that]); // store it for the relations below
-        let fns = this.typeFunctions.get(type); // returning null is OK as there may just be no functions
-        if (fns) {
-            fns.forEach((value) => {
-                this.calculations.set(this.alias(that.name) + this.separator + this.alias(value.name), () => {
-                    return value.calc(that);
-                });
-            });
-        }
+        // store it for the relations below
+        this.thingTypes.set(type, [...(this.thingTypes.get(type) || []), that]);
         return that.name.concat(' is ').concat(type);
     }
 
     // TODO: make defRelation delay its evaluation until the regression test is constructed
     // defines the relationship between types of things
-    public relationFunctions = new Map<string, RelationNameFunction[]>();
+    public relationFunctions = new Map<{ for: string; with: string }, RelationNameFunction[]>();
     public defRelation<T1 extends { name: string }, T2 extends { name: string }>(
         forEachType: string,
         withEachType: string,
         calcs: RelationNameFunction[],
     ) {
-        let forEachs = this.thingTypes.get(forEachType) || [];
-        let withEachs = this.thingTypes.get(withEachType) || [];
-        forEachs.forEach((forValue) => {
-            withEachs.forEach((withValue) => {
-                calcs.forEach((calc) => {
-                    if (forValue != withValue) {
-                        this.calculations.set(
-                            this.alias(forValue.name) + this.separator + this.alias(withValue.name),
-                            () => {
-                                return calc.calc(forValue, withValue); // curried
-                            },
-                        );
-                    }
-                });
-            });
-        });
+        this.relationFunctions.set({ for: forEachType, with: withEachType }, calcs);
         // TODO: return a structure
         // return forEach.concat("_x_").concat(withEach);
     }
 
-    public reset() {
+    public initialise() {
+        // implement behaviour for things of a given type
+        // for each type, for each things of that type, implement the type function
+        for (let [type, things] of this.thingTypes) {
+            const fns = this.typeFunctions.get(type);
+            if (fns) {
+                things.forEach((thing) => {
+                    fns.forEach((fn) => {
+                        this.calculations.set(this.alias(thing.name) + this.separator + this.alias(fn.name), () => {
+                            return fn.calc(thing);
+                        });
+                    });
+                });
+            }
+        }
+        // implement behaviour between things of given types
+        for (let [couple, fns] of this.relationFunctions) {
+            let forEachs = this.thingTypes.get(couple.for) || [];
+            let withEachs = this.thingTypes.get(couple.with) || [];
+            forEachs.forEach((forValue) => {
+                withEachs.forEach((withValue) => {
+                    fns.forEach((fn) => {
+                        if (forValue != withValue) {
+                            this.calculations.set(
+                                this.alias(forValue.name) + this.separator + this.alias(withValue.name),
+                                () => {
+                                    return fn.calc(forValue, withValue); // curried
+                                },
+                            );
+                        }
+                    });
+                });
+            });
+        }
+
         this.variables.forEach((v) => (v.variable.value = v.initial));
     }
 }
@@ -154,7 +166,7 @@ export class PAMRunner {
     ) {
         // initialise the datatable
         // reset all the variables to their initial values
-        this.system.reset();
+        this.system.initialise();
 
         // default calculations to sorted (case-insensitive) list
         for (let calcName of calculationFilter ||

@@ -8,6 +8,10 @@ import { EatContract } from './eatcontract';
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;
     address: string;
+    contractName: string;
+    implementationContractName: string | undefined;
+    tokenName: string | undefined;
+    tokenSymbol: string | undefined;
     connect: (signer: SignerWithAddress) => T;
 };
 
@@ -23,11 +27,15 @@ export async function deploy<T extends Contract>(
     await contract.waitForDeployment();
     let address = await contract.getAddress();
 
-    // TODO: if the contract is a ERC20 token, get it's name from there
+    let erc20 = await getERC20Fields(address);
 
     return Object.assign(contract as T, {
         name: factoryName,
         address: address,
+        contractName: factoryName,
+        implementationContractName: undefined,
+        tokenName: erc20.name,
+        tokenSymbol: erc20.symbol,
         connect: (signer: SignerWithAddress): T => {
             return new BaseContract(contract.target, contract.interface, signer) as T;
         },
@@ -43,30 +51,29 @@ export async function getContract(address: string, signer: SignerWithAddress): P
     const source = await contract.sourceCode();
     if (!source) throw Error(`unable to locate contract ABI: ${address}`);
     let abi = source.ABI;
-    let name = source.ContractName;
+    let contractName: string | undefined;
+    let implementationContractName: string | undefined;
+
+    let erc20 = await getERC20Fields(address);
+
     if (source.Proxy) {
         const implementation = new EatContract(source.Implementation);
-        const source2 = await implementation.sourceCode();
-        if (!source2) throw Error(`unable to locate implementation contract ABI: ${source.Implementation}`);
-        abi = source2.ABI; // TODO: merge the contract ABIs, exclude constructor, etc.
-        name = source2.ContractName;
+        const implementationSource = await implementation.sourceCode();
+        if (!implementationSource)
+            throw Error(`unable to locate implementation contract ABI: ${source.Implementation}`);
+        abi = implementationSource.ABI; // TODO: merge the contract ABIs, exclude constructor, etc.
+        implementationContractName = implementationSource.ContractName;
     }
-    // look up the ERC20 name
-    const erc20Token = new ethers.Contract(
-        address,
-        ['function name() view returns (string)', 'function symbol() view returns (string)'],
-        ethers.provider,
-    );
-    try {
-        const erc20Name = await erc20Token.name();
-        const erc20Symbol = await erc20Token.symbol();
-        if (erc20Name && erc20Symbol) name = erc20Symbol;
-    } catch (error) {}
+
     // put it all together
     const econtract = new ethers.Contract(address, abi, signer);
     return Object.assign(econtract, {
-        name: name,
+        name: erc20.symbol || implementationContractName || contractName,
         address: address,
+        contractName: contractName,
+        implementationContractName: implementationContractName,
+        tokenName: erc20.name,
+        tokenSymbol: erc20.symbol,
         connect: (signer: SignerWithAddress): BaseContract => {
             return new BaseContract(econtract.target, econtract.interface, signer);
         },
@@ -81,6 +88,25 @@ export async function getUser(name: string): Promise<UserWithAddress> {
     //console.log("%s = %s", signer.address, name);
     return Object.assign(signer, { name: name }) as UserWithAddress;
 }
+
+const getERC20Fields = async (address: string): Promise<{ name: string | undefined; symbol: string | undefined }> => {
+    // look up the ERC20 name
+    let tokenName: string | undefined;
+    let tokenSymbol: string | undefined;
+    try {
+        const erc20Token = new ethers.Contract(
+            address,
+            ['function name() view returns (string)', 'function symbol() view returns (string)'],
+            ethers.provider,
+        );
+        tokenName = await erc20Token.name();
+        tokenSymbol = await erc20Token.symbol();
+    } catch (error) {}
+    return {
+        name: tokenName,
+        symbol: tokenSymbol,
+    };
+};
 
 /* find a block given a date/time
 export type NamedAddress = { name: string; address: string }
