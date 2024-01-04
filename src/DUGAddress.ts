@@ -150,16 +150,26 @@ export class DugAddress {
     };
 
     // functions to help with diagramming
-    public contractName = async (): Promise<string> => {
-        const info = await this.info;
-        return info.contractInfo?.sourceCode?.ContractName || (await this.name());
-    };
-
     public token = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.erc20Fields?.name || info.erc20Fields?.symbol
             ? `${info.erc20Fields.symbol} (${info.erc20Fields.name})`
             : undefined;
+    };
+
+    public tokenName = async (): Promise<string | undefined> => {
+        const info = await this.info;
+        return info.erc20Fields?.name;
+    };
+
+    public tokenSymbol = async (): Promise<string | undefined> => {
+        const info = await this.info;
+        return info.erc20Fields?.symbol;
+    };
+
+    public contractName = async (): Promise<string> => {
+        const info = await this.info;
+        return info.contractInfo?.sourceCode?.ContractName || (await this.name());
     };
 
     public implementationAddress = async (): Promise<string | undefined> => {

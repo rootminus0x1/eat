@@ -54,8 +54,8 @@ export async function getContract(address: string, signer: SignerWithAddress): P
         address: address,
         contractName: await dug.contractName(),
         implementationContractName: await dug.implementationName(),
-        tokenName: await dug.token(),
-        tokenSymbol: await dug.token(),
+        tokenName: await dug.tokenName(),
+        tokenSymbol: await dug.tokenSymbol(),
         connect: (signer: SignerWithAddress): BaseContract => {
             return new BaseContract(econtract.target, econtract.interface, signer);
         },
