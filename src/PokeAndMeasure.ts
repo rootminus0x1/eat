@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { formatEther, formatUnits, ContractTransactionResponse, MaxInt256 } from 'ethers';
-import { DataTable, fromCSV, toCSV, diff } from './datatable';
+import { DataTable, fromCSV, toCSV, diff } from './DataTable';
 import * as crypto from 'crypto-js';
 
 //////////////////////////////////
