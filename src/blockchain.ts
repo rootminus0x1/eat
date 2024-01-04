@@ -3,7 +3,7 @@ import { BaseContract, Contract } from 'ethers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
-import { EatContract } from './eatcontract';
+import { EatContract } from './DUGAddress';
 
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;

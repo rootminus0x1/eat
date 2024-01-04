@@ -5,7 +5,7 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
-import { DugAddress } from './eatcontract';
+import { DugAddress } from './DUGAddress';
 // import { GraphContract, GraphNode, GraphNodeType } from './graphnode';
 
 /*

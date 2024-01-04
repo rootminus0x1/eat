@@ -3,7 +3,7 @@
 //
 
 import * as fs from 'fs';
-import { DugAddress } from './eatcontract';
+import { DugAddress } from './DUGAddress';
 import { Contract, ZeroAddress } from 'ethers';
 
 export enum AddressType {
