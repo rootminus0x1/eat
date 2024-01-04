@@ -4,7 +4,7 @@ dotenvExpand.expand(dotenv.config());
 
 import { ethers } from 'hardhat';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { Contract } from 'ethers';
+import { Contract, ZeroAddress } from 'ethers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 
@@ -50,53 +50,55 @@ export class EATAddress {
             erc20Fields: null,
             implementationContractInfo: null,
         };
-        // check if there is code there
-        const code = await ethers.provider.getCode(this.address);
-        if (code !== '0x') {
-            result.isContract = true;
-            // check for etherscan information
-            result.contractInfo = await getContractInfo(this.address);
+        if (this.address !== ZeroAddress) {
+            // check if there is code there
+            const code = await ethers.provider.getCode(this.address);
+            if (code !== '0x') {
+                result.isContract = true;
+                // check for etherscan information
+                result.contractInfo = await getContractInfo(this.address);
 
-            // check for ERC20 contract and extract extra info
-            result.erc20Fields = { name: undefined, symbol: undefined };
-            try {
-                const erc20Token = new ethers.Contract(
-                    this.address,
-                    ['function name() view returns (string)', 'function symbol() view returns (string)'],
-                    ethers.provider,
-                );
-                result.erc20Fields.name = await erc20Token.name();
-                result.erc20Fields.symbol = await erc20Token.symbol();
-            } catch (error: any) {
-                /* just ignore the errors */
-            }
-            if (
-                result.contractInfo?.sourceCode &&
-                result.contractInfo.sourceCode.Proxy > 0 &&
-                result.contractInfo.sourceCode.Implementation !== ''
-            ) {
-                result.implementationContractInfo = await getContractInfo(
-                    result.contractInfo.sourceCode.Implementation,
-                );
-                /*
-                                // TODO: get the update history
-                // Get historical transactions for the proxy contract
-                const events = await ethers.provider.getLogs({
-                    address: address,
-                    topics: [ethers.id('Upgraded(address)')],
-                    fromBlock: 0,
-                    toBlock: 'latest',
-                });
-                if (events.length > 0) {
-                    // TODO: iterate the events and add them as implementations
-                    // get the latest event's first topic as the proxy implementation
-                    const topic = events[events.length - 1]?.topics[1];
-                    if (topic) {
-                        // TODO: this should be a decoding of the topics according to event Upgraded(address indexed implementation)
-                        // result.logic = '0x' + topic.slice(-40);
-                    }
+                // check for ERC20 contract and extract extra info
+                result.erc20Fields = { name: undefined, symbol: undefined };
+                try {
+                    const erc20Token = new ethers.Contract(
+                        this.address,
+                        ['function name() view returns (string)', 'function symbol() view returns (string)'],
+                        ethers.provider,
+                    );
+                    result.erc20Fields.name = await erc20Token.name();
+                    result.erc20Fields.symbol = await erc20Token.symbol();
+                } catch (error: any) {
+                    /* just ignore the errors */
                 }
-                */
+                if (
+                    result.contractInfo?.sourceCode &&
+                    result.contractInfo.sourceCode.Proxy > 0 &&
+                    result.contractInfo.sourceCode.Implementation !== ''
+                ) {
+                    result.implementationContractInfo = await getContractInfo(
+                        result.contractInfo.sourceCode.Implementation,
+                    );
+                    /*
+                                    // TODO: get the update history
+                    // Get historical transactions for the proxy contract
+                    const events = await ethers.provider.getLogs({
+                        address: address,
+                        topics: [ethers.id('Upgraded(address)')],
+                        fromBlock: 0,
+                        toBlock: 'latest',
+                    });
+                    if (events.length > 0) {
+                        // TODO: iterate the events and add them as implementations
+                        // get the latest event's first topic as the proxy implementation
+                        const topic = events[events.length - 1]?.topics[1];
+                        if (topic) {
+                            // TODO: this should be a decoding of the topics according to event Upgraded(address indexed implementation)
+                            // result.logic = '0x' + topic.slice(-40);
+                        }
+                    }
+                    */
+                }
             }
         }
         return result;

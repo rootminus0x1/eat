@@ -6,13 +6,11 @@ dotenvExpand.expand(dotenv.config());
 
 import { ethers } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
-import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
 import { getConfig } from './config';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
 import { asDateString } from './datetime';
-import { EATAddress } from './EATAddress';
-import { dig } from './dig';
+import { dig, digDeep } from './dig';
 import { Link, allLinks, allNodes } from './graph';
 
 async function main() {
@@ -26,29 +24,25 @@ async function main() {
 
     const done = new Set<string>();
     let addresses = config.start;
+    // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
+    // we build up the graph structure as we go for future processing
     while (addresses.length) {
         const address = addresses[0];
         addresses.shift();
         if (!done.has(address)) {
             done.add(address);
             const stopper = config.stopafter.includes(address);
-            const promise = (async (): Promise<void> => {
-                const graphNode = new EATAddress(address);
+            const graphNode = dig(address);
+            if (graphNode) {
+                allNodes.set(address, graphNode);
                 let nodeLinks: Link[] = [];
-                if (!stopper && (await graphNode.isContract())) {
-                    nodeLinks = await dig(graphNode);
-                }
-
-                // TODO: make this a map
-                for (let link of nodeLinks) {
-                    // don't follow zero addresses, but we want to diagram them, maybe
-                    if (link.toAddress !== ZeroAddress) {
-                        addresses.push(link.toAddress);
-                    }
+                if (!stopper) {
+                    nodeLinks = await digDeep(graphNode);
+                    allLinks.set(address, nodeLinks);
+                    nodeLinks.forEach((link) => addresses.push(link.toAddress));
                 }
                 await outputGraphNodeMermaid(outputFile, graphNode, nodeLinks, stopper);
-            })();
-            await promise;
+            }
         }
     }
 
