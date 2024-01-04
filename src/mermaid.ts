@@ -97,7 +97,7 @@ const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: st
 export const outputGraphNodeMermaid = async (
     f: fs.WriteStream,
     graphNode: EATAddress,
-    links: Link[],
+    links: Link[] | undefined,
     stopper: boolean,
 ): Promise<void> => {
     outputNodeMermaid(
@@ -114,9 +114,16 @@ export const outputGraphNodeMermaid = async (
         await graphNode.implementationName(),
         await graphNode.token(),
     );
-    for (let link of links) {
-        outputLinkMermaid(f, graphNode.address, link.toAddress, link.linkName, await graphNode.implementationAddress());
-    }
+    if (links)
+        for (let link of links) {
+            outputLinkMermaid(
+                f,
+                graphNode.address,
+                link.toAddress,
+                link.linkName,
+                await graphNode.implementationAddress(),
+            );
+        }
 };
 
 export const outputHeaderMermaid = (f: fs.WriteStream, blockNumber: number, asOf: string): void => {

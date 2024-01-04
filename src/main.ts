@@ -20,8 +20,6 @@ async function main() {
     await reset(process.env.MAINNET_RPC_URL, config.block);
     let block = await ethers.provider.getBlockNumber();
 
-    outputHeaderMermaid(outputFile, block, asDateString((await ethers.provider.getBlock(block))?.timestamp || 0));
-
     const done = new Set<string>();
     let addresses = config.start;
     // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
@@ -31,21 +29,23 @@ async function main() {
         addresses.shift();
         if (!done.has(address)) {
             done.add(address);
-            const stopper = config.stopafter.includes(address);
             const graphNode = dig(address);
             if (graphNode) {
                 allNodes.set(address, graphNode);
                 let nodeLinks: Link[] = [];
-                if (!stopper) {
+                if (!config.stopafter.includes(address)) {
                     nodeLinks = await digDeep(graphNode);
                     allLinks.set(address, nodeLinks);
                     nodeLinks.forEach((link) => addresses.push(link.toAddress));
                 }
-                await outputGraphNodeMermaid(outputFile, graphNode, nodeLinks, stopper);
             }
         }
     }
 
+    outputHeaderMermaid(outputFile, block, asDateString((await ethers.provider.getBlock(block))?.timestamp || 0));
+    for (const [address, node] of allNodes) {
+        await outputGraphNodeMermaid(outputFile, node, allLinks.get(address), config.stopafter.includes(address));
+    }
     outputFooterMermaid(outputFile);
     outputFile.end();
 }
