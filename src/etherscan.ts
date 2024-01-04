@@ -1,4 +1,4 @@
-import * as fs from 'fs'; // for the http cache
+import { getCachedValue, saveCacheValue } from './eat-cache';
 
 // etherscan via http
 
@@ -30,26 +30,9 @@ export class EtherscanHttp {
                 .map(([k, v]) => [k, encodeURIComponent(v)].join('='))
                 .join('&')
                 .toString();
-        const cacheDir = './eat-cache';
-        const cachePath = cacheDir + '/' + Buffer.from(url).toString('base64');
 
-        // ensure the cache directory exists
-        try {
-            // Check if the directory already exists
-            await fs.promises.access(cacheDir);
-        } catch (error: any) {
-            // If the directory doesn't exist, create it
-            if (error.code === 'ENOENT') {
-                await fs.promises.mkdir(cacheDir, { recursive: true });
-            } else {
-                // If there was an error other than the directory not existing, throw the error
-                throw error;
-            }
-        }
-        if (fs.existsSync(cachePath)) {
-            const resultString = fs.readFileSync(cachePath, 'utf-8');
-            return JSON.parse(resultString);
-        }
+        const cached = await getCachedValue(url);
+        if (cached) return JSON.parse(cached);
 
         const response = await fetch(url);
         if (response.status !== 200) {
@@ -57,7 +40,7 @@ export class EtherscanHttp {
         }
         const json = await response.json();
         if (json.message === 'OK' && json.status === '1' && json.result !== 'Max rate limit reached') {
-            fs.writeFileSync(cachePath, JSON.stringify(json.result));
+            saveCacheValue(url, JSON.stringify(json.result));
             return json.result;
         } else {
             return undefined;

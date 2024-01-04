@@ -11,7 +11,8 @@ import { getConfig } from './config';
 import { ContractWithAddress, UserWithAddress, deploy, getContract } from './blockchain';
 import { asDateString, asDate } from './datetime';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
-import { addContract, addUser, getEthPrice } from './delve';
+import { addContract, addUser } from './delve';
+import { getEthPrice } from './coingecko';
 
 async function main() {
     const config = getConfig();
