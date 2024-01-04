@@ -9,21 +9,39 @@ export class DataTable {
     }
 }
 
-function formatForCSV(value: string): string {
+const formatForCSV = (value: string): string =>
     // If the value contains a comma, newline, or double quote, enclose it in double quotes
-    if (/[,"\n]/.test(value)) {
-        return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
-}
+    /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 
-function unformatCSV(csv: string): string {
+const unformatCSV = (csv: string): string =>
     // TODO: undo surrounding '"' and the internal ',', '"' and '\n' characters
     // if first and last char = '"' then do it else do nothing
-    return csv;
-}
+    csv;
 
-export function toCSV(dt: DataTable, ignoreColumns: string[] = []): string {
+const getRows = (dt: DataTable, sanitise: (str: string) => string, ignoreColumns: string[] = []) => {
+    const specialKeyField = false;
+    // the superset headers
+    let headerRowOfFields = [...dt.keyFields, ...dt.fields];
+    // find the indices of the ignoreColumns
+    let ignoreColumn = headerRowOfFields.map((name) => ignoreColumns.includes(name));
+    headerRowOfFields = headerRowOfFields.filter((value, index) => !ignoreColumn[index]);
+    let dataRowOfFields = dt.data.map((row) => row.filter((value, index) => !ignoreColumn[index]));
+
+    if (specialKeyField) {
+        headerRowOfFields = ['key:' + dt.keyFields.length.toString(), ...headerRowOfFields];
+        dataRowOfFields = dataRowOfFields.map((row) => [row.slice(0, dt.keyFields.length).join(' x '), ...row]);
+    }
+    return [headerRowOfFields, ...dataRowOfFields].map((row) => row.map((cell) => sanitise(cell)));
+};
+
+export const toCSV = (dt: DataTable, ignoreColumns: string[] = []): string => {
+    return getRows(dt, formatForCSV, ignoreColumns)
+        .map((row) => row.join(','))
+        .join('\n');
+};
+
+/*
+export const toYAML = (dt: DataTable, ignoreColumns: string[] = []): string => {
     const specialKeyField = false;
     // the superset headers
     let headerRowOfFields = [...dt.keyFields, ...dt.fields];
@@ -38,7 +56,8 @@ export function toCSV(dt: DataTable, ignoreColumns: string[] = []): string {
     }
     let rows = [headerRowOfFields, ...dataRowOfFields].map((row) => row.map((cell) => formatForCSV(cell)));
     return rows.map((row) => row.join(',')).join('\n');
-}
+};
+*/
 
 export function fromCSV(csv: string): DataTable {
     let lines = csv.split('\n');
