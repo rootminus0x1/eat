@@ -36,7 +36,7 @@ type RawAddressInfo = {
     implementationContractInfo: RawContractInfo | null;
 };
 
-export class DugAddress {
+export class EATAddress {
     constructor(public address: string) {
         this.info = this.getAddressInfo();
     }
@@ -150,6 +150,7 @@ export class DugAddress {
     };
 
     // functions to help with diagramming
+    // TODO: make them more basic, also consider removing name();
     public token = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.erc20Fields?.name || info.erc20Fields?.symbol
@@ -190,6 +191,4 @@ export class DugAddress {
     public isAddress = async (): Promise<boolean> => {
         return ethers.isAddress(this.address) && !(await this.isContract());
     };
-
-    public links: { toAddress: string; linkName: string }[] = [];
 }

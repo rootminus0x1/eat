@@ -1,10 +1,11 @@
 /////////////////////////////////////////////////////////////////////////
 // mermaid graph
 //
-
 import * as fs from 'fs';
-import { DugAddress } from './DUGAddress';
-import { Contract, ZeroAddress } from 'ethers';
+import { ZeroAddress } from 'ethers';
+
+import { EATAddress } from './EATAddress';
+import { Link } from './graph';
 
 export enum AddressType {
     invalid,
@@ -95,7 +96,8 @@ const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: st
 
 export const outputGraphNodeMermaid = async (
     f: fs.WriteStream,
-    graphNode: DugAddress,
+    graphNode: EATAddress,
+    links: Link[],
     stopper: boolean,
 ): Promise<void> => {
     outputNodeMermaid(
@@ -112,7 +114,7 @@ export const outputGraphNodeMermaid = async (
         await graphNode.implementationName(),
         await graphNode.token(),
     );
-    for (let link of graphNode.links) {
+    for (let link of links) {
         outputLinkMermaid(f, graphNode.address, link.toAddress, link.linkName, await graphNode.implementationAddress());
     }
 };

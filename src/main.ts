@@ -11,8 +11,9 @@ import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'eth
 import { getConfig } from './config';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
 import { asDateString } from './datetime';
-
+import { EATAddress } from './EATAddress';
 import { dig } from './dig';
+import { Link, allLinks, allNodes } from './graph';
 
 async function main() {
     const config = getConfig();
@@ -32,15 +33,20 @@ async function main() {
             done.add(address);
             const stopper = config.stopafter.includes(address);
             const promise = (async (): Promise<void> => {
-                const graphNode = await dig(address, !stopper);
+                const graphNode = new EATAddress(address);
+                let nodeLinks: Link[] = [];
+                if (!stopper && (await graphNode.isContract())) {
+                    nodeLinks = await dig(graphNode);
+                }
+
                 // TODO: make this a map
-                for (let link of graphNode.links) {
+                for (let link of nodeLinks) {
                     // don't follow zero addresses, but we want to diagram them, maybe
                     if (link.toAddress !== ZeroAddress) {
                         addresses.push(link.toAddress);
                     }
                 }
-                await outputGraphNodeMermaid(outputFile, graphNode, stopper);
+                await outputGraphNodeMermaid(outputFile, graphNode, nodeLinks, stopper);
             })();
             await promise;
         }
