@@ -9,8 +9,6 @@ import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
 import { getConfig } from './config';
-import { EatContract } from './eatcontract';
-import { GraphNode, GraphNodeType } from './graphnode';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
 import { asDateString } from './datetime';
 
@@ -35,13 +33,14 @@ async function main() {
             const stopper = config.stopafter.includes(address);
             const promise = (async (): Promise<void> => {
                 const graphNode = await dig(address, !stopper);
+                // TODO: make this a map
                 for (let link of graphNode.links) {
-                    // don't follow zero addresses
-                    if (link.to !== ZeroAddress) {
-                        addresses.push(link.to);
+                    // don't follow zero addresses, but we want to diagram them, maybe
+                    if (link.toAddress !== ZeroAddress) {
+                        addresses.push(link.toAddress);
                     }
                 }
-                outputGraphNodeMermaid(outputFile, graphNode, stopper);
+                await outputGraphNodeMermaid(outputFile, graphNode, stopper);
             })();
             await promise;
         }

@@ -3,8 +3,14 @@
 //
 
 import * as fs from 'fs';
-import { GraphNode, GraphNodeType } from './graphnode';
-import { ZeroAddress } from 'ethers';
+import { DugAddress } from './eatcontract';
+import { Contract, ZeroAddress } from 'ethers';
+
+export enum AddressType {
+    invalid,
+    contract,
+    address,
+}
 
 function cl(f: fs.WriteStream, what: string) {
     //console.log(what);
@@ -28,13 +34,13 @@ const outputNodeMermaid = (
     f: fs.WriteStream,
     address: string,
     name: string,
-    type: GraphNodeType,
+    type: AddressType,
     stopper: boolean,
     logic?: string,
     logicName?: string,
     tokenName?: string,
 ) => {
-    if (type === GraphNodeType.contract) {
+    if (type === AddressType.contract) {
         if (logic) {
             if (mergeProxyandLogic) {
                 cl(f, `${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
@@ -58,7 +64,7 @@ const outputNodeMermaid = (
             cl(f, `${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
             cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
         }
-    } else if (type === GraphNodeType.address) {
+    } else if (type === AddressType.address) {
         cl(f, `${address}(["${makeStopper(name, stopper)}"]):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     } else {
@@ -87,20 +93,27 @@ const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: st
     cl(f, '');
 };
 
-export const outputGraphNodeMermaid = (f: fs.WriteStream, graphNode: GraphNode, stopper: boolean): void => {
-    let implementation = graphNode.implementations?.[0];
+export const outputGraphNodeMermaid = async (
+    f: fs.WriteStream,
+    graphNode: DugAddress,
+    stopper: boolean,
+): Promise<void> => {
     outputNodeMermaid(
         f,
         graphNode.address,
-        graphNode.name,
-        graphNode.type,
+        await graphNode.contractName(),
+        (await graphNode.isContract())
+            ? AddressType.contract
+            : (await graphNode.isAddress())
+            ? AddressType.address
+            : AddressType.invalid,
         stopper,
-        implementation?.address,
-        implementation?.name,
-        graphNode.token,
+        await graphNode.implementationAddress(),
+        await graphNode.implementationName(),
+        await graphNode.token(),
     );
     for (let link of graphNode.links) {
-        outputLinkMermaid(f, graphNode.address, link.to, link.name, implementation?.address);
+        outputLinkMermaid(f, graphNode.address, link.toAddress, link.linkName, await graphNode.implementationAddress());
     }
 };
 
