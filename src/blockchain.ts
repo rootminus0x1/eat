@@ -3,7 +3,7 @@ import { BaseContract, Contract } from 'ethers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
-import { EatContract } from './DUGAddress';
+import { DugAddress } from './DUGAddress';
 
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;
@@ -47,33 +47,15 @@ export async function deploy<T extends Contract>(
 // TODO: merge the addition of connect with the above, also the ERC20 name
 export async function getContract(address: string, signer: SignerWithAddress): Promise<ContractWithAddress<Contract>> {
     // look up etherscan
-    const contract = new EatContract(address);
-    const source = await contract.sourceCode();
-    if (!source) throw Error(`unable to locate contract ABI: ${address}`);
-    let abi = source.ABI;
-    let contractName: string | undefined;
-    let implementationContractName: string | undefined;
-
-    let erc20 = await getERC20Fields(address);
-
-    if (source.Proxy > 0 && source.Implementation !== '') {
-        const implementation = new EatContract(source.Implementation);
-        const implementationSource = await implementation.sourceCode();
-        if (!implementationSource)
-            throw Error(`unable to locate implementation contract ABI: ${source.Implementation}`);
-        abi = implementationSource.ABI; // TODO: merge the contract ABIs, exclude constructor, etc.
-        implementationContractName = implementationSource.ContractName;
-    }
-
-    // put it all together
-    const econtract = new ethers.Contract(address, abi, signer);
+    const dug = new DugAddress(address);
+    const econtract = await dug.getContract(signer);
     return Object.assign(econtract, {
-        name: erc20.symbol || implementationContractName || contractName,
+        name: await dug.name(),
         address: address,
-        contractName: contractName,
-        implementationContractName: implementationContractName,
-        tokenName: erc20.name,
-        tokenSymbol: erc20.symbol,
+        contractName: await dug.contractName(),
+        implementationContractName: await dug.implementationName(),
+        tokenName: await dug.token(),
+        tokenSymbol: await dug.token(),
         connect: (signer: SignerWithAddress): BaseContract => {
             return new BaseContract(econtract.target, econtract.interface, signer);
         },

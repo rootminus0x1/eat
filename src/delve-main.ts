@@ -210,6 +210,7 @@ async function main() {
     let rebalancePools = [];
     let rebalanceUsers = [];
     let liquidators = [];
+    /*
     // get all the rebalance pools
     const rebalancePoolAddresses = await rebalancePoolRegistry.getPools();
     for (const [index, rebalancePoolAddress] of rebalancePoolAddresses.target) {
@@ -217,6 +218,7 @@ async function main() {
         rebalanceUsers.push(await addUser(system, `rebalanceUser${index}`, [tokenHolder])); // mints fTokens and deposits in rebalancePool
         liquidators.push(await addUser(system, `liquidator${index}`)); // bot that liquidates the rebalancePool (somehow)
     }
+    */
     const admin = await addUser(system, 'admin'); // bao admin
     const fMinter = await addUser(system, 'fMinter', [tokenHolder]); // user who mints fTokens
     const fHolderLiquidator = await addUser(system, 'fHolderLiquidator', [tokenHolder]); // user who mints/liquidates fTokens
