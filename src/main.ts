@@ -10,7 +10,7 @@ import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { getConfig } from './config';
 import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
 import { asDateString } from './datetime';
-import { dig, digDeep } from './dig';
+import { dig, digDeep, DigDeepResults } from './dig';
 import { Link, allLinks, allNodes } from './graph';
 
 async function main() {
@@ -32,11 +32,10 @@ async function main() {
             const graphNode = dig(address);
             if (graphNode) {
                 allNodes.set(address, graphNode);
-                let nodeLinks: Link[] = [];
                 if (!config.stopafter.includes(address)) {
-                    nodeLinks = await digDeep(graphNode);
-                    allLinks.set(address, nodeLinks);
-                    nodeLinks.forEach((link) => addresses.push(link.toAddress));
+                    const digResults = await digDeep(graphNode);
+                    allLinks.set(address, digResults.links);
+                    digResults.links.forEach((link) => addresses.push(link.toAddress));
                 }
             }
         }
