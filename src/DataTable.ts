@@ -18,7 +18,11 @@ const unformatCSV = (csv: string): string =>
     // if first and last char = '"' then do it else do nothing
     csv;
 
-const getRows = (dt: DataTable, sanitise: (str: string) => string, ignoreColumns: string[] = []) => {
+const getRows = (
+    dt: DataTable,
+    sanitise: (str: string) => string,
+    ignoreColumns: string[] = [],
+): { header: any[]; data: any[][] } => {
     const specialKeyField = false;
     // the superset headers
     let headerRowOfFields = [...dt.keyFields, ...dt.fields];
@@ -31,33 +35,55 @@ const getRows = (dt: DataTable, sanitise: (str: string) => string, ignoreColumns
         headerRowOfFields = ['key:' + dt.keyFields.length.toString(), ...headerRowOfFields];
         dataRowOfFields = dataRowOfFields.map((row) => [row.slice(0, dt.keyFields.length).join(' x '), ...row]);
     }
-    return [headerRowOfFields, ...dataRowOfFields].map((row) => row.map((cell) => sanitise(cell)));
+    return {
+        header: headerRowOfFields.map((heading) => sanitise(heading)),
+        data: dataRowOfFields.map((row) => row.map((cell) => sanitise(cell))),
+    };
 };
 
 export const toCSV = (dt: DataTable, ignoreColumns: string[] = []): string => {
-    return getRows(dt, formatForCSV, ignoreColumns)
+    /*  CSV format
+        h1,  h2,  h3\n
+       v01, v02, v03\n
+       v11, v12, v13\n
+        :    :    :
+       vn1, vn2, vn3\n
+    */
+    const rows = getRows(dt, formatForCSV, ignoreColumns);
+    return [rows.header, ...rows.data].map((row) => row.join(',')).join('\n');
+};
+
+export const toYAMLByRow = (dt: DataTable, ignoreColumns: string[] = []): string => {
+    /*  YAML format by row
+        0:
+         - h1: v01\n
+         - h2: v02\n
+         - h3: v03\n
+        1:
+         - h1: v11\n
+         - h2: v12\n
+         - h3: v13\n
+        :
+    */
+    /*  YAML format by column
+        h1:
+         - v01\n
+         - v11\n
+         - :
+        h2:
+         - v02\n
+         - v12\n
+         - :
+        :
+    */
+    /*
+        const rows = getRows(dt, (str: string) => str, ignoreColumns);
+    rows.data.map((v, i) => )
         .map((row) => row.join(','))
         .join('\n');
+    */
+    return '';
 };
-
-/*
-export const toYAML = (dt: DataTable, ignoreColumns: string[] = []): string => {
-    const specialKeyField = false;
-    // the superset headers
-    let headerRowOfFields = [...dt.keyFields, ...dt.fields];
-    // find the indices of the ignoreColumns
-    let ignoreColumn = headerRowOfFields.map((name) => ignoreColumns.includes(name));
-    headerRowOfFields = headerRowOfFields.filter((value, index) => !ignoreColumn[index]);
-    let dataRowOfFields = dt.data.map((row) => row.filter((value, index) => !ignoreColumn[index]));
-
-    if (specialKeyField) {
-        headerRowOfFields = ['key:' + dt.keyFields.length.toString(), ...headerRowOfFields];
-        dataRowOfFields = dataRowOfFields.map((row) => [row.slice(0, dt.keyFields.length).join(' x '), ...row]);
-    }
-    let rows = [headerRowOfFields, ...dataRowOfFields].map((row) => row.map((cell) => formatForCSV(cell)));
-    return rows.map((row) => row.join(',')).join('\n');
-};
-*/
 
 export function fromCSV(csv: string): DataTable {
     let lines = csv.split('\n');
