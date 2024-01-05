@@ -1,6 +1,7 @@
 import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } from './blockchain';
 import { PAMSystem } from './PokeAndMeasure';
 import { Contract } from 'ethers';
+import { allNodes, Link, allLinks, Measure, allMeasures } from './graph';
 
 export const addUser = async (system: PAMSystem, name: string, types: string[] = []): Promise<UserWithAddress> => {
     const user = await getUser(name);
@@ -8,6 +9,7 @@ export const addUser = async (system: PAMSystem, name: string, types: string[] =
     return user;
 };
 
+// TODO: add Contract may be useful if the contract is not part of the dig Graph
 export const addContract = async (
     system: PAMSystem,
     address: string,
@@ -37,4 +39,56 @@ export const addContract = async (
     });
 
     return contract;
+};
+
+/*
+export const calculateAllActions async (): Promise<Object> => {
+    for (let action of ['', ...this.actions]) {
+        let dataLine = this.independents.map((variable) => this.formatEther(variable.value));
+
+        let result = '-'; // no action
+        let actionGas = 0n;
+        const fn = this.system.actions.get(action);
+        if (fn) {
+            try {
+                let tx = await fn();
+                let receipt = await tx.wait();
+                actionGas = receipt ? receipt.gasUsed : MaxInt256;
+                result = '\\o/'; // success
+            } catch (e: any) {
+                result = this.formatError(e); // failure
+            }
+        }
+        dataLine.push(action);
+        dataLine.push(result);
+        dataLine.push(this.formatWei(actionGas));
+        dataLine.push('$' + formatEther(actionGas * 50n * 10n ** 9n * 2500n));
+    }
+}
+*/
+
+// returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
+// all numbers are converted to strings
+// TODO: convert the numbers using some formatting defined in config?
+export const calculateAllMeasures = async (): Promise<Object> => {
+    const result: any = {}; // use any to shut typescript up here :-)
+
+    for (const [address, measures] of allMeasures) {
+        const node = allNodes.get(address);
+        if (node) {
+            let values: any = {};
+            for (const measure of measures) {
+                let value: any;
+                try {
+                    value = await measure.calculation();
+                } catch (e: any) {
+                    // TODO: collect the errors for the end
+                    value = e.message;
+                }
+                values[measure.name] = value.toString();
+            }
+            result[await node.name()] = values;
+        }
+    }
+    return result;
 };

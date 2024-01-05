@@ -6,7 +6,7 @@ import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
 import { EATAddress } from './EATAddress';
-import { Link } from './graph';
+import { Link, Measure } from './graph';
 
 /*
 function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], outputTypes: string[]): boolean {
@@ -34,91 +34,15 @@ const identity = <T>(arg: T): T => {
     return arg;
 };
 
-/*
-const digUp = async<T>(contract: Contract): Promise<{links: T[]> => {
-    const links: T[] = [];
-
-        // Explore each function in the contract's interface
-        // get parameterless view (or pure) functions
-        let functions: FunctionFragment[] = [];
-        contract.interface.forEachFunction((func) => {
-            // must be parameterless view or pure function
-            if (func.inputs.length == 0 && (func.stateMutability === 'view' || func.stateMutability === 'pure')) {
-                functions.push(func);
-            }
-        });
-        for (let func of functions) {
-            // that returns one or more addresses
-            // are added to the links field along with their function name + output name/index
-
-            // first find the indices of the functions we are interested in
-            const addressIndices = func.outputs.reduce((indices, elem, index) => {
-                if (elem.type === 'address' || elem.type === 'address[]') indices.push(index);
-                return indices;
-            }, [] as number[]);
-
-            // if any interesting function
-            if (addressIndices.length > 0) {
-                try {
-                    const funcResults = await contract[func.name]();
-                    if (func.outputs.length == 1) {
-                        // single result - containing an address or address[]
-                        if (func.outputs[0].type === 'address') {
-                            // single address
-                            result.push({ toAddress: funcResults, linkName: func.name });
-                        } else {
-                            // address[]
-                            for (let index = 0; index < funcResults.length; index++) {
-                                const elem = funcResults[index];
-                                result.push({ toAddress: elem, linkName: `${func.name}[${index}]` });
-                            }
-                        }
-                    } else {
-                        // assume an array of results, each containing an address or address[]
-                        for (const outputIndex of addressIndices) {
-                            if (func.outputs[outputIndex].type === 'address') {
-                                // single address
-                                result.push({
-                                    toAddress: funcResults[outputIndex],
-                                    linkName: `${func.name}.${func.outputs[outputIndex].name}`,
-                                });
-                            } else {
-                                // address[]
-                                for (let index = 0; index < funcResults[outputIndex].length; index++) {
-                                    const elem = funcResults[outputIndex][index];
-                                    result.push({
-                                        toAddress: elem,
-                                        linkName: `${func.name}.${func.outputs[outputIndex].name}[${index}]`,
-                                    });
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.error(`error calling ${contract.address} ${func.name} ${func.selector}: ${err}`);
-                }
-            }
-        }
-
-
-
-    return result;
-}
-*/
-
-export type NumericFunction = {
-    measure: () => Promise<bigint>; // TODO: change to bigint[]
-    measureName: string;
-};
-
 export type DigDeepResults = {
     links: Link[];
-    numerics: NumericFunction[];
+    measures: Measure[];
 };
 
 export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
     const links: Link[] = [];
-    const numerics: NumericFunction[] = [];
+    const measures: Measure[] = [];
+    const contractName = await address.name();
     if (await address.isContract()) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
         // TODO: follow also the proxy contained addresses
@@ -146,12 +70,12 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                         // single result - containing an address or address[]
                         if (func.outputs[0].type === 'address') {
                             // single address
-                            links.push({ toAddress: funcResults, linkName: func.name });
+                            links.push({ to: funcResults, name: func.name });
                         } else {
                             // address[]
                             for (let index = 0; index < funcResults.length; index++) {
                                 const elem = funcResults[index];
-                                links.push({ toAddress: elem, linkName: `${func.name}[${index}]` });
+                                links.push({ to: elem, name: `${func.name}[${index}]` });
                             }
                         }
                     } else {
@@ -160,16 +84,16 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                             if (func.outputs[outputIndex].type === 'address') {
                                 // single address
                                 links.push({
-                                    toAddress: funcResults[outputIndex],
-                                    linkName: `${func.name}.${func.outputs[outputIndex].name}`,
+                                    to: funcResults[outputIndex],
+                                    name: `${func.name}.${func.outputs[outputIndex].name}`,
                                 });
                             } else {
                                 // address[]
                                 for (let index = 0; index < funcResults[outputIndex].length; index++) {
                                     const elem = funcResults[outputIndex][index];
                                     links.push({
-                                        toAddress: elem,
-                                        linkName: `${func.name}.${func.outputs[outputIndex].name}[${index}]`,
+                                        to: elem,
+                                        name: `${func.name}.${func.outputs[outputIndex].name}[${index}]`,
                                     });
                                 }
                             }
@@ -180,9 +104,8 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                 }
             }
 
-            // same for numerics
+            // same for measures
             // TODO: see if these two can be factored out
-            const contractName = await address.name();
             const numericIndices = func.outputs.reduce((indices, elem, index) => {
                 // TODO: (u)int128, etc, and even bool?
                 if (elem.type === 'uint256' || elem.type === 'uint256[]') indices.push(index);
@@ -195,16 +118,16 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                     // TODO: is there any need to differentiate between a uint256 & uint256[]?
                     if (func.outputs[0].type === 'uint256') {
                         // single number
-                        numerics.push({
-                            measure: async (): Promise<bigint> => await rpcContract[func.name](),
-                            measureName: `${contractName}.${func.name}`,
+                        measures.push({
+                            calculation: async (): Promise<bigint> => await rpcContract[func.name](),
+                            name: `${func.name}`,
                         });
                     } else {
                         // number[]
                         /*
-                        numerics.push({
-                            measure: async (): Promise<bigint[]> => await rpcContract[func.name](),
-                            measureName: func.name,
+                        measures.push({
+                            calculation: async (): Promise<bigint[]> => await rpcContract[func.name](),
+                            calculationName: func.name,
                         });
                         */
                     }
@@ -213,22 +136,22 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                     for (const outputIndex of numericIndices) {
                         if (func.outputs[outputIndex].type === 'uint256') {
                             // single number
-                            numerics.push({
-                                measure: async (): Promise<bigint> => {
+                            measures.push({
+                                calculation: async (): Promise<bigint> => {
                                     const result = await rpcContract[func.name]();
                                     return result[outputIndex];
                                 },
-                                measureName: `${contractName}.${func.name}.${func.outputs[outputIndex].name}`,
+                                name: `${func.name}.${func.outputs[outputIndex].name}`,
                             });
                         } else {
                             // number[]
                             /*
-                            numerics.push({
-                                measure: async (): Promise<bigint[]> => {
+                            measures.push({
+                                calculation: async (): Promise<bigint[]> => {
                                     const result = await rpcContract[func.name]();
                                     return result[outputIndex];
                                 },
-                                measureName: `${func.name}.${func.outputs[outputIndex].name}`,
+                                calculationName: `${func.name}.${func.outputs[outputIndex].name}`,
                             });
                             */
                         }
@@ -237,5 +160,5 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
             }
         }
     }
-    return { links: links, numerics: numerics };
+    return { links: links, measures: measures };
 };

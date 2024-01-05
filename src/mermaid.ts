@@ -1,11 +1,9 @@
 /////////////////////////////////////////////////////////////////////////
 // mermaid graph
 //
-import * as fs from 'fs';
 import { ZeroAddress } from 'ethers';
 
-import { EATAddress } from './EATAddress';
-import { Link } from './graph';
+import { Link, allLinks, allNodes } from './graph';
 
 export enum AddressType {
     invalid,
@@ -13,9 +11,9 @@ export enum AddressType {
     address,
 }
 
-function cl(f: fs.WriteStream, what: string) {
+function cl(f: string[], what: string) {
     //console.log(what);
-    f.write(what + '\n');
+    f.push(what);
 }
 
 const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
@@ -31,8 +29,7 @@ const makeStopper = (name: string, stopper: boolean): string => {
 
 const useSubgraphForProxy = false;
 const mergeProxyandLogic = true;
-const outputNodeMermaid = (
-    f: fs.WriteStream,
+const nodeMermaid = (
     address: string,
     name: string,
     type: AddressType,
@@ -40,7 +37,8 @@ const outputNodeMermaid = (
     logic?: string,
     logicName?: string,
     tokenName?: string,
-) => {
+): string => {
+    const f: string[] = [];
     if (type === AddressType.contract) {
         if (logic) {
             if (mergeProxyandLogic) {
@@ -73,10 +71,12 @@ const outputNodeMermaid = (
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     }
     cl(f, '');
+    return f.join('\n');
 };
 
 const useNodesInLinks = false; // TODO: add a style command line arg
-const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: string, logic?: string) => {
+const linkMermaid = (from: string, to: string, name: string, logic?: string): string => {
+    const f: string[] = [];
     // TODO: put this v into a single place for this function and outputNodeMermaid
     const fromid = logic && !mergeProxyandLogic ? `${from}-${logic}` : from;
     // replace zero addresses
@@ -92,41 +92,11 @@ const outputLinkMermaid = (f: fs.WriteStream, from: string, to: string, name: st
         cl(f, `${fromid} -- ${name} --> ${to}`);
     }
     cl(f, '');
+    return f.join('\n');
 };
 
-export const outputGraphNodeMermaid = async (
-    f: fs.WriteStream,
-    graphNode: EATAddress,
-    links: Link[] | undefined,
-    stopper: boolean,
-): Promise<void> => {
-    outputNodeMermaid(
-        f,
-        graphNode.address,
-        await graphNode.contractName(),
-        (await graphNode.isContract())
-            ? AddressType.contract
-            : (await graphNode.isAddress())
-            ? AddressType.address
-            : AddressType.invalid,
-        stopper,
-        await graphNode.implementationAddress(),
-        await graphNode.implementationName(),
-        await graphNode.token(),
-    );
-    if (links)
-        for (let link of links) {
-            outputLinkMermaid(
-                f,
-                graphNode.address,
-                link.toAddress,
-                link.linkName,
-                await graphNode.implementationAddress(),
-            );
-        }
-};
-
-export const outputHeaderMermaid = (f: fs.WriteStream, blockNumber: number, asOf: string): void => {
+const headerMermaid = (blockNumber: number, asOf: string): string => {
+    const f: string[] = [];
     cl(f, '```mermaid');
     cl(f, '---');
     cl(f, `title: contract graph as of block ${blockNumber}, ${asOf}`);
@@ -141,9 +111,11 @@ export const outputHeaderMermaid = (f: fs.WriteStream, blockNumber: number, asOf
     cl(f, 'graphStyle marginY 100px;');
     */
     cl(f, '');
+    return f.join('\n');
 };
 
-export const outputFooterMermaid = (f: fs.WriteStream): void => {
+const footerMermaid = (): string => {
+    const f: string[] = [];
     /*
     cl(f, 'classDef contract font:11px Roboto');
     cl(f, 'classDef address font:11px Roboto');
@@ -151,4 +123,36 @@ export const outputFooterMermaid = (f: fs.WriteStream): void => {
     cl(f, 'classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
     */
     cl(f, '```');
+    cl(f, '');
+    return f.join('\n');
+};
+
+export const mermaid = async (blockNumber: number, asOf: string): Promise<string> => {
+    const f: string[] = [];
+    cl(f, headerMermaid(blockNumber, asOf));
+    for (const [address, node] of allNodes) {
+        cl(
+            f,
+            nodeMermaid(
+                address,
+                await node.contractName(),
+                (await node.isContract())
+                    ? AddressType.contract
+                    : (await node.isAddress())
+                    ? AddressType.address
+                    : AddressType.invalid,
+                node.stopper,
+                await node.implementationAddress(),
+                await node.implementationName(),
+                await node.token(),
+            ),
+        );
+        const links = allLinks.get(address);
+        if (links)
+            for (let link of links) {
+                cl(f, linkMermaid(address, link.to, link.name, await node.implementationAddress()));
+            }
+    }
+    cl(f, footerMermaid());
+    return f.join('\n');
 };

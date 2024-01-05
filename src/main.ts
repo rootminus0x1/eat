@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as yaml from 'js-yaml'; // config files are in yaml
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
@@ -8,15 +9,16 @@ import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { getConfig } from './config';
-import { outputFooterMermaid, outputGraphNodeMermaid, outputHeaderMermaid } from './mermaid';
+import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
-import { dig, digDeep, DigDeepResults, NumericFunction } from './dig';
-import { Link, allLinks, allNodes } from './graph';
+import { dig, digDeep, DigDeepResults } from './dig';
+import { allNodes, Link, allLinks, Measure, allMeasures } from './graph';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
+import { EATAddress } from './EATAddress';
+import { calculateAllMeasures } from './delve';
 
 async function main() {
     const config = getConfig();
-    const outputFile = fs.createWriteStream(config.outputFileRoot + '.md', { encoding: 'utf-8' });
 
     await reset(process.env.MAINNET_RPC_URL, config.block);
     let blockNumber = await ethers.provider.getBlockNumber();
@@ -27,45 +29,54 @@ async function main() {
     let addresses = config.start;
     // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
     // we build up the graph structure as we go for future processing
-    const allMeasures: NumericFunction[] = [];
+
     while (addresses.length) {
         const address = addresses[0];
         addresses.shift();
         if (!done.has(address)) {
             done.add(address);
-            const graphNode = dig(address);
-            if (graphNode) {
-                allNodes.set(address, graphNode);
-                if (!config.stopafter.includes(address)) {
-                    const digResults = await digDeep(graphNode);
+            const eatAddress = dig(address);
+            if (eatAddress) {
+                const stopper = config.stopafter.includes(address);
+                allNodes.set(address, Object.assign({ stopper: stopper }, eatAddress));
+                if (!stopper) {
+                    const digResults = await digDeep(eatAddress);
                     allLinks.set(address, digResults.links);
-                    digResults.links.forEach((link) => addresses.push(link.toAddress));
+                    digResults.links.forEach((link) => addresses.push(link.to));
 
-                    allMeasures.push(...digResults.numerics);
+                    allMeasures.set(address, digResults.measures);
                 }
             }
         }
     }
 
     // output a diagrem
-    // TODO: add this to the config/command line
-    outputHeaderMermaid(outputFile, blockNumber, asDateString(timestamp));
-    for (const [address, node] of allNodes) {
-        await outputGraphNodeMermaid(outputFile, node, allLinks.get(address), config.stopafter.includes(address));
-    }
-    outputFooterMermaid(outputFile);
-    outputFile.end();
+    // TODO: add this output to the config/command line
+    // TODO: factor out writing files, all it needs is a function to generate a string
+    const diagramOutputFile = fs.createWriteStream(config.outputFileRoot + '.md', { encoding: 'utf-8' });
+    diagramOutputFile.write(await mermaid(blockNumber, asDateString(timestamp)));
+    diagramOutputFile.end();
 
     // delve
+    /*
     const system = new PAMSystem();
-    for (const measure of allMeasures) {
-        system.defCalculation(measure.measureName, measure.measure);
+    for (const [address, measures] of allMeasures) {
+        const node = allNodes.get(address);
+        for (const measure of measures) {
+            system.defCalculation(`${await node?.name()}.${measure.name}`, measure.calculation);
+        }
     }
 
     const delver = new PAMRunner(system, [], []);
     await delver.data();
 
     await delver.done(config.outputFileRoot);
+    */
+
+    const measuresOutputFile = fs.createWriteStream(config.outputFileRoot + '-measures.yml', { encoding: 'utf-8' });
+    const results = await calculateAllMeasures();
+    measuresOutputFile.write(yaml.dump(results));
+    measuresOutputFile.end();
 }
 
 // use this pattern to be able to use async/await everywhere and properly handle errors.
