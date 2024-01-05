@@ -36,7 +36,7 @@ type RawAddressInfo = {
     implementationContractInfo: RawContractInfo | null;
 };
 
-export class EATAddress {
+export class BlockchainAddress {
     constructor(public address: string) {
         this.info = this.getAddressInfo();
     }
@@ -151,8 +151,9 @@ export class EATAddress {
             : null;
     };
 
-    // functions to help with diagramming
+    // functions to help with
     // TODO: make them more basic, also consider removing name();
+    // TODO: move some of this to graphNode
     public token = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.erc20Fields?.name || info.erc20Fields?.symbol

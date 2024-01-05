@@ -3,7 +3,7 @@ import { BaseContract, Contract } from 'ethers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
-import { EATAddress } from './EATAddress';
+import { BlockchainAddress } from './BlockchainAddress';
 
 export type ContractWithAddress<T extends Contract> = T & {
     name: string;
@@ -47,7 +47,7 @@ export async function deploy<T extends Contract>(
 // TODO: merge the addition of connect with the above, also the ERC20 name
 export async function getContract(address: string, signer: SignerWithAddress): Promise<ContractWithAddress<Contract>> {
     // look up etherscan
-    const dug = new EATAddress(address);
+    const dug = new BlockchainAddress(address);
     const econtract = await dug.getContract(signer);
     return Object.assign(econtract, {
         name: await dug.name(),

@@ -14,7 +14,7 @@ import { asDateString } from './datetime';
 import { dig, digDeep, DigDeepResults } from './dig';
 import { allNodes, Link, allLinks, Measure, allMeasures } from './graph';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
-import { EATAddress } from './EATAddress';
+import { BlockchainAddress } from './BlockchainAddress';
 import { calculateAllMeasures } from './delve';
 
 async function main() {
@@ -35,12 +35,12 @@ async function main() {
         addresses.shift();
         if (!done.has(address)) {
             done.add(address);
-            const eatAddress = dig(address);
-            if (eatAddress) {
+            const BlockchainAddress = dig(address);
+            if (BlockchainAddress) {
                 const stopper = config.stopafter.includes(address);
-                allNodes.set(address, Object.assign({ stopper: stopper }, eatAddress));
+                allNodes.set(address, Object.assign({ stopper: stopper }, BlockchainAddress));
                 if (!stopper) {
-                    const digResults = await digDeep(eatAddress);
+                    const digResults = await digDeep(BlockchainAddress);
                     allLinks.set(address, digResults.links);
                     digResults.links.forEach((link) => addresses.push(link.to));
 

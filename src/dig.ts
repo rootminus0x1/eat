@@ -5,7 +5,7 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
-import { EATAddress } from './EATAddress';
+import { BlockchainAddress } from './BlockchainAddress';
 import { Link, Measure } from './graph';
 
 /*
@@ -26,8 +26,8 @@ function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], 
 }
 */
 
-export const dig = (address: string): EATAddress | null => {
-    return address !== ZeroAddress ? new EATAddress(address) : null;
+export const dig = (address: string): BlockchainAddress | null => {
+    return address !== ZeroAddress ? new BlockchainAddress(address) : null;
 };
 
 const identity = <T>(arg: T): T => {
@@ -39,7 +39,7 @@ export type DigDeepResults = {
     measures: Measure[];
 };
 
-export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
+export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResults> => {
     const links: Link[] = [];
     const measures: Measure[] = [];
     const contractName = await address.name();

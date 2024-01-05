@@ -1,6 +1,6 @@
-import { EATAddress } from './EATAddress';
+import { BlockchainAddress } from './BlockchainAddress';
 // the nodes, also contains static information about the nodes, name, etc
-export type graphNode = EATAddress & { stopper: boolean };
+export type graphNode = BlockchainAddress & { stopper: boolean };
 export const allNodes = new Map<string, graphNode>(); // address to object
 
 // the links - between a from address (key) and to list of named addresses (value)
