@@ -1,104 +1,179 @@
-0x11E..938: {}
-BoostableRebalancePool:
-  lastAssetLossError: '0'
-  liquidatableCollateralRatio: '1305500000000000000'
-  numTotalSupplyHistory: '69'
-  totalSupply: '2956321364769018396295364'
-ChainlinkTwapOracleV3:
-  chainlinkMessageExpiration: '10800'
-  chainlinkMinMessageCount: '1'
-  getLatest: '2354302111120000000000'
-EACAggregatorProxy:
-  latestRound: '18446744073709574477'
-  latestRoundData.startedAt: '1703821343'
-  latestRoundData.updatedAt: '1703821343'
-  latestTimestamp: '1703821343'
-  proposedLatestRoundData.startedAt: >-
-    VM Exception while processing transaction: reverted with reason string 'No
-    proposed aggregator present'
-  proposedLatestRoundData.updatedAt: >-
-    VM Exception while processing transaction: reverted with reason string 'No
-    proposed aggregator present'
-  version: '4'
-fETH:
-  nav: '1000000000000000000'
-  totalSupply: '6650842598065295621717671'
-FxETHTwapOracle:
-  getPrice._safePrice: '2354302111120000000000'
-  getPrice._minUnsafePrice: '2351811536536838519878'
-  getPrice._maxUnsafePrice: '2354302111120000000000'
-FXN:
-  available_supply: '1047280171993911715747992'
-  decimals: '18'
-  INITIAL_RATE: '3107559614408929'
-  RATE_REDUCTION_COEFFICIENT: '1111111111111111111'
-  rate: '3107559614408929'
-  start_epoch_time: '1695045779'
-  totalSupply: '1020000000000000000000000'
-Gauge Controller:
-  get_total_weight: '0'
-  time_total: '1694649600'
-Market: {}
-PlatformFeeSpliter:
-  getRewardCount: '1'
-RebalancePool:
-  extraRewardsLength: '1'
-  lastAssetLossError: '0'
-  liquidatableCollateralRatio: '1305500000000000000'
-  totalSupply: '132582504874380841545967'
-  totalUnlocking: '21096986654896224195809'
-  unlockDuration: '0'
-RebalancePoolRegistry:
-  totalSupply: '5811959010789095234500199'
-RebalancePoolSplitter: {}
-RebalanceWithBonusToken:
-  bonus: '2000000000000000000'
-ReservePool: {}
-SmartWalletWhitelist: {}
-stETH-ng-f:
-  A_precise: '150000'
-  A: '1500'
-  admin_action_deadline: '0'
-  admin_fee: '5000000000'
-  decimals: '18'
-  ema_price: '999587597349320961'
-  fee: '4000000'
-  future_A_time: '0'
-  future_A: '150000'
-  future_fee: '0'
-  get_p: '999585626171170308'
-  get_virtual_price: '1017734101479506865'
-  initial_A_time: '0'
-  initial_A: '150000'
-  last_price: '999585626029419962'
-  ma_exp_time: '2597'
-  ma_last_time: '1703811923'
-  oracle_method: '0'
-  price_oracle: '999585642014764018'
-  totalSupply: '45363931240034965729028'
-StETHAndxETHWrapper: {}
-stETHTreasury:
-  baseTokenCap: '10000000000000000000000'
-  beta: '100000000000000000'
-  collateralRatio: '2127502112512926719'
-  getCurrentNav._baseNav: '2354302111120000000000'
-  getCurrentNav._fNav: '1028175138984398448'
-  getCurrentNav._xNav: '1365484765135404741'
-  lastPermissionedPrice: '1836785300000000000000'
-  leverageRatio: '1805406876341814937'
-  strategyUnderlying: '0'
-  totalBaseToken: '6179474952048061425555'
-Token Minter: {}
-veFXN:
-  decimals: '18'
-  epoch: '194'
-  supply: '115331908808027700163144'
-  totalSupply: '94540343792368370153142'
-wstETH:
-  stEthPerToken: '1151765726593883840'
-  tokensPerStEth: '868232121264190989'
-  totalSupply: '3247614816540003642107369'
-wstETHWrapper: {}
-xETH:
-  nav: '832299813951458409'
-  totalSupply: '5646434225742690599105577'
+'0x11E91BB6d1334585AA37D8F4fde3932C7960B938':
+  name: 0x11E..938
+  measurements: {}
+'0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
+  name: BoostableRebalancePool
+  measurements:
+    lastAssetLossError: '0'
+    liquidatableCollateralRatio: '1305500000000000000'
+    numTotalSupplyHistory: '68'
+    totalSupply: '2723055141145695996658868'
+'0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
+  name: BoostableRebalancePool
+  measurements:
+    lastAssetLossError: '0'
+    liquidatableCollateralRatio: '1305500000000000000'
+    numTotalSupplyHistory: '69'
+    totalSupply: '2956321364769018396295364'
+'0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230':
+  name: ChainlinkTwapOracleV3
+  measurements:
+    chainlinkMessageExpiration: '10800'
+    chainlinkMinMessageCount: '1'
+    getLatest: '2352781830000000000000'
+'0xD24AC180e6769Fd5F624e7605B93084171074A77':
+  name: ChainlinkTwapOracleV3
+  measurements:
+    chainlinkMessageExpiration: '10800'
+    chainlinkMinMessageCount: '1'
+    getLatest: '2354302111120000000000'
+'0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419':
+  name: EACAggregatorProxy
+  measurements:
+    latestRound: '110680464442257319337'
+    latestRoundData.startedAt: '1703822135'
+    latestRoundData.updatedAt: '1703822135'
+    latestTimestamp: '1703822135'
+    proposedLatestRoundData.startedAt: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    proposedLatestRoundData.updatedAt: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    version: '4'
+'0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8':
+  name: EACAggregatorProxy
+  measurements:
+    latestRound: '18446744073709574477'
+    latestRoundData.startedAt: '1703821343'
+    latestRoundData.updatedAt: '1703821343'
+    latestTimestamp: '1703821343'
+    proposedLatestRoundData.startedAt: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    proposedLatestRoundData.updatedAt: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    version: '4'
+'0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
+  name: fETH
+  measurements:
+    nav: '1000000000000000000'
+    totalSupply: '6650842598065295621717671'
+'0xa84360896cE9152d1780c546305BB54125F962d9':
+  name: FxETHTwapOracle
+  measurements:
+    getPrice._safePrice: '2354302111120000000000'
+    getPrice._minUnsafePrice: '2351811536536838519878'
+    getPrice._maxUnsafePrice: '2354302111120000000000'
+'0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
+  name: FXN
+  measurements:
+    available_supply: '1047280171993911715747992'
+    decimals: '18'
+    INITIAL_RATE: '3107559614408929'
+    RATE_REDUCTION_COEFFICIENT: '1111111111111111111'
+    rate: '3107559614408929'
+    start_epoch_time: '1695045779'
+    totalSupply: '1020000000000000000000000'
+'0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
+  name: Gauge Controller
+  measurements:
+    get_total_weight: '0'
+    time_total: '1694649600'
+'0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
+  name: Market
+  measurements: {}
+'0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
+  name: PlatformFeeSpliter
+  measurements:
+    getRewardCount: '1'
+'0xa677d95B91530d56791FbA72C01a862f1B01A49e':
+  name: RebalancePool
+  measurements:
+    extraRewardsLength: '1'
+    lastAssetLossError: '0'
+    liquidatableCollateralRatio: '1305500000000000000'
+    totalSupply: '132582504874380841545967'
+    totalUnlocking: '21096986654896224195809'
+    unlockDuration: '0'
+'0x4eEfea49e4D876599765d5375cF7314cD14C9d38':
+  name: RebalancePoolRegistry
+  measurements:
+    totalSupply: '5811959010789095234500199'
+'0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb':
+  name: RebalancePoolSplitter
+  measurements: {}
+'0x17f21f468d77E6e35702a9Ae7a9da50Db7F6a4f4':
+  name: RebalanceWithBonusToken
+  measurements:
+    bonus: '2000000000000000000'
+'0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752':
+  name: ReservePool
+  measurements: {}
+'0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
+  name: SmartWalletWhitelist
+  measurements: {}
+'0x21E27a5E5513D6e65C4f830167390997aA84843a':
+  name: stETH-ng-f
+  measurements:
+    A_precise: '150000'
+    A: '1500'
+    admin_action_deadline: '0'
+    admin_fee: '5000000000'
+    decimals: '18'
+    ema_price: '999587597349320961'
+    fee: '4000000'
+    future_A_time: '0'
+    future_A: '150000'
+    future_fee: '0'
+    get_p: '999585626171170308'
+    get_virtual_price: '1017734101479506865'
+    initial_A_time: '0'
+    initial_A: '150000'
+    last_price: '999585626029419962'
+    ma_exp_time: '2597'
+    ma_last_time: '1703811923'
+    oracle_method: '0'
+    price_oracle: '999585642014764018'
+    totalSupply: '45363931240034965729028'
+'0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E':
+  name: StETHAndxETHWrapper
+  measurements: {}
+'0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0':
+  name: stETHTreasury
+  measurements:
+    baseTokenCap: '10000000000000000000000'
+    beta: '100000000000000000'
+    collateralRatio: '2127502112512926719'
+    getCurrentNav._baseNav: '2354302111120000000000'
+    getCurrentNav._fNav: '1028175138984398448'
+    getCurrentNav._xNav: '1365484765135404741'
+    lastPermissionedPrice: '1836785300000000000000'
+    leverageRatio: '1805406876341814937'
+    strategyUnderlying: '0'
+    totalBaseToken: '6179474952048061425555'
+'0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
+  name: Token Minter
+  measurements: {}
+'0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
+  name: veFXN
+  measurements:
+    decimals: '18'
+    epoch: '194'
+    supply: '115331908808027700163144'
+    totalSupply: '94540343792368370153142'
+'0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
+  name: wstETH
+  measurements:
+    stEthPerToken: '1151765726593883840'
+    tokensPerStEth: '868232121264190989'
+    totalSupply: '3247614816540003642107369'
+'0xb09e34dD25d5E88a1E9Ff6F6418109927675B658':
+  name: wstETHWrapper
+  measurements: {}
+'0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
+  name: xETH
+  measurements:
+    nav: '832299813951458409'
+    totalSupply: '5646434225742690599105577'

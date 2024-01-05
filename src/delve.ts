@@ -93,7 +93,7 @@ export const calculateAllMeasures = async (): Promise<Object> => {
                 }
                 values[measure.name] = value.toString();
             }
-            result[node.name] = values;
+            result[address] = { name: node.name, measurements: values };
         }
     }
     return result;
