@@ -4,6 +4,7 @@
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
   name: BoostableRebalancePool
   measurements:
+    gauge.claimAt: '0'
     lastAssetLossError: '0'
     liquidatableCollateralRatio: '1305500000000000000'
     numTotalSupplyHistory: '68'
@@ -12,6 +13,7 @@
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   name: BoostableRebalancePool
   measurements:
+    gauge.claimAt: '0'
     lastAssetLossError: '0'
     liquidatableCollateralRatio: '1305500000000000000'
     numTotalSupplyHistory: '69'
@@ -35,14 +37,26 @@
     decimals: '8'
     latestAnswer: '235278183000'
     latestRound: '110680464442257319337'
+    latestRoundData.roundId: '110680464442257319337'
+    latestRoundData.answer: '235278183000'
     latestRoundData.startedAt: '1703822135'
     latestRoundData.updatedAt: '1703822135'
+    latestRoundData.answeredInRound: '110680464442257319337'
     latestTimestamp: '1703822135'
     phaseId: '6'
+    proposedLatestRoundData.roundId: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    proposedLatestRoundData.answer: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
     proposedLatestRoundData.startedAt: >-
       VM Exception while processing transaction: reverted with reason string 'No
       proposed aggregator present'
     proposedLatestRoundData.updatedAt: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    proposedLatestRoundData.answeredInRound: >-
       VM Exception while processing transaction: reverted with reason string 'No
       proposed aggregator present'
     version: '4'
@@ -52,14 +66,26 @@
     decimals: '8'
     latestAnswer: '235430211112'
     latestRound: '18446744073709574477'
+    latestRoundData.roundId: '18446744073709574477'
+    latestRoundData.answer: '235430211112'
     latestRoundData.startedAt: '1703821343'
     latestRoundData.updatedAt: '1703821343'
+    latestRoundData.answeredInRound: '18446744073709574477'
     latestTimestamp: '1703821343'
     phaseId: '1'
+    proposedLatestRoundData.roundId: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    proposedLatestRoundData.answer: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
     proposedLatestRoundData.startedAt: >-
       VM Exception while processing transaction: reverted with reason string 'No
       proposed aggregator present'
     proposedLatestRoundData.updatedAt: >-
+      VM Exception while processing transaction: reverted with reason string 'No
+      proposed aggregator present'
+    proposedLatestRoundData.answeredInRound: >-
       VM Exception while processing transaction: reverted with reason string 'No
       proposed aggregator present'
     version: '4'
@@ -95,7 +121,22 @@
     time_total: '1694649600'
 '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
   name: Market
-  measurements: {}
+  measurements:
+    fTokenMintFeeRatio.defaultFeeRatio: '2500000000000000'
+    fTokenMintFeeRatio.extraFeeRatio: '0'
+    fTokenRedeemFeeRatio.defaultFeeRatio: '2500000000000000'
+    fTokenRedeemFeeRatio.extraFeeRatio: '-2500000000000000'
+    incentiveConfig.stabilityIncentiveRatio: '0'
+    incentiveConfig.liquidationIncentiveRatio: '0'
+    incentiveConfig.selfLiquidationIncentiveRatio: '0'
+    marketConfig.stabilityRatio: '1305500000000000000'
+    marketConfig.liquidationRatio: '1206700000000000000'
+    marketConfig.selfLiquidationRatio: '1143900000000000000'
+    marketConfig.recapRatio: '1000000000000000000'
+    xTokenMintFeeRatio.defaultFeeRatio: '10000000000000000'
+    xTokenMintFeeRatio.extraFeeRatio: '-10000000000000000'
+    xTokenRedeemFeeRatio.defaultFeeRatio: '10000000000000000'
+    xTokenRedeemFeeRatio.extraFeeRatio: '70000000000000000'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   name: PlatformFeeSpliter
   measurements:
@@ -103,6 +144,9 @@
 '0xa677d95B91530d56791FbA72C01a862f1B01A49e':
   name: RebalancePool
   measurements:
+    epochState.epoch: '0'
+    epochState.scale: '0'
+    epochState.prod: '1000000000000000000'
     extraRewardsLength: '1'
     lastAssetLossError: '0'
     liquidatableCollateralRatio: '1305500000000000000'
@@ -158,6 +202,10 @@
     baseTokenCap: '10000000000000000000000'
     beta: '100000000000000000'
     collateralRatio: '2127502112512926719'
+    emaLeverageRatio.lastTime: '1703792975'
+    emaLeverageRatio.sampleInterval: '86400'
+    emaLeverageRatio.lastValue: '1767249637152348130'
+    emaLeverageRatio.lastEmaValue: '1822162261482861300'
     getCurrentNav._baseNav: '2354302111120000000000'
     getCurrentNav._fNav: '1028175138984398448'
     getCurrentNav._xNav: '1365484765135404741'
