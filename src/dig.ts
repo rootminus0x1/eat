@@ -107,7 +107,7 @@ const digUp = async<T>(contract: Contract): Promise<{links: T[]> => {
 */
 
 export type NumericFunction = {
-    measure: () => Promise<bigint | bigint[]>;
+    measure: () => Promise<bigint>; // TODO: change to bigint[]
     measureName: string;
 };
 
@@ -182,8 +182,9 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
 
             // same for numerics
             // TODO: see if these two can be factored out
+            const contractName = await address.name();
             const numericIndices = func.outputs.reduce((indices, elem, index) => {
-                // TODO: uint128, etc, and even bool?
+                // TODO: (u)int128, etc, and even bool?
                 if (elem.type === 'uint256' || elem.type === 'uint256[]') indices.push(index);
                 return indices;
             }, [] as number[]);
@@ -192,18 +193,20 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                 if (func.outputs.length == 1) {
                     // single result - containing a unit256 or uint256[], likewise below
                     // TODO: is there any need to differentiate between a uint256 & uint256[]?
-                    if (func.outputs[0].type === 'unit256') {
+                    if (func.outputs[0].type === 'uint256') {
                         // single number
                         numerics.push({
                             measure: async (): Promise<bigint> => await rpcContract[func.name](),
-                            measureName: func.name,
+                            measureName: `${contractName}.${func.name}`,
                         });
                     } else {
                         // number[]
+                        /*
                         numerics.push({
                             measure: async (): Promise<bigint[]> => await rpcContract[func.name](),
                             measureName: func.name,
                         });
+                        */
                     }
                 } else {
                     // assume an array of results, some, defined by the indices, containing an uint256 or uint256[]
@@ -215,10 +218,11 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                                     const result = await rpcContract[func.name]();
                                     return result[outputIndex];
                                 },
-                                measureName: `${func.name}.${func.outputs[outputIndex].name}`,
+                                measureName: `${contractName}.${func.name}.${func.outputs[outputIndex].name}`,
                             });
                         } else {
                             // number[]
+                            /*
                             numerics.push({
                                 measure: async (): Promise<bigint[]> => {
                                     const result = await rpcContract[func.name]();
@@ -226,6 +230,7 @@ export const digDeep = async (address: EATAddress): Promise<DigDeepResults> => {
                                 },
                                 measureName: `${func.name}.${func.outputs[outputIndex].name}`,
                             });
+                            */
                         }
                     }
                 }

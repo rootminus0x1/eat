@@ -9,7 +9,7 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
-      "args": ["${workspaceFolder}/src/dig.ts", "${input:dig.debug.args}"],
+      "args": ["${workspaceFolder}/src/main.ts", "${input:dig.debug.args}"],
       "sourceMaps": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
