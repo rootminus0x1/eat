@@ -67,15 +67,21 @@ export const calculateAllActions async (): Promise<Object> => {
 }
 */
 
+export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
+    return Array.from(unsorted.entries()).sort((a, b) =>
+        field(a[1]).localeCompare(field(b[1]), 'en', { sensitivity: 'base' }),
+    );
+};
+
 // returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
 // all numbers are converted to strings
 // TODO: convert the numbers using some formatting defined in config?
 export const calculateAllMeasures = async (): Promise<Object> => {
     const result: any = {}; // use any to shut typescript up here :-)
 
-    for (const [address, measures] of allMeasures) {
-        const node = allNodes.get(address);
-        if (node) {
+    for (const [address, node] of sort(allNodes, (v) => v.name)) {
+        const measures = allMeasures.get(address);
+        if (measures) {
             let values: any = {};
             for (const measure of measures) {
                 let value: any;
@@ -87,7 +93,7 @@ export const calculateAllMeasures = async (): Promise<Object> => {
                 }
                 values[measure.name] = value.toString();
             }
-            result[await node.name()] = values;
+            result[node.name] = values;
         }
     }
     return result;

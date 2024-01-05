@@ -42,7 +42,6 @@ export type DigDeepResults = {
 export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResults> => {
     const links: Link[] = [];
     const measures: Measure[] = [];
-    const contractName = await address.name();
     if (await address.isContract()) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
         // TODO: follow also the proxy contained addresses

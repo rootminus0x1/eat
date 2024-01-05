@@ -104,16 +104,6 @@ export class BlockchainAddress {
         return result;
     };
 
-    public name = async (): Promise<string> => {
-        const info = await this.info;
-        return (
-            info.erc20Fields?.symbol ||
-            info.implementationContractInfo?.sourceCode?.ContractName ||
-            info.contractInfo?.sourceCode?.ContractName ||
-            (ethers.isAddress(this.address) ? this.address.slice(0, 5) + '..' + this.address.slice(-3) : this.address)
-        );
-    };
-
     public creator = async (): Promise<string> => {
         const info = await this.info;
         return info.contractInfo?.contractCreation?.contractCreator || '';
@@ -151,29 +141,28 @@ export class BlockchainAddress {
             : null;
     };
 
-    // functions to help with
-    // TODO: make them more basic, also consider removing name();
-    // TODO: move some of this to graphNode
-    public token = async (): Promise<string | undefined> => {
+    public isContract = async (): Promise<boolean> => {
         const info = await this.info;
-        return info.erc20Fields?.name || info.erc20Fields?.symbol
-            ? `${info.erc20Fields.symbol} (${info.erc20Fields.name})`
-            : undefined;
+        return info.contractInfo ? true : false;
     };
 
-    public tokenName = async (): Promise<string | undefined> => {
+    public isAddress = async (): Promise<boolean> => {
+        return ethers.isAddress(this.address);
+    };
+
+    public erc20Name = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.erc20Fields?.name;
     };
 
-    public tokenSymbol = async (): Promise<string | undefined> => {
+    public erc20Symbol = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.erc20Fields?.symbol;
     };
 
-    public contractName = async (): Promise<string> => {
+    public contractName = async (): Promise<string | undefined> => {
         const info = await this.info;
-        return info.contractInfo?.sourceCode?.ContractName || (await this.name());
+        return info.contractInfo?.sourceCode?.ContractName || undefined;
     };
 
     public implementationAddress = async (): Promise<string | undefined> => {
@@ -181,17 +170,8 @@ export class BlockchainAddress {
         return info.contractInfo?.sourceCode?.Implementation;
     };
 
-    public implementationName = async (): Promise<string | undefined> => {
+    public implementationContractName = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.implementationContractInfo?.sourceCode?.ContractName;
-    };
-
-    public isContract = async (): Promise<boolean> => {
-        const info = await this.info;
-        return info.contractInfo ? true : false;
-    };
-
-    public isAddress = async (): Promise<boolean> => {
-        return ethers.isAddress(this.address) && !(await this.isContract());
     };
 }

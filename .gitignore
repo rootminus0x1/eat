@@ -1,5 +1,7 @@
 .env
 
+out/
+
 .yarn/
 node_modules/
 

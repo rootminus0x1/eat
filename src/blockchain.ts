@@ -50,12 +50,12 @@ export async function getContract(address: string, signer: SignerWithAddress): P
     const dug = new BlockchainAddress(address);
     const econtract = await dug.getContract(signer);
     return Object.assign(econtract, {
-        name: await dug.name(),
+        name: await dug.contractName(),
         address: address,
         contractName: await dug.contractName(),
-        implementationContractName: await dug.implementationName(),
-        tokenName: await dug.tokenName(),
-        tokenSymbol: await dug.tokenSymbol(),
+        implementationContractName: await dug.implementationContractName(),
+        tokenName: await dug.erc20Name(),
+        tokenSymbol: await dug.erc20Symbol(),
         connect: (signer: SignerWithAddress): BaseContract => {
             return new BaseContract(econtract.target, econtract.interface, signer);
         },

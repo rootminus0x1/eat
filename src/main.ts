@@ -16,6 +16,7 @@ import { allNodes, Link, allLinks, Measure, allMeasures } from './graph';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
 import { BlockchainAddress } from './BlockchainAddress';
 import { calculateAllMeasures } from './delve';
+import { isAddress } from 'ethers';
 
 async function main() {
     const config = getConfig();
@@ -35,12 +36,18 @@ async function main() {
         addresses.shift();
         if (!done.has(address)) {
             done.add(address);
-            const BlockchainAddress = dig(address);
-            if (BlockchainAddress) {
+            const blockchainAddress = dig(address);
+            if (blockchainAddress) {
                 const stopper = config.stopafter.includes(address);
-                allNodes.set(address, Object.assign({ stopper: stopper }, BlockchainAddress));
+                const name =
+                    (await blockchainAddress.erc20Symbol()) ||
+                    (await blockchainAddress.implementationContractName()) ||
+                    (await blockchainAddress.contractName()) ||
+                    ((await blockchainAddress.isAddress()) ? address.slice(0, 5) + '..' + address.slice(-3) : address);
+
+                allNodes.set(address, Object.assign({ name: name, stopper: stopper }, blockchainAddress));
                 if (!stopper) {
-                    const digResults = await digDeep(BlockchainAddress);
+                    const digResults = await digDeep(blockchainAddress);
                     allLinks.set(address, digResults.links);
                     digResults.links.forEach((link) => addresses.push(link.to));
 

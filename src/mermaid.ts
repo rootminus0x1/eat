@@ -16,10 +16,15 @@ function cl(f: string[], what: string) {
     f.push(what);
 }
 
-const makeName = (name?: string, logicName?: string, tokenName?: string): string => {
-    let result = name;
+const makeContractName = (
+    contractName?: string,
+    logicName?: string,
+    tokenSymbol?: string,
+    tokenName?: string,
+): string => {
+    let result = contractName;
     result = logicName ? `<b>${logicName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
-    result = tokenName ? `${tokenName}<br>${result}` : result;
+    result = tokenName || tokenSymbol ? `${tokenSymbol} (${tokenName})<br>${result}` : result;
     return result;
 };
 
@@ -31,27 +36,37 @@ const useSubgraphForProxy = false;
 const mergeProxyandLogic = true;
 const nodeMermaid = (
     address: string,
-    name: string,
     type: AddressType,
     stopper: boolean,
+    contractName?: string,
     logic?: string,
     logicName?: string,
+    tokenSymbol?: string,
     tokenName?: string,
 ): string => {
     const f: string[] = [];
     if (type === AddressType.contract) {
         if (logic) {
             if (mergeProxyandLogic) {
-                cl(f, `${address}[["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]]:::contract`);
+                cl(
+                    f,
+                    `${address}[["${makeStopper(
+                        makeContractName(contractName, logicName, tokenSymbol, tokenName),
+                        stopper,
+                    )}"]]:::contract`,
+                );
                 cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
             } else {
                 const logicid = `${address}-${logic}`;
                 if (useSubgraphForProxy) {
                     cl(f, `subgraph ${address}-subgraph [" "]`);
                 }
-                cl(f, `${address}[["${makeName(name, logicName, tokenName)}"]]:::contract`);
+                cl(
+                    f,
+                    `${address}[["${makeContractName(contractName, logicName, tokenSymbol, tokenName)}"]]:::contract`,
+                );
                 cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-                cl(f, `${logicid}["${makeStopper(makeName(logicName), stopper)}"]:::contract`);
+                cl(f, `${logicid}["${makeStopper(makeContractName(logicName), stopper)}"]:::contract`);
                 cl(f, `click ${logicid} "https://etherscan.io/address/${logic}#code"`);
                 cl(f, `${address} o--o ${logicid}`);
                 if (useSubgraphForProxy) {
@@ -60,14 +75,20 @@ const nodeMermaid = (
                 }
             }
         } else {
-            cl(f, `${address}["${makeStopper(makeName(name, logicName, tokenName), stopper)}"]:::contract`);
+            cl(
+                f,
+                `${address}["${makeStopper(
+                    makeContractName(contractName, logicName, tokenSymbol, tokenName),
+                    stopper,
+                )}"]:::contract`,
+            );
             cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
         }
     } else if (type === AddressType.address) {
-        cl(f, `${address}(["${makeStopper(name, stopper)}"]):::address`);
+        cl(f, `${address}(["${makeStopper(address.slice(0, 5) + '..' + address.slice(-3), stopper)}"]):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     } else {
-        cl(f, `${address}("${makeStopper(name, stopper)}"):::address`);
+        cl(f, `${address}("${makeStopper(address, stopper)}"):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     }
     cl(f, '');
@@ -135,16 +156,17 @@ export const mermaid = async (blockNumber: number, asOf: string): Promise<string
             f,
             nodeMermaid(
                 address,
-                await node.contractName(),
                 (await node.isContract())
                     ? AddressType.contract
                     : (await node.isAddress())
                     ? AddressType.address
                     : AddressType.invalid,
                 node.stopper,
+                await node.contractName(),
                 await node.implementationAddress(),
-                await node.implementationName(),
-                await node.token(),
+                await node.implementationContractName(),
+                await node.erc20Symbol(),
+                await node.erc20Name(),
             ),
         );
         const links = allLinks.get(address);
