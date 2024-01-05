@@ -115,7 +115,6 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
             if (numericIndices.length > 0) {
                 if (func.outputs.length == 1) {
                     // single result - containing a unit256 or uint256[], likewise below
-                    // TODO: is there any need to differentiate between a uint256 & uint256[]?
                     if (func.outputs[0].type.endsWith('[]'))
                         console.log(
                             `${await address.contractName()}/${await address.implementationContractName()}: ${
@@ -129,28 +128,19 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                         type: func.outputs[0].type,
                     });
                 } else {
-                    // assume an array of results, some, defined by the indices, containing an uint256 or uint256[]
+                    // assume an array/struct of results, some, defined by the indices, containing an uint256 or uint256[]
                     for (const outputIndex of numericIndices) {
-                        if (func.outputs[outputIndex].type === 'uint256') {
-                            // single number
-                            measures.push({
-                                calculation: async () => (await rpcContract[func.name]())[outputIndex],
-                                name: `${func.name}.${func.outputs[outputIndex].name}`,
-                                type: func.outputs[outputIndex].type,
-                            });
-                        } else {
-                            // number[]
-                            /*
-                            measures.push({
-                                calculation: async (): Promise<bigint[]> => {
-                                    const result = await rpcContract[func.name]();
-                                    return result[outputIndex];
-                                },
-                                name: `${func.name}.${func.outputs[outputIndex].name}`,
-                                type: func.outputs[outputIndex].type,
-                            });
-                            */
-                        }
+                        if (func.outputs[outputIndex].type.endsWith('[]'))
+                            console.log(
+                                `${await address.contractName()}/${await address.implementationContractName()}: ${
+                                    func.name
+                                } returns ${func.outputs[0].type}[]`,
+                            );
+                        measures.push({
+                            calculation: async () => (await rpcContract[func.name]())[outputIndex],
+                            name: `${func.name}.${func.outputs[outputIndex].name}`,
+                            type: func.outputs[outputIndex].type,
+                        });
                     }
                 }
             }

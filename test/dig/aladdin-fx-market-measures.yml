@@ -4,166 +4,356 @@
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
   name: BoostableRebalancePool
   measurements:
-    gauge.claimAt: '0'
-    lastAssetLossError: '0'
-    liquidatableCollateralRatio: '1305500000000000000'
-    numTotalSupplyHistory: '68'
-    periodLength: '604800'
-    totalSupply: '2723055141145695996658868'
+    gauge.claimAt:
+      type: uint64
+      value: '0'
+    lastAssetLossError:
+      type: uint256
+      value: '0'
+    liquidatableCollateralRatio:
+      type: uint256
+      value: '1305500000000000000'
+    numTotalSupplyHistory:
+      type: uint256
+      value: '68'
+    periodLength:
+      type: uint40
+      value: '604800'
+    totalSupply:
+      type: uint256
+      value: '2723055141145695996658868'
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   name: BoostableRebalancePool
   measurements:
-    gauge.claimAt: '0'
-    lastAssetLossError: '0'
-    liquidatableCollateralRatio: '1305500000000000000'
-    numTotalSupplyHistory: '69'
-    periodLength: '604800'
-    totalSupply: '2956321364769018396295364'
+    gauge.claimAt:
+      type: uint64
+      value: '0'
+    lastAssetLossError:
+      type: uint256
+      value: '0'
+    liquidatableCollateralRatio:
+      type: uint256
+      value: '1305500000000000000'
+    numTotalSupplyHistory:
+      type: uint256
+      value: '69'
+    periodLength:
+      type: uint40
+      value: '604800'
+    totalSupply:
+      type: uint256
+      value: '2956321364769018396295364'
 '0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230':
   name: ChainlinkTwapOracleV3
   measurements:
-    chainlinkMessageExpiration: '10800'
-    chainlinkMinMessageCount: '1'
-    getLatest: '2352781830000000000000'
+    chainlinkMessageExpiration:
+      type: uint256
+      value: '10800'
+    chainlinkMinMessageCount:
+      type: uint256
+      value: '1'
+    getLatest:
+      type: uint256
+      value: '2352781830000000000000'
 '0xD24AC180e6769Fd5F624e7605B93084171074A77':
   name: ChainlinkTwapOracleV3
   measurements:
-    chainlinkMessageExpiration: '10800'
-    chainlinkMinMessageCount: '1'
-    getLatest: '2354302111120000000000'
+    chainlinkMessageExpiration:
+      type: uint256
+      value: '10800'
+    chainlinkMinMessageCount:
+      type: uint256
+      value: '1'
+    getLatest:
+      type: uint256
+      value: '2354302111120000000000'
 '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419':
   name: EACAggregatorProxy
   measurements:
-    decimals: '8'
-    latestAnswer: '235278183000'
-    latestRound: '110680464442257319337'
-    latestRoundData.roundId: '110680464442257319337'
-    latestRoundData.answer: '235278183000'
-    latestRoundData.startedAt: '1703822135'
-    latestRoundData.updatedAt: '1703822135'
-    latestRoundData.answeredInRound: '110680464442257319337'
-    latestTimestamp: '1703822135'
-    phaseId: '6'
-    proposedLatestRoundData.roundId: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.answer: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.startedAt: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.updatedAt: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.answeredInRound: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    version: '4'
+    decimals:
+      type: uint8
+      value: '8'
+    latestAnswer:
+      type: int256
+      value: '235278183000'
+    latestRound:
+      type: uint256
+      value: '110680464442257319337'
+    latestRoundData.roundId:
+      type: uint80
+      value: '110680464442257319337'
+    latestRoundData.answer:
+      type: int256
+      value: '235278183000'
+    latestRoundData.startedAt:
+      type: uint256
+      value: '1703822135'
+    latestRoundData.updatedAt:
+      type: uint256
+      value: '1703822135'
+    latestRoundData.answeredInRound:
+      type: uint80
+      value: '110680464442257319337'
+    latestTimestamp:
+      type: uint256
+      value: '1703822135'
+    phaseId:
+      type: uint16
+      value: '6'
+    proposedLatestRoundData.roundId:
+      type: uint80
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.answer:
+      type: int256
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.startedAt:
+      type: uint256
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.updatedAt:
+      type: uint256
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.answeredInRound:
+      type: uint80
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    version:
+      type: uint256
+      value: '4'
 '0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8':
   name: EACAggregatorProxy
   measurements:
-    decimals: '8'
-    latestAnswer: '235430211112'
-    latestRound: '18446744073709574477'
-    latestRoundData.roundId: '18446744073709574477'
-    latestRoundData.answer: '235430211112'
-    latestRoundData.startedAt: '1703821343'
-    latestRoundData.updatedAt: '1703821343'
-    latestRoundData.answeredInRound: '18446744073709574477'
-    latestTimestamp: '1703821343'
-    phaseId: '1'
-    proposedLatestRoundData.roundId: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.answer: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.startedAt: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.updatedAt: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    proposedLatestRoundData.answeredInRound: >-
-      VM Exception while processing transaction: reverted with reason string 'No
-      proposed aggregator present'
-    version: '4'
+    decimals:
+      type: uint8
+      value: '8'
+    latestAnswer:
+      type: int256
+      value: '235430211112'
+    latestRound:
+      type: uint256
+      value: '18446744073709574477'
+    latestRoundData.roundId:
+      type: uint80
+      value: '18446744073709574477'
+    latestRoundData.answer:
+      type: int256
+      value: '235430211112'
+    latestRoundData.startedAt:
+      type: uint256
+      value: '1703821343'
+    latestRoundData.updatedAt:
+      type: uint256
+      value: '1703821343'
+    latestRoundData.answeredInRound:
+      type: uint80
+      value: '18446744073709574477'
+    latestTimestamp:
+      type: uint256
+      value: '1703821343'
+    phaseId:
+      type: uint16
+      value: '1'
+    proposedLatestRoundData.roundId:
+      type: uint80
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.answer:
+      type: int256
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.startedAt:
+      type: uint256
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.updatedAt:
+      type: uint256
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    proposedLatestRoundData.answeredInRound:
+      type: uint80
+      error: >-
+        VM Exception while processing transaction: reverted with reason string
+        'No proposed aggregator present'
+    version:
+      type: uint256
+      value: '4'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   name: fETH
   measurements:
-    decimals: '18'
-    nav: '1000000000000000000'
-    totalSupply: '6650842598065295621717671'
+    decimals:
+      type: uint8
+      value: '18'
+    nav:
+      type: uint256
+      value: '1000000000000000000'
+    totalSupply:
+      type: uint256
+      value: '6650842598065295621717671'
 '0xa84360896cE9152d1780c546305BB54125F962d9':
   name: FxETHTwapOracle
   measurements:
-    getPrice._safePrice: '2354302111120000000000'
-    getPrice._minUnsafePrice: '2351811536536838519878'
-    getPrice._maxUnsafePrice: '2354302111120000000000'
+    getPrice._safePrice:
+      type: uint256
+      value: '2354302111120000000000'
+    getPrice._minUnsafePrice:
+      type: uint256
+      value: '2351811536536838519878'
+    getPrice._maxUnsafePrice:
+      type: uint256
+      value: '2354302111120000000000'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
   name: FXN
   measurements:
-    available_supply: '1047280171993911715747992'
-    decimals: '18'
-    INITIAL_RATE: '3107559614408929'
-    mining_epoch: '0'
-    RATE_REDUCTION_COEFFICIENT: '1111111111111111111'
-    rate: '3107559614408929'
-    start_epoch_time: '1695045779'
-    totalSupply: '1020000000000000000000000'
+    available_supply:
+      type: uint256
+      value: '1047280171993911715747992'
+    decimals:
+      type: uint256
+      value: '18'
+    INITIAL_RATE:
+      type: uint256
+      value: '3107559614408929'
+    mining_epoch:
+      type: int128
+      value: '0'
+    RATE_REDUCTION_COEFFICIENT:
+      type: uint256
+      value: '1111111111111111111'
+    rate:
+      type: uint256
+      value: '3107559614408929'
+    start_epoch_time:
+      type: uint256
+      value: '1695045779'
+    totalSupply:
+      type: uint256
+      value: '1020000000000000000000000'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
   name: Gauge Controller
   measurements:
-    get_total_weight: '0'
-    n_gauge_types: '0'
-    n_gauges: '0'
-    time_total: '1694649600'
+    get_total_weight:
+      type: uint256
+      value: '0'
+    n_gauge_types:
+      type: int128
+      value: '0'
+    n_gauges:
+      type: int128
+      value: '0'
+    time_total:
+      type: uint256
+      value: '1694649600'
 '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
   name: Market
   measurements:
-    fTokenMintFeeRatio.defaultFeeRatio: '2500000000000000'
-    fTokenMintFeeRatio.extraFeeRatio: '0'
-    fTokenRedeemFeeRatio.defaultFeeRatio: '2500000000000000'
-    fTokenRedeemFeeRatio.extraFeeRatio: '-2500000000000000'
-    incentiveConfig.stabilityIncentiveRatio: '0'
-    incentiveConfig.liquidationIncentiveRatio: '0'
-    incentiveConfig.selfLiquidationIncentiveRatio: '0'
-    marketConfig.stabilityRatio: '1305500000000000000'
-    marketConfig.liquidationRatio: '1206700000000000000'
-    marketConfig.selfLiquidationRatio: '1143900000000000000'
-    marketConfig.recapRatio: '1000000000000000000'
-    xTokenMintFeeRatio.defaultFeeRatio: '10000000000000000'
-    xTokenMintFeeRatio.extraFeeRatio: '-10000000000000000'
-    xTokenRedeemFeeRatio.defaultFeeRatio: '10000000000000000'
-    xTokenRedeemFeeRatio.extraFeeRatio: '70000000000000000'
+    fTokenMintFeeRatio.defaultFeeRatio:
+      type: uint128
+      value: '2500000000000000'
+    fTokenMintFeeRatio.extraFeeRatio:
+      type: int128
+      value: '0'
+    fTokenRedeemFeeRatio.defaultFeeRatio:
+      type: uint128
+      value: '2500000000000000'
+    fTokenRedeemFeeRatio.extraFeeRatio:
+      type: int128
+      value: '-2500000000000000'
+    incentiveConfig.stabilityIncentiveRatio:
+      type: uint64
+      value: '0'
+    incentiveConfig.liquidationIncentiveRatio:
+      type: uint64
+      value: '0'
+    incentiveConfig.selfLiquidationIncentiveRatio:
+      type: uint64
+      value: '0'
+    marketConfig.stabilityRatio:
+      type: uint64
+      value: '1305500000000000000'
+    marketConfig.liquidationRatio:
+      type: uint64
+      value: '1206700000000000000'
+    marketConfig.selfLiquidationRatio:
+      type: uint64
+      value: '1143900000000000000'
+    marketConfig.recapRatio:
+      type: uint64
+      value: '1000000000000000000'
+    xTokenMintFeeRatio.defaultFeeRatio:
+      type: uint128
+      value: '10000000000000000'
+    xTokenMintFeeRatio.extraFeeRatio:
+      type: int128
+      value: '-10000000000000000'
+    xTokenRedeemFeeRatio.defaultFeeRatio:
+      type: uint128
+      value: '10000000000000000'
+    xTokenRedeemFeeRatio.extraFeeRatio:
+      type: int128
+      value: '70000000000000000'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   name: PlatformFeeSpliter
   measurements:
-    getRewardCount: '1'
+    getRewardCount:
+      type: uint256
+      value: '1'
 '0xa677d95B91530d56791FbA72C01a862f1B01A49e':
   name: RebalancePool
   measurements:
-    epochState.epoch: '0'
-    epochState.scale: '0'
-    epochState.prod: '1000000000000000000'
-    extraRewardsLength: '1'
-    lastAssetLossError: '0'
-    liquidatableCollateralRatio: '1305500000000000000'
-    totalSupply: '132582504874380841545967'
-    totalUnlocking: '21096986654896224195809'
-    unlockDuration: '0'
+    epochState.epoch:
+      type: uint64
+      value: '0'
+    epochState.scale:
+      type: uint64
+      value: '0'
+    epochState.prod:
+      type: uint128
+      value: '1000000000000000000'
+    extraRewardsLength:
+      type: uint256
+      value: '1'
+    lastAssetLossError:
+      type: uint256
+      value: '0'
+    liquidatableCollateralRatio:
+      type: uint256
+      value: '1305500000000000000'
+    totalSupply:
+      type: uint256
+      value: '132582504874380841545967'
+    totalUnlocking:
+      type: uint256
+      value: '21096986654896224195809'
+    unlockDuration:
+      type: uint256
+      value: '0'
 '0x4eEfea49e4D876599765d5375cF7314cD14C9d38':
   name: RebalancePoolRegistry
   measurements:
-    totalSupply: '5811959010789095234500199'
+    totalSupply:
+      type: uint256
+      value: '5811959010789095234500199'
 '0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb':
   name: RebalancePoolSplitter
   measurements: {}
 '0x17f21f468d77E6e35702a9Ae7a9da50Db7F6a4f4':
   name: RebalanceWithBonusToken
   measurements:
-    bonus: '2000000000000000000'
+    bonus:
+      type: uint256
+      value: '2000000000000000000'
 '0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752':
   name: ReservePool
   measurements: {}
@@ -173,71 +363,165 @@
 '0x21E27a5E5513D6e65C4f830167390997aA84843a':
   name: stETH-ng-f
   measurements:
-    A_precise: '150000'
-    A: '1500'
-    admin_action_deadline: '0'
-    admin_fee: '5000000000'
-    decimals: '18'
-    ema_price: '999587597349320961'
-    fee: '4000000'
-    future_A_time: '0'
-    future_A: '150000'
-    future_fee: '0'
-    get_p: '999585626171170308'
-    get_virtual_price: '1017734101479506865'
-    initial_A_time: '0'
-    initial_A: '150000'
-    last_price: '999585626029419962'
-    ma_exp_time: '2597'
-    ma_last_time: '1703811923'
-    oracle_method: '0'
-    price_oracle: '999585642014764018'
-    totalSupply: '45363931240034965729028'
+    A_precise:
+      type: uint256
+      value: '150000'
+    A:
+      type: uint256
+      value: '1500'
+    admin_action_deadline:
+      type: uint256
+      value: '0'
+    admin_fee:
+      type: uint256
+      value: '5000000000'
+    decimals:
+      type: uint256
+      value: '18'
+    ema_price:
+      type: uint256
+      value: '999587597349320961'
+    fee:
+      type: uint256
+      value: '4000000'
+    future_A_time:
+      type: uint256
+      value: '0'
+    future_A:
+      type: uint256
+      value: '150000'
+    future_fee:
+      type: uint256
+      value: '0'
+    get_p:
+      type: uint256
+      value: '999585626171170308'
+    get_virtual_price:
+      type: uint256
+      value: '1017734101479506865'
+    initial_A_time:
+      type: uint256
+      value: '0'
+    initial_A:
+      type: uint256
+      value: '150000'
+    last_price:
+      type: uint256
+      value: '999585626029419962'
+    ma_exp_time:
+      type: uint256
+      value: '2597'
+    ma_last_time:
+      type: uint256
+      value: '1703811923'
+    oracle_method:
+      type: uint256
+      value: '0'
+    price_oracle:
+      type: uint256
+      value: '999585642014764018'
+    totalSupply:
+      type: uint256
+      value: '45363931240034965729028'
 '0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E':
   name: StETHAndxETHWrapper
   measurements: {}
 '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0':
   name: stETHTreasury
   measurements:
-    baseTokenCap: '10000000000000000000000'
-    beta: '100000000000000000'
-    collateralRatio: '2127502112512926719'
-    emaLeverageRatio.lastTime: '1703792975'
-    emaLeverageRatio.sampleInterval: '86400'
-    emaLeverageRatio.lastValue: '1767249637152348130'
-    emaLeverageRatio.lastEmaValue: '1822162261482861300'
-    getCurrentNav._baseNav: '2354302111120000000000'
-    getCurrentNav._fNav: '1028175138984398448'
-    getCurrentNav._xNav: '1365484765135404741'
-    harvestBountyRatio: '10000000000000000'
-    lastPermissionedPrice: '1836785300000000000000'
-    leverageRatio: '1805406876341814937'
-    rebalancePoolRatio: '500000000000000000'
-    strategyUnderlying: '0'
-    totalBaseToken: '6179474952048061425555'
+    baseTokenCap:
+      type: uint256
+      value: '10000000000000000000000'
+    beta:
+      type: uint256
+      value: '100000000000000000'
+    collateralRatio:
+      type: uint256
+      value: '2127502112512926719'
+    emaLeverageRatio.lastTime:
+      type: uint40
+      value: '1703792975'
+    emaLeverageRatio.sampleInterval:
+      type: uint24
+      value: '86400'
+    emaLeverageRatio.lastValue:
+      type: uint96
+      value: '1767249637152348130'
+    emaLeverageRatio.lastEmaValue:
+      type: uint96
+      value: '1822162261482861300'
+    getCurrentNav._baseNav:
+      type: uint256
+      value: '2354302111120000000000'
+    getCurrentNav._fNav:
+      type: uint256
+      value: '1028175138984398448'
+    getCurrentNav._xNav:
+      type: uint256
+      value: '1365484765135404741'
+    harvestBountyRatio:
+      type: uint128
+      value: '10000000000000000'
+    lastPermissionedPrice:
+      type: uint256
+      value: '1836785300000000000000'
+    leverageRatio:
+      type: uint256
+      value: '1805406876341814937'
+    rebalancePoolRatio:
+      type: uint128
+      value: '500000000000000000'
+    strategyUnderlying:
+      type: uint256
+      value: '0'
+    totalBaseToken:
+      type: uint256
+      value: '6179474952048061425555'
 '0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
   name: Token Minter
   measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   name: veFXN
   measurements:
-    decimals: '18'
-    epoch: '194'
-    supply: '115331908808027700163144'
-    totalSupply: '94540343792368370153142'
+    decimals:
+      type: uint256
+      value: '18'
+    epoch:
+      type: uint256
+      value: '194'
+    supply:
+      type: uint256
+      value: '115331908808027700163144'
+    totalSupply:
+      type: uint256
+      value: '94540343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   name: wstETH
   measurements:
-    decimals: '18'
-    stEthPerToken: '1151765726593883840'
-    tokensPerStEth: '868232121264190989'
-    totalSupply: '3247614816540003642107369'
+    decimals:
+      type: uint8
+      value: '18'
+    stEthPerToken:
+      type: uint256
+      value: '1151765726593883840'
+    tokensPerStEth:
+      type: uint256
+      value: '868232121264190989'
+    totalSupply:
+      type: uint256
+      value: '3247614816540003642107369'
 '0xb09e34dD25d5E88a1E9Ff6F6418109927675B658':
   name: wstETHWrapper
   measurements: {}
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
   name: xETH
   measurements:
-    decimals: '18'
-    nav: '832299813951458409'
-    totalSupply: '5646434225742690599105577'
+    decimals:
+      type: uint8
+      value: '18'
+    nav:
+      type: uint256
+      value: '832299813951458409'
+    totalSupply:
+      type: uint256
+      value: '5646434225742690599105577'

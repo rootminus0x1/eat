@@ -86,14 +86,14 @@ export const calculateAllMeasures = async (): Promise<Object> => {
         if (measures) {
             let values: any = {};
             for (const measure of measures) {
-                let value: any;
+                let value: any = { type: measure.type };
                 try {
-                    value = await measure.calculation();
+                    value.value = (await measure.calculation()).toString();
                 } catch (e: any) {
                     // TODO: collect the errors for the end
-                    value = e.message;
+                    value.error = e.message;
                 }
-                values[measure.name] = value.toString();
+                values[measure.name] = value;
             }
             result[address] = { name: node.name, measurements: values };
         }
