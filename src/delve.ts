@@ -76,6 +76,8 @@ export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
 // returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
 // all numbers are converted to strings
 // TODO: convert the numbers using some formatting defined in config?
+
+// TODO: add linked from, with name
 export const calculateAllMeasures = async (): Promise<Object> => {
     const result: any = {}; // use any to shut typescript up here :-)
 

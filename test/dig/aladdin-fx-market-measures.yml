@@ -7,6 +7,7 @@
     lastAssetLossError: '0'
     liquidatableCollateralRatio: '1305500000000000000'
     numTotalSupplyHistory: '68'
+    periodLength: '604800'
     totalSupply: '2723055141145695996658868'
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   name: BoostableRebalancePool
@@ -14,6 +15,7 @@
     lastAssetLossError: '0'
     liquidatableCollateralRatio: '1305500000000000000'
     numTotalSupplyHistory: '69'
+    periodLength: '604800'
     totalSupply: '2956321364769018396295364'
 '0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230':
   name: ChainlinkTwapOracleV3
@@ -30,10 +32,13 @@
 '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419':
   name: EACAggregatorProxy
   measurements:
+    decimals: '8'
+    latestAnswer: '235278183000'
     latestRound: '110680464442257319337'
     latestRoundData.startedAt: '1703822135'
     latestRoundData.updatedAt: '1703822135'
     latestTimestamp: '1703822135'
+    phaseId: '6'
     proposedLatestRoundData.startedAt: >-
       VM Exception while processing transaction: reverted with reason string 'No
       proposed aggregator present'
@@ -44,10 +49,13 @@
 '0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8':
   name: EACAggregatorProxy
   measurements:
+    decimals: '8'
+    latestAnswer: '235430211112'
     latestRound: '18446744073709574477'
     latestRoundData.startedAt: '1703821343'
     latestRoundData.updatedAt: '1703821343'
     latestTimestamp: '1703821343'
+    phaseId: '1'
     proposedLatestRoundData.startedAt: >-
       VM Exception while processing transaction: reverted with reason string 'No
       proposed aggregator present'
@@ -58,6 +66,7 @@
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   name: fETH
   measurements:
+    decimals: '18'
     nav: '1000000000000000000'
     totalSupply: '6650842598065295621717671'
 '0xa84360896cE9152d1780c546305BB54125F962d9':
@@ -72,6 +81,7 @@
     available_supply: '1047280171993911715747992'
     decimals: '18'
     INITIAL_RATE: '3107559614408929'
+    mining_epoch: '0'
     RATE_REDUCTION_COEFFICIENT: '1111111111111111111'
     rate: '3107559614408929'
     start_epoch_time: '1695045779'
@@ -80,6 +90,8 @@
   name: Gauge Controller
   measurements:
     get_total_weight: '0'
+    n_gauge_types: '0'
+    n_gauges: '0'
     time_total: '1694649600'
 '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
   name: Market
@@ -149,8 +161,10 @@
     getCurrentNav._baseNav: '2354302111120000000000'
     getCurrentNav._fNav: '1028175138984398448'
     getCurrentNav._xNav: '1365484765135404741'
+    harvestBountyRatio: '10000000000000000'
     lastPermissionedPrice: '1836785300000000000000'
     leverageRatio: '1805406876341814937'
+    rebalancePoolRatio: '500000000000000000'
     strategyUnderlying: '0'
     totalBaseToken: '6179474952048061425555'
 '0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
@@ -166,6 +180,7 @@
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   name: wstETH
   measurements:
+    decimals: '18'
     stEthPerToken: '1151765726593883840'
     tokensPerStEth: '868232121264190989'
     totalSupply: '3247614816540003642107369'
@@ -175,5 +190,6 @@
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
   name: xETH
   measurements:
+    decimals: '18'
     nav: '832299813951458409'
     totalSupply: '5646434225742690599105577'

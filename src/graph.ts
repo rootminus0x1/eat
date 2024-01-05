@@ -9,6 +9,7 @@ export const allLinks = new Map<string, Link[]>(); // address to array of links
 
 export type Measure = {
     name: string;
-    calculation: () => Promise<bigint>; // TODO: change to bigint[]
+    calculation: () => Promise<bigint | bigint[]>;
+    type: string; // solidity type
 };
 export const allMeasures = new Map<string, Measure[]>();

@@ -106,8 +106,9 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
             // same for measures
             // TODO: see if these two can be factored out
             const numericIndices = func.outputs.reduce((indices, elem, index) => {
-                // TODO: (u)int128, etc, and even bool?
-                if (elem.type === 'uint256' || elem.type === 'uint256[]') indices.push(index);
+                // TODO:  bool?
+                const numeric = /^u?int\d+(\[\])?$/;
+                if (numeric.test(elem.type)) indices.push(index);
                 return indices;
             }, [] as number[]);
             // if any interesting function
@@ -115,32 +116,27 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                 if (func.outputs.length == 1) {
                     // single result - containing a unit256 or uint256[], likewise below
                     // TODO: is there any need to differentiate between a uint256 & uint256[]?
-                    if (func.outputs[0].type === 'uint256') {
-                        // single number
-                        measures.push({
-                            calculation: async (): Promise<bigint> => await rpcContract[func.name](),
-                            name: `${func.name}`,
-                        });
-                    } else {
-                        // number[]
-                        /*
-                        measures.push({
-                            calculation: async (): Promise<bigint[]> => await rpcContract[func.name](),
-                            calculationName: func.name,
-                        });
-                        */
-                    }
+                    if (func.outputs[0].type.endsWith('[]'))
+                        console.log(
+                            `${await address.contractName()}/${await address.implementationContractName()}: ${
+                                func.name
+                            } returns ${func.outputs[0].type}[]`,
+                        );
+                    // single number
+                    measures.push({
+                        calculation: async () => await rpcContract[func.name](),
+                        name: func.name,
+                        type: func.outputs[0].type,
+                    });
                 } else {
                     // assume an array of results, some, defined by the indices, containing an uint256 or uint256[]
                     for (const outputIndex of numericIndices) {
                         if (func.outputs[outputIndex].type === 'uint256') {
                             // single number
                             measures.push({
-                                calculation: async (): Promise<bigint> => {
-                                    const result = await rpcContract[func.name]();
-                                    return result[outputIndex];
-                                },
+                                calculation: async () => (await rpcContract[func.name]())[outputIndex],
                                 name: `${func.name}.${func.outputs[outputIndex].name}`,
+                                type: func.outputs[outputIndex].type,
                             });
                         } else {
                             // number[]
@@ -150,7 +146,8 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                                     const result = await rpcContract[func.name]();
                                     return result[outputIndex];
                                 },
-                                calculationName: `${func.name}.${func.outputs[outputIndex].name}`,
+                                name: `${func.name}.${func.outputs[outputIndex].name}`,
+                                type: func.outputs[outputIndex].type,
                             });
                             */
                         }
