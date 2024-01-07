@@ -8,8 +8,8 @@
   "scripts": {
     "build": "tsc",
     "dig": "ts-node src/main.ts test/aladdin-fx-market.yml",
-    "go": "ts-node src/main.ts ",
-    "delve": "ts-node src/delve-main.ts test/delve/aladdin-fx.yml",
+    "testn": "ts-node src/main.ts ",
+    "test": "ts-node src/main.ts test/*.yml",
     "devdig": "ts-node -r ts-node/register src/dig.ts"
   },
   "devDependencies": {

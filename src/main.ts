@@ -7,17 +7,16 @@ dotenvExpand.expand(dotenv.config());
 
 import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
 import { getConfig } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { dig, digDeep, DigDeepResults } from './dig';
-import { allNodes, Link, allLinks, Measure, allMeasures, graphNode, allBackLinks } from './graph';
+import { Graph } from './graph';
+import { calculateMeasures } from './delve';
 import { BlockchainAddress } from './BlockchainAddress';
-import { calculateAllMeasures } from './delve';
 import { ContractTransactionResponse, isAddress, MaxInt256, parseEther } from 'ethers';
-
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
 async function main() {
     const configs = getConfig();
@@ -32,6 +31,7 @@ async function main() {
         // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
         // we build up the graph structure as we go for future processing
 
+        const graph = new Graph();
         while (addresses.length) {
             const address = addresses[0];
             addresses.shift();
@@ -48,23 +48,23 @@ async function main() {
                             ? address.slice(0, 5) + '..' + address.slice(-3)
                             : address);
 
-                    allNodes.set(address, Object.assign({ name: name, stopper: stopper }, blockchainAddress));
+                    graph.nodes.set(address, Object.assign({ name: name, stopper: stopper }, blockchainAddress));
 
                     if (!stopper) {
                         const digResults = await digDeep(blockchainAddress);
                         // set the links
-                        allLinks.set(address, digResults.links);
+                        graph.links.set(address, digResults.links);
                         // and backlinks
                         digResults.links.forEach((link) =>
-                            allBackLinks.set(
+                            graph.backLinks.set(
                                 link.address,
-                                (allBackLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
+                                (graph.backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
                             ),
                         );
 
                         // add more addresses to be dug up
                         digResults.links.forEach((link) => addresses.push(link.address));
-                        allMeasures.set(address, digResults.measures);
+                        graph.measures.set(address, digResults.measures);
                     }
                 }
             }
@@ -74,12 +74,12 @@ async function main() {
         // TODO: add this output to the config/command line
         // TODO: factor out writing files, all it needs is a function to generate a string
         const diagramOutputFile = fs.createWriteStream(config.outputFileRoot + '-diagram.md', { encoding: 'utf-8' });
-        diagramOutputFile.write(await mermaid(blockNumber, asDateString(timestamp)));
+        diagramOutputFile.write(await mermaid(graph, blockNumber, asDateString(timestamp)));
         diagramOutputFile.end();
 
         // make node names unique
         const nodeNames = new Map<string, string[]>();
-        for (const [address, node] of allNodes) {
+        for (const [address, node] of graph.nodes) {
             nodeNames.set(node.name, (nodeNames.get(node.name) ?? []).concat(address));
         }
         for (const [name, addresses] of nodeNames) {
@@ -88,10 +88,10 @@ async function main() {
                 // find the links to get some name for them
                 let unique = 0;
                 for (const address of addresses) {
-                    const node = allNodes.get(address);
+                    const node = graph.nodes.get(address);
                     if (node) {
                         //console.log(`for ${address},`);
-                        const backLinks = allBackLinks.get(address);
+                        const backLinks = graph.backLinks.get(address);
                         let done = false;
                         if (backLinks && backLinks.length == 1) {
                             const index = backLinks[0].name.match(/\[\d+\]$/);
@@ -111,7 +111,7 @@ async function main() {
         }
 
         const measuresOutputFile = fs.createWriteStream(config.outputFileRoot + '-measures.yml', { encoding: 'utf-8' });
-        const results = await calculateAllMeasures();
+        const results = await calculateMeasures(graph);
         measuresOutputFile.write(yaml.dump(results));
         measuresOutputFile.end();
 
@@ -138,14 +138,14 @@ async function main() {
             if (!fMinter) throw Error('could not find fMinter user');
 
             /*
-        const treasuryNode = allNodes.get("stETHTreasury");
+        const treasuryNode = graph.nodes.get("stETHTreasury");
         if (! treasuryNode) throw Error("could not find stETHTreasury contract");
         const treasury: any = treasuryNode.getContract(fMinter);
         // TODO: access the Calculation for this
         const fNav = await treasury.getCurrentNav().then((res: any) => res._fNav);
         */
 
-            const marketNode = allNodes.get('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB');
+            const marketNode = graph.nodes.get('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB');
             if (!marketNode) throw Error('could not find Market contract');
             const market = await marketNode.getContract(fMinter);
 

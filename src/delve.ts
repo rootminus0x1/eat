@@ -1,7 +1,7 @@
 import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } from './blockchain';
 import { PAMSystem } from './PokeAndMeasure';
 import { Contract } from 'ethers';
-import { allNodes, Link, allLinks, Measure, allMeasures } from './graph';
+import { Graph } from './graph';
 
 export const addUser = async (system: PAMSystem, name: string, types: string[] = []): Promise<UserWithAddress> => {
     const user = await getUser(name);
@@ -78,11 +78,11 @@ export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
 // TODO: convert the numbers using some formatting defined in config?
 
 // TODO: add linked from, with name
-export const calculateAllMeasures = async (): Promise<Object> => {
+export const calculateMeasures = async (graph: Graph): Promise<Object> => {
     const result: any = {}; // use any to shut typescript up here :-)
 
-    for (const [address, node] of sort(allNodes, (v) => v.name)) {
-        const measures = allMeasures.get(address);
+    for (const [address, node] of sort(graph.nodes, (v) => v.name)) {
+        const measures = graph.measures.get(address);
         if (measures) {
             let values: any = {};
             for (const measure of measures) {

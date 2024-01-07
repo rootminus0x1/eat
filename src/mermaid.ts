@@ -3,7 +3,7 @@
 //
 import { ZeroAddress } from 'ethers';
 
-import { Link, allLinks, allNodes } from './graph';
+import { Graph } from './graph';
 
 export enum AddressType {
     invalid,
@@ -148,10 +148,10 @@ const footerMermaid = (): string => {
     return f.join('\n');
 };
 
-export const mermaid = async (blockNumber: number, asOf: string): Promise<string> => {
+export const mermaid = async (graph: Graph, blockNumber: number, asOf: string): Promise<string> => {
     const f: string[] = [];
     cl(f, headerMermaid(blockNumber, asOf));
-    for (const [address, node] of allNodes) {
+    for (const [address, node] of graph.nodes) {
         cl(
             f,
             nodeMermaid(
@@ -169,7 +169,7 @@ export const mermaid = async (blockNumber: number, asOf: string): Promise<string
                 await node.erc20Name(),
             ),
         );
-        const links = allLinks.get(address);
+        const links = graph.links.get(address);
         if (links)
             for (let link of links) {
                 cl(f, linkMermaid(address, link.address, link.name, await node.implementationAddress()));
