@@ -172,7 +172,7 @@ export const mermaid = async (blockNumber: number, asOf: string): Promise<string
         const links = allLinks.get(address);
         if (links)
             for (let link of links) {
-                cl(f, linkMermaid(address, link.to, link.name, await node.implementationAddress()));
+                cl(f, linkMermaid(address, link.address, link.name, await node.implementationAddress()));
             }
     }
     cl(f, footerMermaid());

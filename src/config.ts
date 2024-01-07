@@ -6,7 +6,7 @@ export const getConfig = (): any => {
     const args = process.argv.slice(2);
     let configFilePath = path.resolve(args[0]);
     const config: any = yaml.load(fs.readFileSync(configFilePath).toString());
-    config.outputFileRoot =
-        path.dirname(configFilePath) + '/' + path.basename(configFilePath, path.extname(configFilePath));
+    const configName = path.basename(configFilePath, path.extname(configFilePath));
+    config.outputFileRoot = `${path.dirname(configFilePath)}/${configName}/${configName}`;
     return config;
 };

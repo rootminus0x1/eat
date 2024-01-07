@@ -1,0 +1,96 @@
+'0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1':
+  name: 0x18d..0F1
+  measurements: {}
+'0x1aCA782843444905712a4929C75F6575a32FA257':
+  name: 0x1aC..257
+  measurements: {}
+'0x2f75E925C38f83785A7D0630f65Aed8C65C1454f':
+  name: 0x2f7..54f
+  measurements: {}
+'0x4De2494a282B295B08E84dDd0926749fe9964d1A':
+  name: 0x4De..d1A
+  measurements: {}
+'0x632e6920B7c443D92052442e0F230355099a9989':
+  name: 0x632..989
+  measurements: {}
+'0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6':
+  name: 0x8f4..Bf6
+  measurements: {}
+'0xA849456125301De7DedA49c09a65B673C115Cf37':
+  name: 0xA84..f37
+  measurements: {}
+'0xf1674FE69b2920b4de51E909cbf060dd78724CD8':
+  name: 0xf16..CD8
+  measurements: {}
+'0xCe391315b414D4c7555956120461D21808A69F3A':
+  name: BAO
+  measurements:
+    available_supply:
+      type: uint256
+      value: '1342272585171312291062882512'
+    decimals:
+      type: uint8
+      value: '18'
+    mining_epoch:
+      type: int128
+      value: '1'
+    rate:
+      type: uint256
+      value: '6139694197700000572'
+    start_epoch_time:
+      type: uint256
+      value: '1700524031'
+    totalSupply:
+      type: uint256
+      value: '1320116065635125541877393702'
+'0x885D90A424f87D362C9369C0F3d9A2d28AF495F4':
+  name: BaoDistribution
+  measurements: {}
+'0x3dFc49e5112005179Da613BdE5973229082dAc35':
+  name: GnosisSafe
+  measurements:
+    getChainId:
+      type: uint256
+      value: '31337'
+    getThreshold:
+      type: uint256
+      value: '3'
+    nonce:
+      type: uint256
+      value: '1400'
+'0x1390c3ffb3f45864641f08bcc66211935B10D753':
+  name: SmartWalletWhitelist
+  measurements: {}
+'0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6':
+  name: veBAO
+  measurements:
+    decimals:
+      type: uint256
+      value: '18'
+    epoch:
+      type: uint256
+      value: '969'
+    supply:
+      type: uint256
+      value: '174846060816462883671490561'
+    totalSupply:
+      type: uint256
+      value: '127481437679363369597663159'
+'0x840e75261c2934f33C8766F6eA6235330DC1D72d':
+  name: Vyper_contract_0
+  measurements:
+    get_total_weight:
+      type: uint256
+      value: '33267863535548433440713600000000000000000000'
+    n_gauge_types:
+      type: int128
+      value: '1'
+    n_gauges:
+      type: int128
+      value: '12'
+    time_total:
+      type: uint256
+      value: '1704326400'
+'0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380':
+  name: Vyper_contract_1
+  measurements: {}

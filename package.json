@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "dig": "ts-node src/main.ts test/dig/aladdin-fx-market.yml",
+    "dig": "ts-node src/main.ts test/aladdin-fx-market.yml",
+    "go": "ts-node src/main.ts ",
     "delve": "ts-node src/delve-main.ts test/delve/aladdin-fx.yml",
     "devdig": "ts-node -r ts-node/register src/dig.ts"
   },

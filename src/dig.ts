@@ -69,12 +69,12 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                         // single result - containing an address or address[]
                         if (func.outputs[0].type === 'address') {
                             // single address
-                            links.push({ to: funcResults, name: func.name });
+                            links.push({ address: funcResults, name: func.name });
                         } else {
                             // address[]
                             for (let index = 0; index < funcResults.length; index++) {
                                 const elem = funcResults[index];
-                                links.push({ to: elem, name: `${func.name}[${index}]` });
+                                links.push({ address: elem, name: `${func.name}[${index}]` });
                             }
                         }
                     } else {
@@ -83,7 +83,7 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                             if (func.outputs[outputIndex].type === 'address') {
                                 // single address
                                 links.push({
-                                    to: funcResults[outputIndex],
+                                    address: funcResults[outputIndex],
                                     name: `${func.name}.${func.outputs[outputIndex].name}`,
                                 });
                             } else {
@@ -91,7 +91,7 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                                 for (let index = 0; index < funcResults[outputIndex].length; index++) {
                                     const elem = funcResults[outputIndex][index];
                                     links.push({
-                                        to: elem,
+                                        address: elem,
                                         name: `${func.name}.${func.outputs[outputIndex].name}[${index}]`,
                                     });
                                 }
@@ -104,11 +104,9 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
             }
 
             // same for measures
-            // TODO: see if these two can be factored out
             const numericIndices = func.outputs.reduce((indices, elem, index) => {
-                // TODO:  bool?
-                const numeric = /^u?int\d+(\[\])?$/;
-                if (numeric.test(elem.type)) indices.push(index);
+                // TODO:  add bool?
+                if (/^u?int\d+(\[\])?$/.test(elem.type)) indices.push(index);
                 return indices;
             }, [] as number[]);
             // if any interesting function
