@@ -15,21 +15,39 @@ import { asDateString } from './datetime';
 import { dig, digDeep, DigDeepResults } from './dig';
 import { Graph } from './graph';
 import { calculateMeasures } from './delve';
-import { BlockchainAddress } from './BlockchainAddress';
 import { ContractTransactionResponse, isAddress, MaxInt256, parseEther } from 'ethers';
+
+class Blockchain {
+    private allSigners = ethers.getSigners();
+    private allocatedSigners = 0;
+
+    public timestamp = 0;
+
+    constructor(public blockNumber: number) {}
+
+    public getUser = async (name: string): Promise<SignerWithAddress> => {
+        await this.allSigners;
+        return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
+    };
+
+    public reset = async () => {
+        await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
+        this.blockNumber = await ethers.provider.getBlockNumber();
+        this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
+        console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
+    };
+}
 
 async function main() {
     const configs = getConfig();
     for (const config of configs) {
-        await reset(process.env.MAINNET_RPC_URL, config.block);
-        let blockNumber = await ethers.provider.getBlockNumber();
-        const timestamp = (await ethers.provider.getBlock(blockNumber))?.timestamp || 0;
-        console.log(`${network.name} ${blockNumber} ${asDateString(timestamp)} UX:${timestamp}`);
+        const blockchain = new Blockchain(config.block);
+        await blockchain.reset();
 
-        const done = new Set<string>();
-        let addresses = config.start;
         // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
         // we build up the graph structure as we go for future processing
+        const done = new Set<string>();
+        let addresses = config.start;
 
         const graph = new Graph();
         while (addresses.length) {
@@ -74,7 +92,7 @@ async function main() {
         // TODO: add this output to the config/command line
         // TODO: factor out writing files, all it needs is a function to generate a string
         const diagramOutputFile = fs.createWriteStream(config.outputFileRoot + '-diagram.md', { encoding: 'utf-8' });
-        diagramOutputFile.write(await mermaid(graph, blockNumber, asDateString(timestamp)));
+        diagramOutputFile.write(await mermaid(graph, blockchain.blockNumber, asDateString(blockchain.timestamp)));
         diagramOutputFile.end();
 
         // make node names unique

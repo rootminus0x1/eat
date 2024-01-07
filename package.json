@@ -7,12 +7,17 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "lint": "ts-node test/findGlobals.ts",
     "dig": "ts-node src/main.ts test/aladdin-fx-market.yml",
-    "testn": "ts-node src/main.ts ",
+    "test1": "ts-node src/main.ts ",
+    "png1": "mmdc --outputFormat png --input ",
+    "pdf1": "mmdc --outputFormat pdf --input ",
+    "svg1": "mmdc --outputFormat svg --input ",
     "test": "ts-node src/main.ts test/*.yml",
     "devdig": "ts-node -r ts-node/register src/dig.ts"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^10.6.1",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@types/crypto-js": "^4.2.1",
@@ -25,6 +30,7 @@
     "ethers": "^6.9.0",
     "hardhat": "^2.19.4",
     "js-yaml": "^4.1.0",
+    "ts-morph": "^21.0.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"

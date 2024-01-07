@@ -7,3 +7,8 @@ node_modules/
 
 cache/
 eat-cache/
+
+# generated files
+test/**/*.png
+test/**/*.svg
+test/**/*.pdf
