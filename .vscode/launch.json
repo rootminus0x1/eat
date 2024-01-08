@@ -5,23 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "debug dig",
+      "name": "debug",
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
-      "args": ["${workspaceFolder}/src/main.ts", "${input:dig.debug.args}"],
-      "sourceMaps": true,
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "name": "debug delve",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
-      "args": ["${workspaceFolder}/src/delve-main.ts", "${workspaceFolder}/test/delve/aladdin-fx.yml"],
+      "args": ["${workspaceFolder}/src/main.ts", "${workspaceFolder}/test/${input:debug.args}"],
       "sourceMaps": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
@@ -32,10 +20,9 @@
   "inputs": [
     {
       "type": "pickString",
-      "id": "dig.debug.args",
+      "id": "debug.args",
       "description": "What type of component do you want to create?",
-      "options": ["${workspaceFolder}/test/aladdin-fx-market.yml", "${workspaceFolder}/test/bao-governance.yml"],
-      "default": "debug.yml"
+      "options": ["aladdin-fx-market.yml", "bao-governance.yml", "token-minter.yml"]
     },
     {
       // keep this here for future use

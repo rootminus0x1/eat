@@ -1,0 +1,102 @@
+'0x38a93e70b0D8343657f802C1c3Fdb06aC8F8fe99':
+  name: 0x38a..e99
+  measurements: {}
+'0x4088421cBDBa1501d8Fd09fD241717097Afb42Cb':
+  name: 0x408..2Cb
+  measurements: {}
+'0x74390470F4001Ca85D93bD546A4Ab1724359654B':
+  name: 0x743..54B
+  measurements: {}
+'0x7904Ad7c992CDAb500dAa0f3366301b1f5365B62':
+  name: 0x790..B62
+  measurements: {}
+'0x8EcAB7B8ed8215cA52500cbf1548B9239173ef82':
+  name: 0x8Ec..f82
+  measurements: {}
+'0xcdF067F306E7a511Ef701588AFCdcff292B19282':
+  name: 0xcdF..282
+  measurements: {}
+'0xe3522d85d37F55735e9327CD7a5cDe3abaf28E03':
+  name: 0xe35..E03
+  measurements: {}
+'0xeF0Ca09fbf9a5f61E657Fb208b46b8685c1d4766':
+  name: 0xeF0..766
+  measurements: {}
+'0xF483De0f306952FA56ef56c1dbBDd2A70737bDd5':
+  name: 0xF48..Dd5
+  measurements: {}
+'0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
+  name: FXN
+  measurements:
+    available_supply:
+      type: uint256
+      value: '1047280171993911715747992'
+    decimals:
+      type: uint256
+      value: '18'
+    INITIAL_RATE:
+      type: uint256
+      value: '3107559614408929'
+    mining_epoch:
+      type: int128
+      value: '0'
+    RATE_REDUCTION_COEFFICIENT:
+      type: uint256
+      value: '1111111111111111111'
+    rate:
+      type: uint256
+      value: '3107559614408929'
+    start_epoch_time:
+      type: uint256
+      value: '1695045779'
+    totalSupply:
+      type: uint256
+      value: '1020000000000000000000000'
+'0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
+  name: Gauge Controller
+  measurements:
+    get_total_weight:
+      type: uint256
+      value: '0'
+    n_gauge_types:
+      type: int128
+      value: '0'
+    n_gauges:
+      type: int128
+      value: '0'
+    time_total:
+      type: uint256
+      value: '1694649600'
+'0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF':
+  name: GnosisSafe
+  measurements:
+    getChainId:
+      type: uint256
+      value: '31337'
+    getThreshold:
+      type: uint256
+      value: '6'
+    nonce:
+      type: uint256
+      value: '45'
+'0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
+  name: SmartWalletWhitelist
+  measurements: {}
+'0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
+  name: Token Minter
+  measurements: {}
+'0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
+  name: veFXN
+  measurements:
+    decimals:
+      type: uint256
+      value: '18'
+    epoch:
+      type: uint256
+      value: '194'
+    supply:
+      type: uint256
+      value: '115331908808027700163144'
+    totalSupply:
+      type: uint256
+      value: '94540343792368370153142'

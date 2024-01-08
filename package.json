@@ -8,12 +8,12 @@
   "scripts": {
     "build": "tsc",
     "lint": "ts-node test/findGlobals.ts",
-    "dig": "ts-node src/main.ts test/aladdin-fx-market.yml",
-    "test1": "ts-node src/main.ts ",
-    "png1": "mmdc --outputFormat png --input ",
-    "pdf1": "mmdc --outputFormat pdf --input ",
-    "svg1": "mmdc --outputFormat svg --input ",
     "test": "ts-node src/main.ts test/*.yml",
+    "test1": "ts-node src/main.ts",
+    "svg": "for file in ./test/*/*.md; do mmdc -i \"$file\" -o \"${file%.md}.svg\" && mv \"${file%.md}-1.svg\" \"${file%.md}.svg\"; done",
+    "svg1": "mmdc --outputFormat svg --input ",
+    "view": "for file in ./test/*/*.svg; do firefox 2>/dev/null --new-tab $file & done",
+    "view1": "firefox 2>/dev/null --new-tab",
     "devdig": "ts-node -r ts-node/register src/dig.ts"
   },
   "devDependencies": {

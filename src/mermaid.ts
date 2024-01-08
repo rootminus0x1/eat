@@ -4,6 +4,7 @@
 import { ZeroAddress } from 'ethers';
 
 import { Graph } from './graph';
+import { string } from 'hardhat/internal/core/params/argumentTypes';
 
 export enum AddressType {
     invalid,
@@ -19,11 +20,12 @@ function cl(f: string[], what: string) {
 const makeContractName = (
     contractName?: string,
     logicName?: string,
+    vyperName?: string,
     tokenSymbol?: string,
     tokenName?: string,
 ): string => {
     let result = contractName;
-    result = logicName ? `<b>${logicName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
+    result = logicName || vyperName ? `<b>${logicName || vyperName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
     result = tokenName || tokenSymbol ? `${tokenSymbol} (${tokenName})<br>${result}` : result;
     return result;
 };
@@ -41,17 +43,18 @@ const nodeMermaid = (
     contractName?: string,
     logic?: string,
     logicName?: string,
+    vyperName?: string,
     tokenSymbol?: string,
     tokenName?: string,
 ): string => {
     const f: string[] = [];
     if (type === AddressType.contract) {
-        if (logic) {
+        if (logicName) {
             if (mergeProxyandLogic) {
                 cl(
                     f,
                     `${address}[["${makeStopper(
-                        makeContractName(contractName, logicName, tokenSymbol, tokenName),
+                        makeContractName(contractName, logicName, vyperName, tokenSymbol, tokenName),
                         stopper,
                     )}"]]:::contract`,
                 );
@@ -63,7 +66,13 @@ const nodeMermaid = (
                 }
                 cl(
                     f,
-                    `${address}[["${makeContractName(contractName, logicName, tokenSymbol, tokenName)}"]]:::contract`,
+                    `${address}[["${makeContractName(
+                        contractName,
+                        logicName,
+                        vyperName,
+                        tokenSymbol,
+                        tokenName,
+                    )}"]]:::contract`,
                 );
                 cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
                 cl(f, `${logicid}["${makeStopper(makeContractName(logicName), stopper)}"]:::contract`);
@@ -78,7 +87,7 @@ const nodeMermaid = (
             cl(
                 f,
                 `${address}["${makeStopper(
-                    makeContractName(contractName, logicName, tokenSymbol, tokenName),
+                    makeContractName(contractName, logicName, vyperName, tokenSymbol, tokenName),
                     stopper,
                 )}"]:::contract`,
             );
@@ -165,6 +174,7 @@ export const mermaid = async (graph: Graph, blockNumber: number, asOf: string): 
                 await node.contractName(),
                 await node.implementationAddress(),
                 await node.implementationContractName(),
+                await node.vyperContractName(),
                 await node.erc20Symbol(),
                 await node.erc20Name(),
             ),

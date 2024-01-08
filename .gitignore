@@ -1,14 +1,16 @@
 .env
 
-out/
-
-.yarn/
+# dependencies recreated with yarn install
 node_modules/
 
+# cache files
 cache/
 eat-cache/
 
-# generated files
+# uninteresting generated files
 test/**/*.png
 test/**/*.svg
 test/**/*.pdf
+*.log
+out/
+.yarn/

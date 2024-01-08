@@ -261,7 +261,7 @@ click 0xD24AC180e6769Fd5F624e7605B93084171074A77 "https://etherscan.io/address/0
 
 0xD24AC180e6769Fd5F624e7605B93084171074A77 -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-0x21E27a5E5513D6e65C4f830167390997aA84843a["stETH-ng-f (Curve.fi Factory Pool: stETH-ng)<br><b>Vyper_contract</b>"]:::contract
+0x21E27a5E5513D6e65C4f830167390997aA84843a["stETH-ng-f (Curve.fi Factory Pool: stETH-ng)<br><b>StableSwap</b><br><i>Vyper_contract</i>"]:::contract
 click 0x21E27a5E5513D6e65C4f830167390997aA84843a "https://etherscan.io/address/0x21E27a5E5513D6e65C4f830167390997aA84843a#code"
 
 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37["<b>Gauge Controller</b>"]:::contract

@@ -41,6 +41,7 @@ export class BlockchainAddress {
         this.info = this.getAddressInfo();
     }
 
+    // get all the information in one go so it simplifies waiting for an
     private info: Promise<RawAddressInfo>;
     private getAddressInfo = async (): Promise<RawAddressInfo> => {
         // default the values to simple address
@@ -80,7 +81,7 @@ export class BlockchainAddress {
                         result.contractInfo.sourceCode.Implementation,
                     );
                     /*
-                                    // TODO: get the update history
+                    // TODO: get the update history
                     // Get historical transactions for the proxy contract
                     const events = await ethers.provider.getLogs({
                         address: address,
@@ -173,5 +174,14 @@ export class BlockchainAddress {
     public implementationContractName = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.implementationContractInfo?.sourceCode?.ContractName;
+    };
+
+    public vyperContractName = async (): Promise<string | undefined> => {
+        const info = await this.info;
+        if (info.contractInfo?.sourceCode?.ContractName === 'Vyper_contract') {
+            const match = info.contractInfo?.sourceCode?.SourceCode.match(/^\s*@title\s+(.*)\s*$/m);
+            return match && match[1] ? match[1] : undefined;
+        }
+        return undefined;
     };
 }
