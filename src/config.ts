@@ -39,7 +39,6 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
                 }),
             );
     } catch (error: any) {}
-    // console.log(defaults);
 
     for (const fileArg of fileArgs) {
         // load the requested config
@@ -49,9 +48,7 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
         // find matching defaults and merge them
         const config: any = defaults.reduce((result: any, d) => {
             if (configName.startsWith(d.name)) {
-                console.log(`defaulting from '${d.name}'`);
                 merge(result, d.config);
-                console.log(`new config = ${JSON.stringify(result, undefined, '  ')}`);
             }
             return result;
         }, {} as any);
@@ -64,9 +61,8 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
         config.configFilePath = configFilePath;
         config.configName = configName;
 
-        write(config, 'flat-config.xml', yaml.dump(config));
-
-        console.log(`final config = ${JSON.stringify(config, undefined, '  ')}`);
+        // output the config actually used for debug purposes
+        write(config, 'flat-config.yml', yaml.dump(config));
 
         result.push(config);
     }
