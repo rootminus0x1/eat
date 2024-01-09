@@ -1,6 +1,5 @@
 block: 18888888
 start:
-  # TODO: check if I can remove the quotes round the addresses
   - "0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB" # Market
   #- '0x4eEfea49e4D876599765d5375cF7314cD14C9d38' # RebalancePoolRegistry
   #- '0xc6dEe5913e010895F3702bc43a40d661B13a40BD' # BoostableRebalancePool (has array outputs with addresses)
