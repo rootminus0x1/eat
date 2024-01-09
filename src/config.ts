@@ -6,7 +6,7 @@ import lodash from 'lodash';
 type ConfigItem = { name: string; config: any };
 
 export const write = (config: any, name: string, results: string): void => {
-    const outputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '-' + name, {
+    const outputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '.' + name, {
         encoding: 'utf-8',
     });
     outputFile.write(results);
