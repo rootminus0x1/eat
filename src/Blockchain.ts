@@ -176,6 +176,8 @@ export class BlockchainAddress {
         return ethers.isAddress(this.address);
     };
 
+    // naming functions and a consolidated name (called nameish)
+
     public erc20Name = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.erc20Fields?.name;
@@ -208,5 +210,14 @@ export class BlockchainAddress {
             return match && match[1] ? match[1] : undefined;
         }
         return undefined;
+    };
+
+    public contractNamish = async (): Promise<string> => {
+        return (
+            (await this.vyperContractName()) ||
+            (await this.implementationContractName()) ||
+            (await this.contractName()) ||
+            this.address
+        );
     };
 }

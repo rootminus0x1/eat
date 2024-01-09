@@ -1,8 +1,10 @@
 '0x11E91BB6d1334585AA37D8F4fde3932C7960B938':
   name: 0x11E..938
+  contractNamish: '0x11E91BB6d1334585AA37D8F4fde3932C7960B938'
   measurements: {}
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   name: BoostableRebalancePool
+  contractNamish: BoostableRebalancePool
   measurements:
     gauge.claimAt:
       type: uint64
@@ -24,6 +26,7 @@
       value: '2956321364769018396295364'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   name: fETH
+  contractNamish: FractionalToken
   measurements:
     decimals:
       type: uint8
@@ -36,6 +39,7 @@
       value: '6650842598065295621717671'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
   name: FXN
+  contractNamish: Curve DAO Token
   measurements:
     available_supply:
       type: uint256
@@ -63,6 +67,7 @@
       value: '1020000000000000000000000'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
   name: Gauge Controller
+  contractNamish: Gauge Controller
   measurements:
     get_total_weight:
       type: uint256
@@ -78,24 +83,30 @@
       value: '1694649600'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   name: PlatformFeeSpliter
+  contractNamish: PlatformFeeSpliter
   measurements:
     getRewardCount:
       type: uint256
       value: '1'
 '0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752':
   name: ReservePool
+  contractNamish: ReservePool
   measurements: {}
 '0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
   name: SmartWalletWhitelist
+  contractNamish: SmartWalletWhitelist
   measurements: {}
 '0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E':
   name: StETHAndxETHWrapper
+  contractNamish: StETHAndxETHWrapper
   measurements: {}
 '0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
   name: Token Minter
+  contractNamish: Token Minter
   measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   name: veFXN
+  contractNamish: Voting Escrow
   measurements:
     decimals:
       type: uint256
@@ -111,6 +122,7 @@
       value: '94540343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   name: wstETH
+  contractNamish: WstETH
   measurements:
     decimals:
       type: uint8
@@ -126,6 +138,7 @@
       value: '3247614816540003642107369'
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
   name: xETH
+  contractNamish: LeveragedToken
   measurements:
     decimals:
       type: uint8

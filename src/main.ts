@@ -7,7 +7,7 @@ dotenvExpand.expand(dotenv.config());
 
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
-import { getConfig, write } from './config';
+import { getConfig, write, writeYaml } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
@@ -54,7 +54,7 @@ async function main() {
             );
         }
 
-        write(config, 'measures.yml', yaml.dump(await calculateMeasures(graph)));
+        writeYaml(config, 'measures.yml', await calculateMeasures(graph));
 
         // get all the users
         const allUsers = new Map<string, SignerWithAddress>();

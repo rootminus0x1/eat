@@ -1,5 +1,6 @@
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
   name: BoostableRebalancePool
+  contractNamish: BoostableRebalancePool
   measurements:
     gauge.claimAt:
       type: uint64
@@ -21,6 +22,7 @@
       value: '2723055141145695996658868'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   name: fETH
+  contractNamish: FractionalToken
   measurements:
     decimals:
       type: uint8
@@ -33,6 +35,7 @@
       value: '6650842598065295621717671'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
   name: FXN
+  contractNamish: Curve DAO Token
   measurements:
     available_supply:
       type: uint256
@@ -60,6 +63,7 @@
       value: '1020000000000000000000000'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
   name: Gauge Controller
+  contractNamish: Gauge Controller
   measurements:
     get_total_weight:
       type: uint256
@@ -75,12 +79,15 @@
       value: '1694649600'
 '0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
   name: SmartWalletWhitelist
+  contractNamish: SmartWalletWhitelist
   measurements: {}
 '0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
   name: Token Minter
+  contractNamish: Token Minter
   measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   name: veFXN
+  contractNamish: Voting Escrow
   measurements:
     decimals:
       type: uint256
@@ -96,6 +103,7 @@
       value: '94540343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   name: wstETH
+  contractNamish: WstETH
   measurements:
     decimals:
       type: uint8
@@ -111,4 +119,5 @@
       value: '3247614816540003642107369'
 '0xb09e34dD25d5E88a1E9Ff6F6418109927675B658':
   name: wstETHWrapper
+  contractNamish: wstETHWrapper
   measurements: {}

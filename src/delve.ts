@@ -88,14 +88,14 @@ export const calculateMeasures = async (graph: Graph): Promise<Object> => {
             for (const measure of measures) {
                 let value: any = { type: measure.type };
                 try {
+                    // TODO: remove the string and replace with specific formatting
                     value.value = (await measure.calculation()).toString();
                 } catch (e: any) {
-                    // TODO: collect the errors for the end
                     value.error = e.message;
                 }
                 values[measure.name] = value;
             }
-            result[address] = { name: node.name, measurements: values };
+            result[address] = { name: node.name, contractNamish: await node.contractNamish(), measurements: values };
         }
     }
     return result;

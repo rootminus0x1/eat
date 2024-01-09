@@ -8,6 +8,11 @@ import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'eth
 import { BlockchainAddress } from './Blockchain';
 import { Graph, Link, Measure } from './graph';
 
+export type DigDeepResults = {
+    links: Link[];
+    measures: Measure[];
+};
+
 export const digGraph = async (addresses: string[], stopafter?: string[]) => {
     // ensure addresses are only visited once
     const done = new Set<string>();
@@ -32,7 +37,7 @@ export const digGraph = async (addresses: string[], stopafter?: string[]) => {
                     const digResults = await digDeep(blockchainAddress);
                     // set the links
                     graph.links.set(address, digResults.links);
-                    // and backlinks
+                    // and consequent backlinks
                     digResults.links.forEach((link) =>
                         graph.backLinks.set(
                             link.address,
@@ -78,21 +83,11 @@ export const digGraph = async (addresses: string[], stopafter?: string[]) => {
             }
         }
     }
-
     return graph;
 };
 
 export const dig = (address: string): BlockchainAddress | null => {
     return address !== ZeroAddress ? new BlockchainAddress(address) : null;
-};
-
-const identity = <T>(arg: T): T => {
-    return arg;
-};
-
-export type DigDeepResults = {
-    links: Link[];
-    measures: Measure[];
 };
 
 export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResults> => {
@@ -178,7 +173,7 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                     // single number
                     measures.push({
                         calculation: async () => await rpcContract[func.name](),
-                        name: func.name,
+                        name: `${func.name}`,
                         type: func.outputs[0].type,
                     });
                 } else {

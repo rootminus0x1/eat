@@ -13,6 +13,10 @@ export const write = (config: any, name: string, results: string): void => {
     outputFile.end();
 };
 
+export const writeYaml = (config: any, name: string, results: any): void => {
+    write(config, name, yaml.dump(results));
+};
+
 export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
     const result = [];
     // functions
