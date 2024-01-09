@@ -1,10 +1,8 @@
 '0x11E91BB6d1334585AA37D8F4fde3932C7960B938':
-  name: 0x11E..938
-  contractNamish: '0x11E91BB6d1334585AA37D8F4fde3932C7960B938'
+  contract: '0x11E91BB6d1334585AA37D8F4fde3932C7960B938'
   measurements: {}
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
-  name: BoostableRebalancePool[1]
-  contractNamish: BoostableRebalancePool
+  contract: BoostableRebalancePool
   measurements:
     gauge.claimAt:
       type: uint64
@@ -25,8 +23,7 @@
       type: uint256
       value: '2723055141145695996658868'
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
-  name: BoostableRebalancePool[2]
-  contractNamish: BoostableRebalancePool
+  contract: BoostableRebalancePool
   measurements:
     gauge.claimAt:
       type: uint64
@@ -47,8 +44,7 @@
       type: uint256
       value: '2956321364769018396295364'
 '0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230':
-  name: ChainlinkTwapOracleV3_0
-  contractNamish: ChainlinkTwapOracleV3
+  contract: ChainlinkTwapOracleV3
   measurements:
     chainlinkMessageExpiration:
       type: uint256
@@ -60,8 +56,7 @@
       type: uint256
       value: '2352781830000000000000'
 '0xD24AC180e6769Fd5F624e7605B93084171074A77':
-  name: ChainlinkTwapOracleV3_1
-  contractNamish: ChainlinkTwapOracleV3
+  contract: ChainlinkTwapOracleV3
   measurements:
     chainlinkMessageExpiration:
       type: uint256
@@ -73,8 +68,7 @@
       type: uint256
       value: '2354302111120000000000'
 '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419':
-  name: EACAggregatorProxy_0
-  contractNamish: EACAggregatorProxy
+  contract: EACAggregatorProxy
   measurements:
     decimals:
       type: uint8
@@ -135,8 +129,7 @@
       type: uint256
       value: '4'
 '0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8':
-  name: EACAggregatorProxy_1
-  contractNamish: EACAggregatorProxy
+  contract: EACAggregatorProxy
   measurements:
     decimals:
       type: uint8
@@ -197,8 +190,7 @@
       type: uint256
       value: '4'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
-  name: fETH
-  contractNamish: FractionalToken
+  contract: FractionalToken
   measurements:
     decimals:
       type: uint8
@@ -210,8 +202,7 @@
       type: uint256
       value: '6650842598065295621717671'
 '0xa84360896cE9152d1780c546305BB54125F962d9':
-  name: FxETHTwapOracle
-  contractNamish: FxETHTwapOracle
+  contract: FxETHTwapOracle
   measurements:
     getPrice._safePrice:
       type: uint256
@@ -223,8 +214,7 @@
       type: uint256
       value: '2354302111120000000000'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
-  name: FXN
-  contractNamish: Curve DAO Token
+  contract: Curve DAO Token
   measurements:
     available_supply:
       type: uint256
@@ -251,8 +241,7 @@
       type: uint256
       value: '1020000000000000000000000'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
-  name: Gauge Controller
-  contractNamish: Gauge Controller
+  contract: Gauge Controller
   measurements:
     get_total_weight:
       type: uint256
@@ -267,8 +256,7 @@
       type: uint256
       value: '1694649600'
 '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
-  name: Market
-  contractNamish: Market
+  contract: Market
   measurements:
     fTokenMintFeeRatio.defaultFeeRatio:
       type: uint128
@@ -316,15 +304,13 @@
       type: int128
       value: '70000000000000000'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
-  name: PlatformFeeSpliter
-  contractNamish: PlatformFeeSpliter
+  contract: PlatformFeeSpliter
   measurements:
     getRewardCount:
       type: uint256
       value: '1'
 '0xa677d95B91530d56791FbA72C01a862f1B01A49e':
-  name: RebalancePool
-  contractNamish: RebalancePool
+  contract: RebalancePool
   measurements:
     epochState.epoch:
       type: uint64
@@ -354,34 +340,28 @@
       type: uint256
       value: '0'
 '0x4eEfea49e4D876599765d5375cF7314cD14C9d38':
-  name: RebalancePoolRegistry
-  contractNamish: RebalancePoolRegistry
+  contract: RebalancePoolRegistry
   measurements:
     totalSupply:
       type: uint256
       value: '5811959010789095234500199'
 '0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb':
-  name: RebalancePoolSplitter
-  contractNamish: RebalancePoolSplitter
+  contract: RebalancePoolSplitter
   measurements: {}
 '0x17f21f468d77E6e35702a9Ae7a9da50Db7F6a4f4':
-  name: RebalanceWithBonusToken
-  contractNamish: RebalanceWithBonusToken
+  contract: RebalanceWithBonusToken
   measurements:
     bonus:
       type: uint256
       value: '2000000000000000000'
 '0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752':
-  name: ReservePool
-  contractNamish: ReservePool
+  contract: ReservePool
   measurements: {}
 '0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
-  name: SmartWalletWhitelist
-  contractNamish: SmartWalletWhitelist
+  contract: SmartWalletWhitelist
   measurements: {}
 '0x21E27a5E5513D6e65C4f830167390997aA84843a':
-  name: stETH-ng-f
-  contractNamish: StableSwap
+  contract: StableSwap
   measurements:
     A_precise:
       type: uint256
@@ -444,12 +424,10 @@
       type: uint256
       value: '45363931240034965729028'
 '0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E':
-  name: StETHAndxETHWrapper
-  contractNamish: StETHAndxETHWrapper
+  contract: StETHAndxETHWrapper
   measurements: {}
 '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0':
-  name: stETHTreasury
-  contractNamish: stETHTreasury
+  contract: stETHTreasury
   measurements:
     baseTokenCap:
       type: uint256
@@ -500,12 +478,10 @@
       type: uint256
       value: '6179474952048061425555'
 '0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
-  name: Token Minter
-  contractNamish: Token Minter
+  contract: Token Minter
   measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
-  name: veFXN
-  contractNamish: Voting Escrow
+  contract: Voting Escrow
   measurements:
     decimals:
       type: uint256
@@ -520,8 +496,7 @@
       type: uint256
       value: '94540343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
-  name: wstETH
-  contractNamish: WstETH
+  contract: WstETH
   measurements:
     decimals:
       type: uint8
@@ -536,12 +511,10 @@
       type: uint256
       value: '3247614816540003642107369'
 '0xb09e34dD25d5E88a1E9Ff6F6418109927675B658':
-  name: wstETHWrapper
-  contractNamish: wstETHWrapper
+  contract: wstETHWrapper
   measurements: {}
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
-  name: xETH
-  contractNamish: LeveragedToken
+  contract: LeveragedToken
   measurements:
     decimals:
       type: uint8

@@ -1,6 +1,14 @@
 block: 18888888
 diagram:
   renderer: elk
+format:
+  - type: uint256
+    digits: 18
+  - contract: eek
+    call: getCurrentNav._baseNav
+    digits: 20
+  - type: unit128
+    digits: 0
 stopafter:
   - '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
   - '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'

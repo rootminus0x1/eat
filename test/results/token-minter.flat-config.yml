@@ -1,6 +1,14 @@
 block: 18888888
 diagram:
   renderer: default
+format:
+  - type: uint256
+    digits: 18
+  - contract: eek
+    call: getCurrentNav._baseNav
+    digits: 20
+  - type: unit128
+    digits: 0
 start:
   - '0xC8b194925D55d5dE9555AD1db74c149329F71DeF'
 stopafter:

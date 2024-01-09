@@ -1,6 +1,14 @@
 block: 18888888
 diagram:
   renderer: default
+format:
+  - type: uint256
+    digits: 18
+  - contract: eek
+    call: getCurrentNav._baseNav
+    digits: 20
+  - type: unit128
+    digits: 0
 start:
   - '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/

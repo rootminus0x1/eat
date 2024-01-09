@@ -14,7 +14,13 @@ export const write = (config: any, name: string, results: string): void => {
 };
 
 export const writeYaml = (config: any, name: string, results: any): void => {
-    write(config, name, yaml.dump(results));
+    const reformatted = lodash.cloneDeepWith(results, (value) => {
+        if (typeof value === 'bigint') {
+            // TODO: find a way to format those correctly, not just to a string
+            return value.toString();
+        }
+    });
+    write(config, name, yaml.dump(reformatted));
 };
 
 export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
