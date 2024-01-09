@@ -2,13 +2,38 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { ethers } from 'hardhat';
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { Contract, ZeroAddress } from 'ethers';
 
+import { ethers, network } from 'hardhat';
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { reset } from '@nomicfoundation/hardhat-network-helpers';
+
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
+import { asDateString } from './datetime';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
+
+export class Blockchain {
+    private allSigners = ethers.getSigners();
+    private allocatedSigners = 0;
+
+    public timestamp = 0;
+
+    constructor(public blockNumber: number) {}
+
+    public getUser = async (name: string): Promise<SignerWithAddress> => {
+        await this.allSigners;
+        return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
+    };
+
+    public reset = async (quiet: boolean) => {
+        await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
+        this.blockNumber = await ethers.provider.getBlockNumber();
+        this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
+        if (!quiet)
+            console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
+    };
+}
 
 type ERC20Fields = { name: string | undefined; symbol: string | undefined };
 

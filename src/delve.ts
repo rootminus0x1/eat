@@ -1,4 +1,4 @@
-import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } from './blockchain';
+import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } from './blockchain-old';
 import { PAMSystem } from './PokeAndMeasure';
 import { Contract } from 'ethers';
 import { Graph } from './graph';

@@ -5,7 +5,7 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
-import { BlockchainAddress } from './BlockchainAddress';
+import { BlockchainAddress } from './Blockchain';
 import { Link, Measure } from './graph';
 
 /*

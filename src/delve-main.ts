@@ -8,7 +8,7 @@ import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { getConfig } from './config';
-import { ContractWithAddress, UserWithAddress, deploy, getContract } from './blockchain';
+import { ContractWithAddress, UserWithAddress, deploy, getContract } from './blockchain-old';
 import { asDateString, asDate } from './datetime';
 import { PAMSystem, PAMRunner } from './PokeAndMeasure';
 import { addContract, addUser } from './delve';

@@ -5,40 +5,17 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { ethers, network } from 'hardhat';
-import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
 import { getConfig, write } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
-import { dig, digDeep, DigDeepResults } from './dig';
+import { Blockchain } from './Blockchain';
+import { dig, digDeep } from './dig';
 import { Graph } from './graph';
 import { calculateMeasures } from './delve';
-import { ContractTransactionResponse, isAddress, MaxInt256, parseEther } from 'ethers';
+import { ContractTransactionResponse, MaxInt256, parseEther } from 'ethers';
 import { ensureDirectory } from './eat-cache';
-
-class Blockchain {
-    private allSigners = ethers.getSigners();
-    private allocatedSigners = 0;
-
-    public timestamp = 0;
-
-    constructor(public blockNumber: number) {}
-
-    public getUser = async (name: string): Promise<SignerWithAddress> => {
-        await this.allSigners;
-        return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
-    };
-
-    public reset = async (quiet: boolean) => {
-        await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
-        this.blockNumber = await ethers.provider.getBlockNumber();
-        this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
-        if (!quiet)
-            console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
-    };
-}
 
 async function main() {
     // process the command line
@@ -153,20 +130,11 @@ async function main() {
 
         write(config, 'measures.yml', yaml.dump(await calculateMeasures(graph)));
 
-        let allSigners = ethers.getSigners();
-        let allocatedSigners = 0;
-
-        async function getUser(name: string): Promise<SignerWithAddress> {
-            return (await allSigners)[allocatedSigners++];
-            //console.log("%s = %s", signer.address, name);
-            //return Object.assign(signer, { name: name }) as UserWithAddress;
-        }
-
         // get all the users
         const allUsers = new Map<string, SignerWithAddress>();
         if (config.users)
             for (const name of config.users) {
-                allUsers.set(name, await getUser(name));
+                allUsers.set(name, await blockchain.getUser(name));
             }
         type ActionFunction = () => Promise<ContractTransactionResponse>;
         const allActions = new Map<string, ActionFunction>();

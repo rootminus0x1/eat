@@ -1,4 +1,4 @@
-import { BlockchainAddress } from './BlockchainAddress';
+import { BlockchainAddress } from './Blockchain';
 // the nodes, also contains static information about the nodes, name, etc
 export type graphNode = BlockchainAddress & { name: string; stopper: boolean };
 // the links - between a from address (key) and to list of named addresses (value)
