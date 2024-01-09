@@ -1,9 +1,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml'; // config files are in yaml
-import * as lodash from 'lodash';
+import lodash from 'lodash';
 
 type ConfigItem = { name: string; config: any };
+
+export const write = (config: any, name: string, results: string): void => {
+    const outputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '-' + name, {
+        encoding: 'utf-8',
+    });
+    outputFile.write(results);
+    outputFile.end();
+};
 
 // TODO: support referencing to merge in other config.
 export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
@@ -11,7 +19,13 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
     // functions
     const getConfigName = (configFilePath: string) =>
         path.basename(configFilePath, '.config' + path.extname(configFilePath));
+
     const loadYaml = (configFilePath: string) => yaml.load(fs.readFileSync(configFilePath).toString());
+
+    const merge = (object: any, source: any) =>
+        lodash.mergeWith(object, source, (o: any, s: any) => {
+            if (lodash.isArray(o)) return o.concat(s);
+        });
 
     // load the default-configs
     let defaults: ConfigItem[] = [];
@@ -35,22 +49,24 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
         // find matching defaults and merge them
         const config: any = defaults.reduce((result: any, d) => {
             if (configName.startsWith(d.name)) {
-                //console.log(`defaulting from '${d.name}'`);
-                lodash.merge(result, d.config);
-                // console.log(`new config = ${JSON.stringify(result, undefined, '  ')}`);
+                console.log(`defaulting from '${d.name}'`);
+                merge(result, d.config);
+                console.log(`new config = ${JSON.stringify(result, undefined, '  ')}`);
             }
             return result;
         }, {} as any);
 
         // finally merge in the actual config
-        lodash.merge(config, loadYaml(configFilePath));
+        merge(config, loadYaml(configFilePath));
 
         // finally, finally, add additional fields
         config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
         config.configFilePath = configFilePath;
         config.configName = configName;
 
-        //console.log(`final config = ${JSON.stringify(config, undefined, '  ')}`);
+        write(config, 'flat-config.xml', yaml.dump(config));
+
+        console.log(`final config = ${JSON.stringify(config, undefined, '  ')}`);
 
         result.push(config);
     }

@@ -1,0 +1,10 @@
+block: 18888888
+diagram:
+  renderer: default
+start:
+  - '0xC8b194925D55d5dE9555AD1db74c149329F71DeF'
+stopafter:
+  - '0xC8b194925D55d5dE9555AD1db74c149329F71DeF'
+outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
+configFilePath: /home/tfras/github/rootminus0x1/eat/test/token-minter.config.yml
+configName: token-minter

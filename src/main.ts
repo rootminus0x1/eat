@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as yaml from 'js-yaml'; // config files are in yaml
 import yargs from 'yargs/yargs';
 
@@ -10,7 +9,7 @@ import { ethers, network } from 'hardhat';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
-import { getConfig } from './config';
+import { getConfig, write } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { dig, digDeep, DigDeepResults } from './dig';
@@ -112,13 +111,11 @@ async function main() {
         // output a diagram
         // TODO: add this output to the config/command line
         if (!config.nodiagram) {
-            const diagramOutputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '-diagram.md', {
-                encoding: 'utf-8',
-            });
-            diagramOutputFile.write(
+            write(
+                config,
+                'diagram.md',
                 await mermaid(graph, blockchain.blockNumber, asDateString(blockchain.timestamp), config.diagram),
             );
-            diagramOutputFile.end();
         }
 
         // make node names unique
@@ -154,12 +151,7 @@ async function main() {
             }
         }
 
-        const measuresOutputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '-measures.yml', {
-            encoding: 'utf-8',
-        });
-        const results = await calculateMeasures(graph);
-        measuresOutputFile.write(yaml.dump(results));
-        measuresOutputFile.end();
+        write(config, 'measures.yml', yaml.dump(await calculateMeasures(graph)));
 
         let allSigners = ethers.getSigners();
         let allocatedSigners = 0;
