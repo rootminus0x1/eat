@@ -1,6 +1,3 @@
-'0x11E91BB6d1334585AA37D8F4fde3932C7960B938':
-  contract: '0x11E91BB6d1334585AA37D8F4fde3932C7960B938'
-  measurements: {}
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   contract: BoostableRebalancePool
   measurements:
@@ -82,18 +79,6 @@
     getRewardCount:
       type: uint256
       value: '1'
-'0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752':
-  contract: ReservePool
-  measurements: {}
-'0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
-  contract: SmartWalletWhitelist
-  measurements: {}
-'0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E':
-  contract: StETHAndxETHWrapper
-  measurements: {}
-'0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
-  contract: Token Minter
-  measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:

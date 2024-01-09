@@ -83,7 +83,7 @@ export const calculateMeasures = async (graph: Graph): Promise<Object> => {
 
     for (const [address, node] of sort(graph.nodes, (v) => v.name)) {
         const measures = graph.measures.get(address);
-        if (measures) {
+        if (measures && measures.length > 0) {
             let values: any = {};
             for (const measure of measures) {
                 let value: any = { type: measure.type };

@@ -73,12 +73,6 @@
     time_total:
       type: uint256
       value: '1694649600'
-'0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
-  contract: SmartWalletWhitelist
-  measurements: {}
-'0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
-  contract: Token Minter
-  measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
@@ -109,6 +103,3 @@
     totalSupply:
       type: uint256
       value: '3247614816540003642107369'
-'0xb09e34dD25d5E88a1E9Ff6F6418109927675B658':
-  contract: wstETHWrapper
-  measurements: {}

@@ -1,6 +1,3 @@
-'0x11E91BB6d1334585AA37D8F4fde3932C7960B938':
-  contract: '0x11E91BB6d1334585AA37D8F4fde3932C7960B938'
-  measurements: {}
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
   contract: BoostableRebalancePool
   measurements:
@@ -345,21 +342,12 @@
     totalSupply:
       type: uint256
       value: '5811959010789095234500199'
-'0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb':
-  contract: RebalancePoolSplitter
-  measurements: {}
 '0x17f21f468d77E6e35702a9Ae7a9da50Db7F6a4f4':
   contract: RebalanceWithBonusToken
   measurements:
     bonus:
       type: uint256
       value: '2000000000000000000'
-'0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752':
-  contract: ReservePool
-  measurements: {}
-'0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea':
-  contract: SmartWalletWhitelist
-  measurements: {}
 '0x21E27a5E5513D6e65C4f830167390997aA84843a':
   contract: StableSwap
   measurements:
@@ -423,9 +411,6 @@
     totalSupply:
       type: uint256
       value: '45363931240034965729028'
-'0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E':
-  contract: StETHAndxETHWrapper
-  measurements: {}
 '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0':
   contract: stETHTreasury
   measurements:
@@ -477,9 +462,6 @@
     totalBaseToken:
       type: uint256
       value: '6179474952048061425555'
-'0xC8b194925D55d5dE9555AD1db74c149329F71DeF':
-  contract: Token Minter
-  measurements: {}
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
@@ -510,9 +492,6 @@
     totalSupply:
       type: uint256
       value: '3247614816540003642107369'
-'0xb09e34dD25d5E88a1E9Ff6F6418109927675B658':
-  contract: wstETHWrapper
-  measurements: {}
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
   contract: LeveragedToken
   measurements:
