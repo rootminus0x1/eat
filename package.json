@@ -2,15 +2,16 @@
   "name": "eat",
   "version": "0.0.1",
   "description": "Ethereum Archaeology Tools",
-  "main": "index.js",
+  "main": "src/main.ts",
   "author": "rootminus0x1 <rootminus0x1@gmail.com>",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "tsconfig": "tsc --showConfig && ts-node --showConfig",
     "lint": "ts-node test/findGlobals.ts",
-    "test": "ts-node src/main.ts test/*.yml",
-    "svg": "for file in ./test/*/*.md; do mmdc -i \"$file\" -o \"${file%.md}.svg\" && mv \"${file%.md}-1.svg\" \"${file%.md}.svg\"; done",
-    "view": "for file in ./test/*/*.svg; do firefox 2>/dev/null -new-tab $file & done"
+    "test": "ts-node src/main.ts test/*-config.yml",
+    "svg": "for file in ./test/results/*.md; do mmdc -i \"$file\" -o \"${file%.md}.svg\" && mv \"${file%.md}-1.svg\" \"${file%.md}.svg\"; done",
+    "view": "for file in ./test/results/*.svg; do firefox 2>/dev/null -new-tab $file & done"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^10.6.1",
@@ -18,7 +19,8 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@types/crypto-js": "^4.2.1",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.10.4",
+    "@types/node": "^20.10.7",
+    "@types/yargs": "^17.0.32",
     "axios": "^1.6.3",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.3.1",
@@ -29,7 +31,8 @@
     "ts-morph": "^21.0.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "yargs": "^17.7.2"
   },
   "dependencies": {}
 }

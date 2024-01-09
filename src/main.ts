@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml'; // config files are in yaml
+import yargs from 'yargs/yargs';
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
@@ -16,6 +17,7 @@ import { dig, digDeep, DigDeepResults } from './dig';
 import { Graph } from './graph';
 import { calculateMeasures } from './delve';
 import { ContractTransactionResponse, isAddress, MaxInt256, parseEther } from 'ethers';
+import { ensureDirectory } from './eat-cache';
 
 class Blockchain {
     private allSigners = ethers.getSigners();
@@ -39,8 +41,25 @@ class Blockchain {
 }
 
 async function main() {
-    const configs = getConfig();
+    // process the command line
+    const argv: any = yargs(process.argv.slice(2))
+        .options({
+            nodiagram: { type: 'boolean', default: false },
+            nomeasures: { type: 'boolean', default: false },
+            showconfig: { type: 'boolean', default: false },
+            defaultconfig: { type: 'string', default: 'test/default-config.yml' },
+        })
+        .parse();
+
+    const configs = getConfig(argv._, argv.defaultconfig);
     for (const config of configs) {
+        if (argv.showconfig) {
+            console.log(config);
+            break;
+        }
+
+        ensureDirectory(config.outputFileRoot);
+
         const blockchain = new Blockchain(config.block);
         await blockchain.reset();
 
