@@ -1,72 +1,56 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml'; // config files are in yaml
+import * as lodash from 'lodash';
 
-function deepCopyAndOverlay<T extends Record<string, any>>(source1: T, source2: T): T {
-    function deepCopy(obj: any): any {
-        if (obj === null || typeof obj !== 'object') {
-            return obj;
-        }
-
-        if (Array.isArray(obj)) {
-            return obj.map((item) => deepCopy(item));
-        }
-
-        if (typeof obj === 'object') {
-            const copiedObject: Record<string, any> = {};
-
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    copiedObject[key] = deepCopy(obj[key]);
-                }
-            }
-
-            return copiedObject;
-        }
-
-        return obj;
-    }
-
-    const copiedObject = deepCopy(source1);
-
-    function overlay(target: Record<string, any>, source: Record<string, any>): void {
-        for (const key in source) {
-            if (source.hasOwnProperty(key)) {
-                if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
-                    // Recursively overlay nested objects
-                    target[key] = deepCopyAndOverlay(target[key], source[key]);
-                } else {
-                    // Overlay primitive values or arrays
-                    target[key] = source[key];
-                }
-            }
-        }
-    }
-
-    overlay(copiedObject, source2);
-
-    return copiedObject;
-}
+type ConfigItem = { name: string; config: any };
 
 // TODO: support referencing to merge in other config.
-export const getConfig = (fileArgs: string[], defaultconfigArg: string): any[] => {
+export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
     const result = [];
-    // load the default
-    const defaultConfigFilePath = path.resolve(defaultconfigArg);
-    const defaultConfig: any = yaml.load(fs.readFileSync(defaultConfigFilePath).toString());
+    // functions
+    const getConfigName = (configFilePath: string) =>
+        path.basename(configFilePath, '.config' + path.extname(configFilePath));
+    const loadYaml = (configFilePath: string) => yaml.load(fs.readFileSync(configFilePath).toString());
+
+    // load the default-configs
+    let defaults: ConfigItem[] = [];
+    try {
+        fs.readdirSync(defaultconfigsArg)
+            .sort()
+            .forEach((fileName) =>
+                defaults.push({
+                    name: getConfigName(fileName),
+                    config: loadYaml(defaultconfigsArg + '/' + fileName),
+                }),
+            );
+    } catch (error: any) {}
+    // console.log(defaults);
 
     for (const fileArg of fileArgs) {
+        // load the requested config
         const configFilePath = path.resolve(fileArg);
-        if (configFilePath === defaultConfigFilePath) continue; // don't process the default as a non-default
+        const configName = getConfigName(configFilePath);
 
-        // load and copy it over a copy of the default
-        let undefaultedConfig: any = yaml.load(fs.readFileSync(configFilePath).toString());
-        let config = deepCopyAndOverlay(defaultConfig, undefaultedConfig);
+        // find matching defaults and merge them
+        const config: any = defaults.reduce((result: any, d) => {
+            if (configName.startsWith(d.name)) {
+                //console.log(`defaulting from '${d.name}'`);
+                lodash.merge(result, d.config);
+                // console.log(`new config = ${JSON.stringify(result, undefined, '  ')}`);
+            }
+            return result;
+        }, {} as any);
 
-        // add additional fields
+        // finally merge in the actual config
+        lodash.merge(config, loadYaml(configFilePath));
+
+        // finally, finally, add additional fields
         config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
         config.configFilePath = configFilePath;
-        config.configName = path.basename(configFilePath, '-config' + path.extname(configFilePath));
+        config.configName = configName;
+
+        //console.log(`final config = ${JSON.stringify(config, undefined, '  ')}`);
 
         result.push(config);
     }

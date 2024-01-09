@@ -49,12 +49,11 @@ async function main() {
             nomeasures: { type: 'boolean', default: false },
             showconfig: { type: 'boolean', default: false },
             quiet: { type: 'boolean', default: false },
-            defaultconfig: { type: 'string', default: 'test/default-config.yml' },
+            defaultconfigs: { type: 'string', default: 'test/default-configs' },
         })
         .parse();
 
-    const configs = getConfig(argv._, argv.defaultconfig);
-    for (const config of configs) {
+    for (const config of getConfig(argv._, argv.defaultconfigs)) {
         if (!config.quiet) console.log(`config: ${config.configName}  from ${config.configFilePath}`);
         if (argv.showconfig) {
             console.log(config);
@@ -184,13 +183,12 @@ async function main() {
             const fMinter = allUsers.get('fMinter');
             if (!fMinter) throw Error('could not find fMinter user');
 
-            /*
-        const treasuryNode = graph.nodes.get("stETHTreasury");
-        if (! treasuryNode) throw Error("could not find stETHTreasury contract");
-        const treasury: any = treasuryNode.getContract(fMinter);
-        // TODO: access the Calculation for this
-        const fNav = await treasury.getCurrentNav().then((res: any) => res._fNav);
-        */
+            // const treasuryNode = graph.nodes.get("stETHTreasury");
+            // if (! treasuryNode) throw Error("could not find stETHTreasury contract");
+            // const treasury: any = treasuryNode.getContract(fMinter);
+            // // TODO: access the Calculation for this
+            // const fNav = await treasury.getCurrentNav().then((res: any) => res._fNav);
+            //
 
             const marketNode = graph.nodes.get('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB');
             if (!marketNode) throw Error('could not find Market contract');

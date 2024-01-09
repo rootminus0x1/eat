@@ -1,0 +1,7 @@
+stopafter:
+  - "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84" # stETH
+  #- '0xa84360896cE9152d1780c546305BB54125F962d9' # FxETHTwapOracle
+  - "0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF" # GnosisSafe (just has a list of owners)
+  - "0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA" # "           "
+  - "0xE62B71cf983019BFf55bC83B48601ce8419650CC" # AccessControlledOffchainAggregator
+  - "0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196" # "           ",
