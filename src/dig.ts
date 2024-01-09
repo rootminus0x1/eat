@@ -6,25 +6,81 @@ import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, ZeroAddress, TransactionReceipt } from 'ethers';
 
 import { BlockchainAddress } from './Blockchain';
-import { Link, Measure } from './graph';
+import { Graph, Link, Measure } from './graph';
 
-/*
-function hasFunction(abi: ethers.Interface, name: string, inputTypes: string[], outputTypes: string[]): boolean {
-    abi.forEachFunction(async (func) => {
-        if (
-            func.name === name &&
-            func.inputs.reduce((matches, input, index) => {
-                return matches && input.type == inputTypes[index];
-            }, true) &&
-            func.outputs.reduce((matches, output, index) => {
-                return matches && output.type == outputTypes[index];
-            }, true)
-        )
-            return true;
-    });
-    return false;
-}
-*/
+export const digGraph = async (addresses: string[], stopafter?: string[]) => {
+    // ensure addresses are only visited once
+    const done = new Set<string>();
+    const graph = new Graph();
+    while (addresses && addresses.length) {
+        const address = addresses[0];
+        addresses.shift();
+        if (!done.has(address)) {
+            done.add(address);
+            const blockchainAddress = dig(address);
+            if (blockchainAddress) {
+                const stopper = stopafter?.includes(address);
+                const name =
+                    (await blockchainAddress.erc20Symbol()) ||
+                    (await blockchainAddress.implementationContractName()) ||
+                    (await blockchainAddress.contractName()) ||
+                    ((await blockchainAddress.isAddress()) ? address.slice(0, 5) + '..' + address.slice(-3) : address);
+
+                graph.nodes.set(address, Object.assign({ name: name, stopper: stopper }, blockchainAddress));
+
+                if (!stopper) {
+                    const digResults = await digDeep(blockchainAddress);
+                    // set the links
+                    graph.links.set(address, digResults.links);
+                    // and backlinks
+                    digResults.links.forEach((link) =>
+                        graph.backLinks.set(
+                            link.address,
+                            (graph.backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
+                        ),
+                    );
+
+                    // add more addresses to be dug up
+                    digResults.links.forEach((link) => addresses.push(link.address));
+                    graph.measures.set(address, digResults.measures);
+                }
+            }
+        }
+    }
+
+    // make node names unique
+    const nodeNames = new Map<string, string[]>();
+    for (const [address, node] of graph.nodes) {
+        nodeNames.set(node.name, (nodeNames.get(node.name) ?? []).concat(address));
+    }
+    for (const [name, addresses] of nodeNames) {
+        if (addresses.length > 1) {
+            // find the links to get some name for them
+            let unique = 0;
+            for (const address of addresses) {
+                const node = graph.nodes.get(address);
+                if (node) {
+                    //console.log(`for ${address},`);
+                    const backLinks = graph.backLinks.get(address);
+                    let done = false;
+                    if (backLinks && backLinks.length == 1) {
+                        const index = backLinks[0].name.match(/\[\d+\]$/);
+                        if (index && index.length == 1) {
+                            node.name += index[0];
+                            done = true;
+                        }
+                    }
+                    if (!done) {
+                        node.name += `_${unique}`;
+                        unique++;
+                    }
+                }
+            }
+        }
+    }
+
+    return graph;
+};
 
 export const dig = (address: string): BlockchainAddress | null => {
     return address !== ZeroAddress ? new BlockchainAddress(address) : null;

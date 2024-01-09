@@ -13,7 +13,6 @@ export const write = (config: any, name: string, results: string): void => {
     outputFile.end();
 };
 
-// TODO: support referencing to merge in other config.
 export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
     const result = [];
     // functions

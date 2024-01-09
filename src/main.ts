@@ -11,8 +11,7 @@ import { getConfig, write } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
-import { dig, digDeep } from './dig';
-import { Graph } from './graph';
+import { digGraph } from './dig';
 import { calculateMeasures } from './delve';
 import { ContractTransactionResponse, MaxInt256, parseEther } from 'ethers';
 import { ensureDirectory } from './eat-cache';
@@ -43,89 +42,16 @@ async function main() {
 
         // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
         // we build up the graph structure as we go for future processing
-        const done = new Set<string>();
-        let addresses = config.start;
 
-        const graph = new Graph();
-        while (addresses && addresses.length) {
-            const address = addresses[0];
-            addresses.shift();
-            if (!done.has(address)) {
-                done.add(address);
-                const blockchainAddress = dig(address);
-                if (blockchainAddress) {
-                    const stopper = config.stopafter?.includes(address);
-                    const name =
-                        (await blockchainAddress.erc20Symbol()) ||
-                        (await blockchainAddress.implementationContractName()) ||
-                        (await blockchainAddress.contractName()) ||
-                        ((await blockchainAddress.isAddress())
-                            ? address.slice(0, 5) + '..' + address.slice(-3)
-                            : address);
-
-                    graph.nodes.set(address, Object.assign({ name: name, stopper: stopper }, blockchainAddress));
-
-                    if (!stopper) {
-                        const digResults = await digDeep(blockchainAddress);
-                        // set the links
-                        graph.links.set(address, digResults.links);
-                        // and backlinks
-                        digResults.links.forEach((link) =>
-                            graph.backLinks.set(
-                                link.address,
-                                (graph.backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
-                            ),
-                        );
-
-                        // add more addresses to be dug up
-                        digResults.links.forEach((link) => addresses.push(link.address));
-                        graph.measures.set(address, digResults.measures);
-                    }
-                }
-            }
-        }
+        const graph = await digGraph(config.start, config.stopafter);
 
         // output a diagram
-        // TODO: add this output to the config/command line
         if (!config.nodiagram) {
             write(
                 config,
                 'diagram.md',
                 await mermaid(graph, blockchain.blockNumber, asDateString(blockchain.timestamp), config.diagram),
             );
-        }
-
-        // make node names unique
-        const nodeNames = new Map<string, string[]>();
-        for (const [address, node] of graph.nodes) {
-            nodeNames.set(node.name, (nodeNames.get(node.name) ?? []).concat(address));
-        }
-        for (const [name, addresses] of nodeNames) {
-            if (addresses.length > 1) {
-                //console.log(`${name} is used for ${addresses}`);
-                // find the links to get some name for them
-                let unique = 0;
-                for (const address of addresses) {
-                    const node = graph.nodes.get(address);
-                    if (node) {
-                        //console.log(`for ${address},`);
-                        const backLinks = graph.backLinks.get(address);
-                        let done = false;
-                        if (backLinks && backLinks.length == 1) {
-                            const index = backLinks[0].name.match(/\[\d+\]$/);
-                            if (index && index.length == 1) {
-                                node.name += index[0];
-                                done = true;
-                            }
-                        }
-                        if (!done) {
-                            node.name += `_${unique}`;
-                            unique++;
-                        }
-                        //console.log(`${address} name becomes '${node.name}'`);
-                    }
-                }
-            }
         }
 
         write(config, 'measures.yml', yaml.dump(await calculateMeasures(graph)));

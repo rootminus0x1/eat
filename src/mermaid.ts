@@ -30,7 +30,7 @@ const makeContractName = (
     return result;
 };
 
-const makeStopper = (name: string, stopper: boolean): string => {
+const makeStopper = (name: string, stopper?: boolean): string => {
     return stopper ? `${name}<br><hr>` : name;
 };
 
@@ -39,7 +39,7 @@ const mergeProxyandLogic = true;
 const nodeMermaid = (
     address: string,
     type: AddressType,
-    stopper: boolean,
+    stopper?: boolean,
     contractName?: string,
     logic?: string,
     logicName?: string,
