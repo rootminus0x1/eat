@@ -9,7 +9,7 @@
     "build": "tsc",
     "tsconfig": "tsc --showConfig && ts-node --showConfig",
     "lint": "ts-node test/findGlobals.ts",
-    "test": "ts-node src/main.ts test/*-config.yml",
+    "test": "ts-node src/main.ts test/*.config.yml",
     "svg": "for file in ./test/results/*.md; do mmdc -i \"$file\" -o \"${file%.md}.svg\" && mv \"${file%.md}-1.svg\" \"${file%.md}.svg\"; done",
     "view": "for file in ./test/results/*.svg; do firefox 2>/dev/null -new-tab $file & done"
   },
