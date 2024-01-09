@@ -125,13 +125,15 @@ const linkMermaid = (from: string, to: string, name: string, logic?: string): st
     return f.join('\n');
 };
 
-const headerMermaid = (blockNumber: number, asOf: string): string => {
+const headerMermaid = (blockNumber: number, asOf: string, config?: any): string => {
     const f: string[] = [];
     cl(f, '```mermaid');
     cl(f, '---');
     cl(f, `title: contract graph as of block ${blockNumber}, ${asOf}`);
     cl(f, '---');
-    cl(f, '%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%');
+    if (config?.renderer) {
+        cl(f, `%%{init: {"flowchart": {"defaultRenderer": "${config.renderer}"}} }%%`);
+    }
     //%%{init: {"flowchart": {"htmlLabels": false}} }%%
     //%%{ init: { 'flowchart': { 'curve': 'stepBefore' } } }%%
 
@@ -157,9 +159,9 @@ const footerMermaid = (): string => {
     return f.join('\n');
 };
 
-export const mermaid = async (graph: Graph, blockNumber: number, asOf: string): Promise<string> => {
+export const mermaid = async (graph: Graph, blockNumber: number, asOf: string, config?: any): Promise<string> => {
     const f: string[] = [];
-    cl(f, headerMermaid(blockNumber, asOf));
+    cl(f, headerMermaid(blockNumber, asOf, config));
     for (const [address, node] of graph.nodes) {
         cl(
             f,

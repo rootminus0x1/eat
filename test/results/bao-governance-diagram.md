@@ -2,7 +2,7 @@
 ---
 title: contract graph as of block 18888888, 2023-12-29T04:33:47.000Z
 ---
-%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+%%{init: {"flowchart": {"defaultRenderer": "default"}} }%%
 flowchart TB
 
 0x840e75261c2934f33C8766F6eA6235330DC1D72d["<b>Gauge Controller</b><br><i>Vyper_contract</i>"]:::contract

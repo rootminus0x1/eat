@@ -32,11 +32,12 @@ class Blockchain {
         return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
     };
 
-    public reset = async () => {
+    public reset = async (quiet: boolean) => {
         await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
         this.blockNumber = await ethers.provider.getBlockNumber();
         this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
-        console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
+        if (!quiet)
+            console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
     };
 }
 
@@ -47,12 +48,14 @@ async function main() {
             nodiagram: { type: 'boolean', default: false },
             nomeasures: { type: 'boolean', default: false },
             showconfig: { type: 'boolean', default: false },
+            quiet: { type: 'boolean', default: false },
             defaultconfig: { type: 'string', default: 'test/default-config.yml' },
         })
         .parse();
 
     const configs = getConfig(argv._, argv.defaultconfig);
     for (const config of configs) {
+        if (!config.quiet) console.log(`config: ${config.configName}  from ${config.configFilePath}`);
         if (argv.showconfig) {
             console.log(config);
             break;
@@ -61,7 +64,7 @@ async function main() {
         ensureDirectory(config.outputFileRoot);
 
         const blockchain = new Blockchain(config.block);
-        await blockchain.reset();
+        await blockchain.reset(config.quiet);
 
         // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
         // we build up the graph structure as we go for future processing
@@ -69,7 +72,7 @@ async function main() {
         let addresses = config.start;
 
         const graph = new Graph();
-        while (addresses.length) {
+        while (addresses && addresses.length) {
             const address = addresses[0];
             addresses.shift();
             if (!done.has(address)) {
@@ -109,10 +112,15 @@ async function main() {
 
         // output a diagram
         // TODO: add this output to the config/command line
-        // TODO: factor out writing files, all it needs is a function to generate a string
-        const diagramOutputFile = fs.createWriteStream(config.outputFileRoot + '-diagram.md', { encoding: 'utf-8' });
-        diagramOutputFile.write(await mermaid(graph, blockchain.blockNumber, asDateString(blockchain.timestamp)));
-        diagramOutputFile.end();
+        if (!config.nodiagram) {
+            const diagramOutputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '-diagram.md', {
+                encoding: 'utf-8',
+            });
+            diagramOutputFile.write(
+                await mermaid(graph, blockchain.blockNumber, asDateString(blockchain.timestamp), config.diagram),
+            );
+            diagramOutputFile.end();
+        }
 
         // make node names unique
         const nodeNames = new Map<string, string[]>();
@@ -147,7 +155,9 @@ async function main() {
             }
         }
 
-        const measuresOutputFile = fs.createWriteStream(config.outputFileRoot + '-measures.yml', { encoding: 'utf-8' });
+        const measuresOutputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '-measures.yml', {
+            encoding: 'utf-8',
+        });
         const results = await calculateMeasures(graph);
         measuresOutputFile.write(yaml.dump(results));
         measuresOutputFile.end();

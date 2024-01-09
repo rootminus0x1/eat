@@ -20,3 +20,6 @@ users:
   - "fHolderRedeemer" # user who mint/redeems fTokens
   - "xMinter" # user who mint/redeems xTokens
   - "xHolderRedeemer" # user who mint/redeems xTokens
+
+diagram:
+  renderer: "elk"

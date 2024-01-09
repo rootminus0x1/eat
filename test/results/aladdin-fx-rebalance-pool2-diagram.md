@@ -2,7 +2,7 @@
 ---
 title: contract graph as of block 18888888, 2023-12-29T04:33:47.000Z
 ---
-%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+%%{init: {"flowchart": {"defaultRenderer": "default"}} }%%
 flowchart TB
 
 0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9[["<b>BoostableRebalancePool</b><br><i>TransparentUpgradeableProxy</i>"]]:::contract

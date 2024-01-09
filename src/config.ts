@@ -2,14 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml'; // config files are in yaml
 
-const loadConfig = (fileArg: string): any => {
-    const configFilePath = path.resolve(fileArg);
-    let config: any = yaml.load(fs.readFileSync(configFilePath).toString());
-    config.configFilePath = configFilePath;
-    config.configName = path.basename(configFilePath, '-config' + path.extname(configFilePath));
-    return config;
-};
-
 function deepCopyAndOverlay<T extends Record<string, any>>(source1: T, source2: T): T {
     function deepCopy(obj: any): any {
         if (obj === null || typeof obj !== 'object') {
@@ -60,11 +52,21 @@ function deepCopyAndOverlay<T extends Record<string, any>>(source1: T, source2: 
 export const getConfig = (fileArgs: string[], defaultconfigArg: string): any[] => {
     const result = [];
     // load the default
-    const defaultConfig = loadConfig(defaultconfigArg);
-    for (const fileArg of fileArgs) {
-        let config = deepCopyAndOverlay(defaultConfig, loadConfig(fileArg));
+    const defaultConfigFilePath = path.resolve(defaultconfigArg);
+    const defaultConfig: any = yaml.load(fs.readFileSync(defaultConfigFilePath).toString());
 
-        config.outputFileRoot = `${path.dirname(config.configFilePath)}/results/`;
+    for (const fileArg of fileArgs) {
+        const configFilePath = path.resolve(fileArg);
+        if (configFilePath === defaultConfigFilePath) continue; // don't process the default as a non-default
+
+        // load and copy it over a copy of the default
+        let undefaultedConfig: any = yaml.load(fs.readFileSync(configFilePath).toString());
+        let config = deepCopyAndOverlay(defaultConfig, undefaultedConfig);
+
+        // add additional fields
+        config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
+        config.configFilePath = configFilePath;
+        config.configName = path.basename(configFilePath, '-config' + path.extname(configFilePath));
 
         result.push(config);
     }
