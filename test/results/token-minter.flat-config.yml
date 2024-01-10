@@ -5,6 +5,10 @@ format:
   - contract: eek
     name: getCurrentNav._baseNav
     digits: 20
+  - contact: ChainlinkTwapOracleV3
+    name: chainlinkMinMessageCount
+  - contract: BoostableRebalancePool
+  - name: numTotalSupplyHistory
   - type: uint256
     digits: 18
   - type: unit128

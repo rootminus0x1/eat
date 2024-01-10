@@ -1,506 +1,506 @@
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
   contract: BoostableRebalancePool
   measurements:
-    gauge.claimAt:
+    - name: gauge.claimAt
       type: uint64
       value: '0'
-    lastAssetLossError:
+    - name: lastAssetLossError
       type: uint256
       value: '0'
-    liquidatableCollateralRatio:
+    - name: liquidatableCollateralRatio
       type: uint256
-      value: '1305500000000000000'
-    numTotalSupplyHistory:
+      value: '1.3055'
+    - name: numTotalSupplyHistory
       type: uint256
-      value: '68'
-    periodLength:
+      value: '0.000000000000000068'
+    - name: periodLength
       type: uint40
       value: '604800'
-    totalSupply:
+    - name: totalSupply
       type: uint256
-      value: '2723055141145695996658868'
+      value: '2723055.141145695996658868'
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   contract: BoostableRebalancePool
   measurements:
-    gauge.claimAt:
+    - name: gauge.claimAt
       type: uint64
       value: '0'
-    lastAssetLossError:
+    - name: lastAssetLossError
       type: uint256
       value: '0'
-    liquidatableCollateralRatio:
+    - name: liquidatableCollateralRatio
       type: uint256
-      value: '1305500000000000000'
-    numTotalSupplyHistory:
+      value: '1.3055'
+    - name: numTotalSupplyHistory
       type: uint256
-      value: '69'
-    periodLength:
+      value: '0.000000000000000069'
+    - name: periodLength
       type: uint40
       value: '604800'
-    totalSupply:
+    - name: totalSupply
       type: uint256
-      value: '2956321364769018396295364'
+      value: '2956321.364769018396295364'
 '0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230':
   contract: ChainlinkTwapOracleV3
   measurements:
-    chainlinkMessageExpiration:
+    - name: chainlinkMessageExpiration
       type: uint256
-      value: '10800'
-    chainlinkMinMessageCount:
+      value: '0.0000000000000108'
+    - name: chainlinkMinMessageCount
       type: uint256
-      value: '1'
-    getLatest:
+      value: '0.000000000000000001'
+    - name: getLatest
       type: uint256
-      value: '2352781830000000000000'
+      value: '2352.78183'
 '0xD24AC180e6769Fd5F624e7605B93084171074A77':
   contract: ChainlinkTwapOracleV3
   measurements:
-    chainlinkMessageExpiration:
+    - name: chainlinkMessageExpiration
       type: uint256
-      value: '10800'
-    chainlinkMinMessageCount:
+      value: '0.0000000000000108'
+    - name: chainlinkMinMessageCount
       type: uint256
-      value: '1'
-    getLatest:
+      value: '0.000000000000000001'
+    - name: getLatest
       type: uint256
-      value: '2354302111120000000000'
+      value: '2354.30211112'
 '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419':
   contract: EACAggregatorProxy
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '8'
-    latestAnswer:
+    - name: latestAnswer
       type: int256
       value: '235278183000'
-    latestRound:
+    - name: latestRound
       type: uint256
-      value: '110680464442257319337'
-    latestRoundData.roundId:
+      value: '110.680464442257319337'
+    - name: latestRoundData.roundId
       type: uint80
       value: '110680464442257319337'
-    latestRoundData.answer:
+    - name: latestRoundData.answer
       type: int256
       value: '235278183000'
-    latestRoundData.startedAt:
+    - name: latestRoundData.startedAt
       type: uint256
-      value: '1703822135'
-    latestRoundData.updatedAt:
+      value: '0.000000001703822135'
+    - name: latestRoundData.updatedAt
       type: uint256
-      value: '1703822135'
-    latestRoundData.answeredInRound:
+      value: '0.000000001703822135'
+    - name: latestRoundData.answeredInRound
       type: uint80
       value: '110680464442257319337'
-    latestTimestamp:
+    - name: latestTimestamp
       type: uint256
-      value: '1703822135'
-    phaseId:
+      value: '0.000000001703822135'
+    - name: phaseId
       type: uint16
       value: '6'
-    proposedLatestRoundData.roundId:
+    - name: proposedLatestRoundData.roundId
       type: uint80
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.answer:
+    - name: proposedLatestRoundData.answer
       type: int256
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.startedAt:
+    - name: proposedLatestRoundData.startedAt
       type: uint256
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.updatedAt:
+    - name: proposedLatestRoundData.updatedAt
       type: uint256
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.answeredInRound:
+    - name: proposedLatestRoundData.answeredInRound
       type: uint80
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    version:
+    - name: version
       type: uint256
-      value: '4'
+      value: '0.000000000000000004'
 '0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8':
   contract: EACAggregatorProxy
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '8'
-    latestAnswer:
+    - name: latestAnswer
       type: int256
       value: '235430211112'
-    latestRound:
+    - name: latestRound
       type: uint256
-      value: '18446744073709574477'
-    latestRoundData.roundId:
+      value: '18.446744073709574477'
+    - name: latestRoundData.roundId
       type: uint80
       value: '18446744073709574477'
-    latestRoundData.answer:
+    - name: latestRoundData.answer
       type: int256
       value: '235430211112'
-    latestRoundData.startedAt:
+    - name: latestRoundData.startedAt
       type: uint256
-      value: '1703821343'
-    latestRoundData.updatedAt:
+      value: '0.000000001703821343'
+    - name: latestRoundData.updatedAt
       type: uint256
-      value: '1703821343'
-    latestRoundData.answeredInRound:
+      value: '0.000000001703821343'
+    - name: latestRoundData.answeredInRound
       type: uint80
       value: '18446744073709574477'
-    latestTimestamp:
+    - name: latestTimestamp
       type: uint256
-      value: '1703821343'
-    phaseId:
+      value: '0.000000001703821343'
+    - name: phaseId
       type: uint16
       value: '1'
-    proposedLatestRoundData.roundId:
+    - name: proposedLatestRoundData.roundId
       type: uint80
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.answer:
+    - name: proposedLatestRoundData.answer
       type: int256
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.startedAt:
+    - name: proposedLatestRoundData.startedAt
       type: uint256
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.updatedAt:
+    - name: proposedLatestRoundData.updatedAt
       type: uint256
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    proposedLatestRoundData.answeredInRound:
+    - name: proposedLatestRoundData.answeredInRound
       type: uint80
       error: >-
         VM Exception while processing transaction: reverted with reason string
         'No proposed aggregator present'
-    version:
+    - name: version
       type: uint256
-      value: '4'
+      value: '0.000000000000000004'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   contract: FractionalToken
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    nav:
+    - name: nav
       type: uint256
-      value: '1000000000000000000'
-    totalSupply:
+      value: '1.0'
+    - name: totalSupply
       type: uint256
-      value: '6650842598065295621717671'
+      value: '6650842.598065295621717671'
 '0xa84360896cE9152d1780c546305BB54125F962d9':
   contract: FxETHTwapOracle
   measurements:
-    getPrice._safePrice:
+    - name: getPrice._safePrice
       type: uint256
-      value: '2354302111120000000000'
-    getPrice._minUnsafePrice:
+      value: '2354.30211112'
+    - name: getPrice._minUnsafePrice
       type: uint256
-      value: '2351811536536838519878'
-    getPrice._maxUnsafePrice:
+      value: '2351.811536536838519878'
+    - name: getPrice._maxUnsafePrice
       type: uint256
-      value: '2354302111120000000000'
+      value: '2354.30211112'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
   contract: Curve DAO Token
   measurements:
-    available_supply:
+    - name: available_supply
       type: uint256
-      value: '1047280171993911715747992'
-    decimals:
+      value: '1047280.171993911715747992'
+    - name: decimals
       type: uint256
-      value: '18'
-    INITIAL_RATE:
+      value: '0.000000000000000018'
+    - name: INITIAL_RATE
       type: uint256
-      value: '3107559614408929'
-    mining_epoch:
+      value: '0.003107559614408929'
+    - name: mining_epoch
       type: int128
       value: '0'
-    RATE_REDUCTION_COEFFICIENT:
+    - name: RATE_REDUCTION_COEFFICIENT
       type: uint256
-      value: '1111111111111111111'
-    rate:
+      value: '1.111111111111111111'
+    - name: rate
       type: uint256
-      value: '3107559614408929'
-    start_epoch_time:
+      value: '0.003107559614408929'
+    - name: start_epoch_time
       type: uint256
-      value: '1695045779'
-    totalSupply:
+      value: '0.000000001695045779'
+    - name: totalSupply
       type: uint256
-      value: '1020000000000000000000000'
+      value: '1020000.0'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
   contract: Gauge Controller
   measurements:
-    get_total_weight:
+    - name: get_total_weight
       type: uint256
       value: '0'
-    n_gauge_types:
+    - name: n_gauge_types
       type: int128
       value: '0'
-    n_gauges:
+    - name: n_gauges
       type: int128
       value: '0'
-    time_total:
+    - name: time_total
       type: uint256
-      value: '1694649600'
+      value: '0.0000000016946496'
 '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
   contract: Market
   measurements:
-    fTokenMintFeeRatio.defaultFeeRatio:
+    - name: fTokenMintFeeRatio.defaultFeeRatio
       type: uint128
       value: '2500000000000000'
-    fTokenMintFeeRatio.extraFeeRatio:
+    - name: fTokenMintFeeRatio.extraFeeRatio
       type: int128
       value: '0'
-    fTokenRedeemFeeRatio.defaultFeeRatio:
+    - name: fTokenRedeemFeeRatio.defaultFeeRatio
       type: uint128
       value: '2500000000000000'
-    fTokenRedeemFeeRatio.extraFeeRatio:
+    - name: fTokenRedeemFeeRatio.extraFeeRatio
       type: int128
       value: '-2500000000000000'
-    incentiveConfig.stabilityIncentiveRatio:
+    - name: incentiveConfig.stabilityIncentiveRatio
       type: uint64
       value: '0'
-    incentiveConfig.liquidationIncentiveRatio:
+    - name: incentiveConfig.liquidationIncentiveRatio
       type: uint64
       value: '0'
-    incentiveConfig.selfLiquidationIncentiveRatio:
+    - name: incentiveConfig.selfLiquidationIncentiveRatio
       type: uint64
       value: '0'
-    marketConfig.stabilityRatio:
+    - name: marketConfig.stabilityRatio
       type: uint64
       value: '1305500000000000000'
-    marketConfig.liquidationRatio:
+    - name: marketConfig.liquidationRatio
       type: uint64
       value: '1206700000000000000'
-    marketConfig.selfLiquidationRatio:
+    - name: marketConfig.selfLiquidationRatio
       type: uint64
       value: '1143900000000000000'
-    marketConfig.recapRatio:
+    - name: marketConfig.recapRatio
       type: uint64
       value: '1000000000000000000'
-    xTokenMintFeeRatio.defaultFeeRatio:
+    - name: xTokenMintFeeRatio.defaultFeeRatio
       type: uint128
       value: '10000000000000000'
-    xTokenMintFeeRatio.extraFeeRatio:
+    - name: xTokenMintFeeRatio.extraFeeRatio
       type: int128
       value: '-10000000000000000'
-    xTokenRedeemFeeRatio.defaultFeeRatio:
+    - name: xTokenRedeemFeeRatio.defaultFeeRatio
       type: uint128
       value: '10000000000000000'
-    xTokenRedeemFeeRatio.extraFeeRatio:
+    - name: xTokenRedeemFeeRatio.extraFeeRatio
       type: int128
       value: '70000000000000000'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   contract: PlatformFeeSpliter
   measurements:
-    getRewardCount:
+    - name: getRewardCount
       type: uint256
-      value: '1'
+      value: '0.000000000000000001'
 '0xa677d95B91530d56791FbA72C01a862f1B01A49e':
   contract: RebalancePool
   measurements:
-    epochState.epoch:
+    - name: epochState.epoch
       type: uint64
       value: '0'
-    epochState.scale:
+    - name: epochState.scale
       type: uint64
       value: '0'
-    epochState.prod:
+    - name: epochState.prod
       type: uint128
       value: '1000000000000000000'
-    extraRewardsLength:
+    - name: extraRewardsLength
       type: uint256
-      value: '1'
-    lastAssetLossError:
+      value: '0.000000000000000001'
+    - name: lastAssetLossError
       type: uint256
       value: '0'
-    liquidatableCollateralRatio:
+    - name: liquidatableCollateralRatio
       type: uint256
-      value: '1305500000000000000'
-    totalSupply:
+      value: '1.3055'
+    - name: totalSupply
       type: uint256
-      value: '132582504874380841545967'
-    totalUnlocking:
+      value: '132582.504874380841545967'
+    - name: totalUnlocking
       type: uint256
-      value: '21096986654896224195809'
-    unlockDuration:
+      value: '21096.986654896224195809'
+    - name: unlockDuration
       type: uint256
       value: '0'
 '0x4eEfea49e4D876599765d5375cF7314cD14C9d38':
   contract: RebalancePoolRegistry
   measurements:
-    totalSupply:
+    - name: totalSupply
       type: uint256
-      value: '5811959010789095234500199'
+      value: '5811959.010789095234500199'
 '0x17f21f468d77E6e35702a9Ae7a9da50Db7F6a4f4':
   contract: RebalanceWithBonusToken
   measurements:
-    bonus:
+    - name: bonus
       type: uint256
-      value: '2000000000000000000'
+      value: '2.0'
 '0x21E27a5E5513D6e65C4f830167390997aA84843a':
   contract: StableSwap
   measurements:
-    A_precise:
+    - name: A_precise
       type: uint256
-      value: '150000'
-    A:
+      value: '0.00000000000015'
+    - name: A
       type: uint256
-      value: '1500'
-    admin_action_deadline:
-      type: uint256
-      value: '0'
-    admin_fee:
-      type: uint256
-      value: '5000000000'
-    decimals:
-      type: uint256
-      value: '18'
-    ema_price:
-      type: uint256
-      value: '999587597349320961'
-    fee:
-      type: uint256
-      value: '4000000'
-    future_A_time:
+      value: '0.0000000000000015'
+    - name: admin_action_deadline
       type: uint256
       value: '0'
-    future_A:
+    - name: admin_fee
       type: uint256
-      value: '150000'
-    future_fee:
+      value: '0.000000005'
+    - name: decimals
       type: uint256
-      value: '0'
-    get_p:
+      value: '0.000000000000000018'
+    - name: ema_price
       type: uint256
-      value: '999585626171170308'
-    get_virtual_price:
+      value: '0.999587597349320961'
+    - name: fee
       type: uint256
-      value: '1017734101479506865'
-    initial_A_time:
-      type: uint256
-      value: '0'
-    initial_A:
-      type: uint256
-      value: '150000'
-    last_price:
-      type: uint256
-      value: '999585626029419962'
-    ma_exp_time:
-      type: uint256
-      value: '2597'
-    ma_last_time:
-      type: uint256
-      value: '1703811923'
-    oracle_method:
+      value: '0.000000000004'
+    - name: future_A_time
       type: uint256
       value: '0'
-    price_oracle:
+    - name: future_A
       type: uint256
-      value: '999585642014764018'
-    totalSupply:
+      value: '0.00000000000015'
+    - name: future_fee
       type: uint256
-      value: '45363931240034965729028'
+      value: '0'
+    - name: get_p
+      type: uint256
+      value: '0.999585626171170308'
+    - name: get_virtual_price
+      type: uint256
+      value: '1.017734101479506865'
+    - name: initial_A_time
+      type: uint256
+      value: '0'
+    - name: initial_A
+      type: uint256
+      value: '0.00000000000015'
+    - name: last_price
+      type: uint256
+      value: '0.999585626029419962'
+    - name: ma_exp_time
+      type: uint256
+      value: '0.000000000000002597'
+    - name: ma_last_time
+      type: uint256
+      value: '0.000000001703811923'
+    - name: oracle_method
+      type: uint256
+      value: '0'
+    - name: price_oracle
+      type: uint256
+      value: '0.999585642014764018'
+    - name: totalSupply
+      type: uint256
+      value: '45363.931240034965729028'
 '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0':
   contract: stETHTreasury
   measurements:
-    baseTokenCap:
+    - name: baseTokenCap
       type: uint256
-      value: '10000000000000000000000'
-    beta:
+      value: '10000.0'
+    - name: beta
       type: uint256
-      value: '100000000000000000'
-    collateralRatio:
+      value: '0.1'
+    - name: collateralRatio
       type: uint256
-      value: '2127502112512926719'
-    emaLeverageRatio.lastTime:
+      value: '2.127502112512926719'
+    - name: emaLeverageRatio.lastTime
       type: uint40
       value: '1703792975'
-    emaLeverageRatio.sampleInterval:
+    - name: emaLeverageRatio.sampleInterval
       type: uint24
       value: '86400'
-    emaLeverageRatio.lastValue:
+    - name: emaLeverageRatio.lastValue
       type: uint96
       value: '1767249637152348130'
-    emaLeverageRatio.lastEmaValue:
+    - name: emaLeverageRatio.lastEmaValue
       type: uint96
       value: '1822162261482861300'
-    getCurrentNav._baseNav:
+    - name: getCurrentNav._baseNav
       type: uint256
-      value: '2354302111120000000000'
-    getCurrentNav._fNav:
+      value: '2354.30211112'
+    - name: getCurrentNav._fNav
       type: uint256
-      value: '1028175138984398448'
-    getCurrentNav._xNav:
+      value: '1.028175138984398448'
+    - name: getCurrentNav._xNav
       type: uint256
-      value: '1365484765135404741'
-    harvestBountyRatio:
+      value: '1.365484765135404741'
+    - name: harvestBountyRatio
       type: uint128
       value: '10000000000000000'
-    lastPermissionedPrice:
+    - name: lastPermissionedPrice
       type: uint256
-      value: '1836785300000000000000'
-    leverageRatio:
+      value: '1836.7853'
+    - name: leverageRatio
       type: uint256
-      value: '1805406876341814937'
-    rebalancePoolRatio:
+      value: '1.805406876341814937'
+    - name: rebalancePoolRatio
       type: uint128
       value: '500000000000000000'
-    strategyUnderlying:
+    - name: strategyUnderlying
       type: uint256
       value: '0'
-    totalBaseToken:
+    - name: totalBaseToken
       type: uint256
-      value: '6179474952048061425555'
+      value: '6179.474952048061425555'
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
-    decimals:
+    - name: decimals
       type: uint256
-      value: '18'
-    epoch:
+      value: '0.000000000000000018'
+    - name: epoch
       type: uint256
-      value: '194'
-    supply:
+      value: '0.000000000000000194'
+    - name: supply
       type: uint256
-      value: '115331908808027700163144'
-    totalSupply:
+      value: '115331.908808027700163144'
+    - name: totalSupply
       type: uint256
-      value: '94540343792368370153142'
+      value: '94540.343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   contract: WstETH
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    stEthPerToken:
+    - name: stEthPerToken
       type: uint256
-      value: '1151765726593883840'
-    tokensPerStEth:
+      value: '1.15176572659388384'
+    - name: tokensPerStEth
       type: uint256
-      value: '868232121264190989'
-    totalSupply:
+      value: '0.868232121264190989'
+    - name: totalSupply
       type: uint256
-      value: '3247614816540003642107369'
+      value: '3247614.816540003642107369'
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
   contract: LeveragedToken
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    nav:
+    - name: nav
       type: uint256
-      value: '832299813951458409'
-    totalSupply:
+      value: '0.832299813951458409'
+    - name: totalSupply
       type: uint256
-      value: '5646434225742690599105577'
+      value: '5646434.225742690599105577'

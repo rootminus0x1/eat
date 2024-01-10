@@ -6,7 +6,7 @@
       value: '0'
     - name: lastAssetLossError
       type: uint256
-      value: '0.0'
+      value: '0'
     - name: liquidatableCollateralRatio
       type: uint256
       value: '1.3055'
@@ -63,7 +63,7 @@
   measurements:
     - name: get_total_weight
       type: uint256
-      value: '0.0'
+      value: '0'
     - name: n_gauge_types
       type: int128
       value: '0'

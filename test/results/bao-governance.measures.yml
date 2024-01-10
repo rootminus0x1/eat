@@ -1,63 +1,63 @@
 '0xCe391315b414D4c7555956120461D21808A69F3A':
   contract: BAO Token
   measurements:
-    available_supply:
+    - name: available_supply
       type: uint256
-      value: '1342272585171312291062882512'
-    decimals:
+      value: '1342272585.171312291062882512'
+    - name: decimals
       type: uint8
       value: '18'
-    mining_epoch:
+    - name: mining_epoch
       type: int128
       value: '1'
-    rate:
+    - name: rate
       type: uint256
-      value: '6139694197700000572'
-    start_epoch_time:
+      value: '6.139694197700000572'
+    - name: start_epoch_time
       type: uint256
-      value: '1700524031'
-    totalSupply:
+      value: '0.000000001700524031'
+    - name: totalSupply
       type: uint256
-      value: '1320116065635125541877393702'
+      value: '1320116065.635125541877393702'
 '0x3dFc49e5112005179Da613BdE5973229082dAc35':
   contract: GnosisSafe
   measurements:
-    getChainId:
+    - name: getChainId
       type: uint256
-      value: '31337'
-    getThreshold:
+      value: '0.000000000000031337'
+    - name: getThreshold
       type: uint256
-      value: '3'
-    nonce:
+      value: '0.000000000000000003'
+    - name: nonce
       type: uint256
-      value: '1400'
+      value: '0.0000000000000014'
 '0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6':
   contract: Voting Escrow
   measurements:
-    decimals:
+    - name: decimals
       type: uint256
-      value: '18'
-    epoch:
+      value: '0.000000000000000018'
+    - name: epoch
       type: uint256
-      value: '969'
-    supply:
+      value: '0.000000000000000969'
+    - name: supply
       type: uint256
-      value: '174846060816462883671490561'
-    totalSupply:
+      value: '174846060.816462883671490561'
+    - name: totalSupply
       type: uint256
-      value: '127481437679363369597663159'
+      value: '127481437.679363369597663159'
 '0x840e75261c2934f33C8766F6eA6235330DC1D72d':
   contract: Gauge Controller
   measurements:
-    get_total_weight:
+    - name: get_total_weight
       type: uint256
-      value: '33267863535548433440713600000000000000000000'
-    n_gauge_types:
+      value: '33267863535548433440713600.0'
+    - name: n_gauge_types
       type: int128
       value: '1'
-    n_gauges:
+    - name: n_gauges
       type: int128
       value: '12'
-    time_total:
+    - name: time_total
       type: uint256
-      value: '1704326400'
+      value: '0.0000000017043264'

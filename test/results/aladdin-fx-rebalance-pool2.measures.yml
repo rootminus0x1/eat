@@ -1,123 +1,123 @@
 '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9':
   contract: BoostableRebalancePool
   measurements:
-    gauge.claimAt:
+    - name: gauge.claimAt
       type: uint64
       value: '0'
-    lastAssetLossError:
+    - name: lastAssetLossError
       type: uint256
       value: '0'
-    liquidatableCollateralRatio:
+    - name: liquidatableCollateralRatio
       type: uint256
-      value: '1305500000000000000'
-    numTotalSupplyHistory:
+      value: '1.3055'
+    - name: numTotalSupplyHistory
       type: uint256
-      value: '69'
-    periodLength:
+      value: '0.000000000000000069'
+    - name: periodLength
       type: uint40
       value: '604800'
-    totalSupply:
+    - name: totalSupply
       type: uint256
-      value: '2956321364769018396295364'
+      value: '2956321.364769018396295364'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   contract: FractionalToken
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    nav:
+    - name: nav
       type: uint256
-      value: '1000000000000000000'
-    totalSupply:
+      value: '1.0'
+    - name: totalSupply
       type: uint256
-      value: '6650842598065295621717671'
+      value: '6650842.598065295621717671'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
   contract: Curve DAO Token
   measurements:
-    available_supply:
+    - name: available_supply
       type: uint256
-      value: '1047280171993911715747992'
-    decimals:
+      value: '1047280.171993911715747992'
+    - name: decimals
       type: uint256
-      value: '18'
-    INITIAL_RATE:
+      value: '0.000000000000000018'
+    - name: INITIAL_RATE
       type: uint256
-      value: '3107559614408929'
-    mining_epoch:
+      value: '0.003107559614408929'
+    - name: mining_epoch
       type: int128
       value: '0'
-    RATE_REDUCTION_COEFFICIENT:
+    - name: RATE_REDUCTION_COEFFICIENT
       type: uint256
-      value: '1111111111111111111'
-    rate:
+      value: '1.111111111111111111'
+    - name: rate
       type: uint256
-      value: '3107559614408929'
-    start_epoch_time:
+      value: '0.003107559614408929'
+    - name: start_epoch_time
       type: uint256
-      value: '1695045779'
-    totalSupply:
+      value: '0.000000001695045779'
+    - name: totalSupply
       type: uint256
-      value: '1020000000000000000000000'
+      value: '1020000.0'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
   contract: Gauge Controller
   measurements:
-    get_total_weight:
+    - name: get_total_weight
       type: uint256
       value: '0'
-    n_gauge_types:
+    - name: n_gauge_types
       type: int128
       value: '0'
-    n_gauges:
+    - name: n_gauges
       type: int128
       value: '0'
-    time_total:
+    - name: time_total
       type: uint256
-      value: '1694649600'
+      value: '0.0000000016946496'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   contract: PlatformFeeSpliter
   measurements:
-    getRewardCount:
+    - name: getRewardCount
       type: uint256
-      value: '1'
+      value: '0.000000000000000001'
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
-    decimals:
+    - name: decimals
       type: uint256
-      value: '18'
-    epoch:
+      value: '0.000000000000000018'
+    - name: epoch
       type: uint256
-      value: '194'
-    supply:
+      value: '0.000000000000000194'
+    - name: supply
       type: uint256
-      value: '115331908808027700163144'
-    totalSupply:
+      value: '115331.908808027700163144'
+    - name: totalSupply
       type: uint256
-      value: '94540343792368370153142'
+      value: '94540.343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   contract: WstETH
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    stEthPerToken:
+    - name: stEthPerToken
       type: uint256
-      value: '1151765726593883840'
-    tokensPerStEth:
+      value: '1.15176572659388384'
+    - name: tokensPerStEth
       type: uint256
-      value: '868232121264190989'
-    totalSupply:
+      value: '0.868232121264190989'
+    - name: totalSupply
       type: uint256
-      value: '3247614816540003642107369'
+      value: '3247614.816540003642107369'
 '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2':
   contract: LeveragedToken
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    nav:
+    - name: nav
       type: uint256
-      value: '832299813951458409'
-    totalSupply:
+      value: '0.832299813951458409'
+    - name: totalSupply
       type: uint256
-      value: '5646434225742690599105577'
+      value: '5646434.225742690599105577'

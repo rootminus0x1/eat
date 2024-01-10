@@ -75,7 +75,8 @@ async function main() {
             if (typeof address === 'object' && typeof address.measurements === 'object') {
                 let newAddress: any = undefined;
                 address.measurements.forEach((measurement: Measurement, index: number) => {
-                    if (config.format && measurement)
+                    // TODO: work out why we need an "as any" below (2 places)
+                    if ((measurement as any).value && config.format && measurement)
                         for (const format of config.format) {
                             if (
                                 (!format.type || format.type === measurement.type) &&
@@ -87,7 +88,6 @@ async function main() {
                                 // TODO: handle values that are arrays
                                 // we have a match - so what kind of formatting
                                 if (format.digits) {
-                                    // TODO: work out why we need an "as any" below
                                     newAddress.measurements[index].value = formatEther((measurement as any).value);
                                     break; // only do one format, the first
                                 }

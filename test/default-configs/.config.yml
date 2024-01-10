@@ -9,3 +9,7 @@ format:
     digits: 20
   - type: unit128
     digits: 0
+  - contact: ChainlinkTwapOracleV3
+    name: chainlinkMinMessageCount
+  - contract: BoostableRebalancePool
+  - name: numTotalSupplyHistory
