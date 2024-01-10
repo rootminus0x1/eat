@@ -2,6 +2,7 @@ import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } fr
 import { PAMSystem } from './PokeAndMeasure';
 import { Contract } from 'ethers';
 import { Graph } from './graph';
+import { string } from 'yargs';
 
 export const addUser = async (system: PAMSystem, name: string, types: string[] = []): Promise<UserWithAddress> => {
     const user = await getUser(name);
@@ -73,26 +74,26 @@ export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
     );
 };
 
-// returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
-// all numbers are converted to strings
-// TODO: convert the numbers using some formatting defined in config?
+export type Measurement = {
+    name: string;
+    type: string;
+} & ({ value: bigint | bigint[] } | { error: string });
 
-// TODO: add linked from, with name
+// returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
 export const calculateMeasures = async (graph: Graph): Promise<Object> => {
     const result: any = {}; // use any to shut typescript up here :-)
 
     for (const [address, node] of sort(graph.nodes, (v) => v.name)) {
         const measures = graph.measures.get(address);
         if (measures && measures.length > 0) {
-            let values: any = {};
+            let values: Measurement[] = [];
             for (const measure of measures) {
-                let value: any = { type: measure.type };
                 try {
-                    value.value = await measure.calculation();
+                    const value = await measure.calculation();
+                    values.push({ name: measure.name, type: measure.type, value: value });
                 } catch (e: any) {
-                    value.error = e.message;
+                    values.push({ name: measure.name, type: measure.type, error: e.message });
                 }
-                values[measure.name] = value;
             }
             result[address] = {
                 contract: await node.contractNamish(),

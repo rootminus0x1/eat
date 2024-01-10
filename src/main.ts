@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml'; // config files are in yaml
 import yargs from 'yargs/yargs';
+import lodash from 'lodash';
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
@@ -12,8 +13,8 @@ import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
 import { digGraph } from './dig';
-import { calculateMeasures } from './delve';
-import { ContractTransactionResponse, MaxInt256, parseEther } from 'ethers';
+import { Measurement, calculateMeasures } from './delve';
+import { ContractTransactionResponse, MaxInt256, formatEther, parseEther } from 'ethers';
 import { ensureDirectory } from './eat-cache';
 
 async function main() {
@@ -54,8 +55,53 @@ async function main() {
             );
         }
 
-        writeYaml(config, 'measures.yml', await calculateMeasures(graph));
+        const formatUint256 = (value: any): any => {
+            // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+            if (typeof value === 'object' && typeof value.measurements === 'object') {
+                value = lodash.cloneDeep(value);
+                for (const name of Object.keys(value.measurements)) {
+                    // value.contract
+                    const measurement = value.measurements[name];
+                    if (measurement.type === 'uint256') {
+                        measurement.value = formatEther(measurement.value);
+                    }
+                }
+                return value;
+            }
+        };
 
+        const formatFromConfig = (address: any): any => {
+            // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+            if (typeof address === 'object' && typeof address.measurements === 'object') {
+                let newAddress: any = undefined;
+                address.measurements.forEach((measurement: Measurement, index: number) => {
+                    if (config.format && measurement)
+                        for (const format of config.format) {
+                            if (
+                                (!format.type || format.type === measurement.type) &&
+                                (!format.name || format.name === measurement.name) &&
+                                (!format.contract || format.contract === address.contract)
+                            ) {
+                                // we're about to change it so clone it
+                                if (!newAddress) newAddress = lodash.cloneDeep(address);
+                                // TODO: handle values that are arrays
+                                // we have a match - so what kind of formatting
+                                if (format.digits) {
+                                    // TODO: work out why we need an "as any" below
+                                    newAddress.measurements[index].value = formatEther((measurement as any).value);
+                                    break; // only do one format, the first
+                                }
+                            }
+                        }
+                });
+                return newAddress;
+            }
+        };
+
+        const allMeasuresUnformatted = await calculateMeasures(graph);
+        // const allMeasures = lodash.cloneDeepWith(allMeasuresUnformatted, );
+
+        writeYaml(config, 'measures.yml', allMeasuresUnformatted, formatFromConfig);
         // get all the users
         const allUsers = new Map<string, SignerWithAddress>();
         if (config.users)

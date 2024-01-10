@@ -13,14 +13,41 @@ export const write = (config: any, name: string, results: string): void => {
     outputFile.end();
 };
 
-export const writeYaml = (config: any, name: string, results: any): void => {
-    const reformatted = lodash.cloneDeepWith(results, (value) => {
-        if (typeof value === 'bigint') {
-            // TODO: find a way to format those correctly, not just to a string
-            return value.toString();
-        }
-    });
-    write(config, name, yaml.dump(reformatted));
+type Formatter = (value: any) => any;
+const removeInvalidYamlTypes: Formatter = (value: any): any => {
+    if (typeof value === 'bigint') {
+        return value.toString();
+    }
+};
+
+export const writeYaml = (config: any, name: string, results: any, formatter?: Formatter): void => {
+    if (formatter) results = lodash.cloneDeepWith(results, formatter);
+    write(config, name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
+};
+
+const sortFormats = (formats: any[]): any => {
+    // those with both contract and name come first
+    // second are those with one of contract and name, retaining the same order as given
+    // last are those with no contract and name
+    return (
+        formats
+            // add indices
+            .map((format, index) => ({ format, index }))
+            // sort them
+            .sort((a, b) => {
+                const valueof = (x: any): number => {
+                    let value = 0;
+                    if (x.contract) value++;
+                    if (x.name) value++;
+                    return value;
+                };
+                const av = valueof(a.format);
+                const bv = valueof(b.format);
+                return av == bv ? a.index - b.index : bv - av;
+            })
+            // remove the indices
+            .map((v) => v.format)
+    );
 };
 
 export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
@@ -69,6 +96,9 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
         config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
         config.configFilePath = configFilePath;
         config.configName = configName;
+
+        // make sure more specific formats take precedence over less specific
+        config.format = sortFormats(config.format);
 
         // output the config actually used for debug purposes
         write(config, 'flat-config.yml', yaml.dump(config));

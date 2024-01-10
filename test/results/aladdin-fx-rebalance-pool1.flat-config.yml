@@ -2,11 +2,11 @@ block: 18888888
 diagram:
   renderer: default
 format:
-  - type: uint256
-    digits: 18
   - contract: eek
     name: getCurrentNav._baseNav
     digits: 20
+  - type: uint256
+    digits: 18
   - type: unit128
     digits: 0
 stopafter:
