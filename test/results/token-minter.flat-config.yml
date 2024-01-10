@@ -2,17 +2,40 @@ block: 18888888
 diagram:
   renderer: default
 format:
-  - contract: eek
-    name: getCurrentNav._baseNav
-    digits: 20
-  - contact: ChainlinkTwapOracleV3
-    name: chainlinkMinMessageCount
   - contract: BoostableRebalancePool
+    name: numTotalSupplyHistory
+  - name: chainlinkMinMessageCount
+  - name: chainlinkMessageExpiration
+  - name: start_epoch_time
+  - name: getChainId
+  - name: getThreshold
+  - name: nonce
+  - name: decimals
+  - name: epoch
+  - name: time_total
   - name: numTotalSupplyHistory
+  - name: latestRoundData.startedAt
+  - name: latestRoundData.updatedAt
+  - name: latestTimestamp
+  - name: version
+  - name: getRewardCount
+  - name: latestAnswer
+    type: int256
+    digits: 8
+  - name: latestRoundData.answer
+    type: int256
+    digits: 8
+  - contract: Market
+    type: uint128
+    digits: 16
+  - contract: Market
+    type: int128
+    digits: 16
+  - contract: Market
+    type: uint64
+    digits: 18
   - type: uint256
     digits: 18
-  - type: unit128
-    digits: 0
 start:
   - '0xC8b194925D55d5dE9555AD1db74c149329F71DeF'
 stopafter:

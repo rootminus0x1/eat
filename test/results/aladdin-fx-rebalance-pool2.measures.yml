@@ -12,7 +12,7 @@
       value: '1.3055'
     - name: numTotalSupplyHistory
       type: uint256
-      value: '0.000000000000000069'
+      value: '69'
     - name: periodLength
       type: uint40
       value: '604800'
@@ -39,7 +39,7 @@
       value: '1047280.171993911715747992'
     - name: decimals
       type: uint256
-      value: '0.000000000000000018'
+      value: '18'
     - name: INITIAL_RATE
       type: uint256
       value: '0.003107559614408929'
@@ -54,7 +54,7 @@
       value: '0.003107559614408929'
     - name: start_epoch_time
       type: uint256
-      value: '0.000000001695045779'
+      value: '1695045779'
     - name: totalSupply
       type: uint256
       value: '1020000.0'
@@ -72,22 +72,22 @@
       value: '0'
     - name: time_total
       type: uint256
-      value: '0.0000000016946496'
+      value: '1694649600'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   contract: PlatformFeeSpliter
   measurements:
     - name: getRewardCount
       type: uint256
-      value: '0.000000000000000001'
+      value: '1'
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
     - name: decimals
       type: uint256
-      value: '0.000000000000000018'
+      value: '18'
     - name: epoch
       type: uint256
-      value: '0.000000000000000194'
+      value: '194'
     - name: supply
       type: uint256
       value: '115331.908808027700163144'

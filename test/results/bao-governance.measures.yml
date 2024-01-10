@@ -15,7 +15,7 @@
       value: '6.139694197700000572'
     - name: start_epoch_time
       type: uint256
-      value: '0.000000001700524031'
+      value: '1700524031'
     - name: totalSupply
       type: uint256
       value: '1320116065.635125541877393702'
@@ -24,22 +24,22 @@
   measurements:
     - name: getChainId
       type: uint256
-      value: '0.000000000000031337'
+      value: '31337'
     - name: getThreshold
       type: uint256
-      value: '0.000000000000000003'
+      value: '3'
     - name: nonce
       type: uint256
-      value: '0.0000000000000014'
+      value: '1400'
 '0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6':
   contract: Voting Escrow
   measurements:
     - name: decimals
       type: uint256
-      value: '0.000000000000000018'
+      value: '18'
     - name: epoch
       type: uint256
-      value: '0.000000000000000969'
+      value: '969'
     - name: supply
       type: uint256
       value: '174846060.816462883671490561'
@@ -60,4 +60,4 @@
       value: '12'
     - name: time_total
       type: uint256
-      value: '0.0000000017043264'
+      value: '1704326400'

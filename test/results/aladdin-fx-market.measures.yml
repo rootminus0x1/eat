@@ -12,7 +12,7 @@
       value: '1.3055'
     - name: numTotalSupplyHistory
       type: uint256
-      value: '0.000000000000000068'
+      value: '68'
     - name: periodLength
       type: uint40
       value: '604800'
@@ -33,7 +33,7 @@
       value: '1.3055'
     - name: numTotalSupplyHistory
       type: uint256
-      value: '0.000000000000000069'
+      value: '69'
     - name: periodLength
       type: uint40
       value: '604800'
@@ -45,10 +45,10 @@
   measurements:
     - name: chainlinkMessageExpiration
       type: uint256
-      value: '0.0000000000000108'
+      value: '10800'
     - name: chainlinkMinMessageCount
       type: uint256
-      value: '0.000000000000000001'
+      value: '1'
     - name: getLatest
       type: uint256
       value: '2352.78183'
@@ -57,10 +57,10 @@
   measurements:
     - name: chainlinkMessageExpiration
       type: uint256
-      value: '0.0000000000000108'
+      value: '10800'
     - name: chainlinkMinMessageCount
       type: uint256
-      value: '0.000000000000000001'
+      value: '1'
     - name: getLatest
       type: uint256
       value: '2354.30211112'
@@ -72,7 +72,7 @@
       value: '8'
     - name: latestAnswer
       type: int256
-      value: '235278183000'
+      value: '2352.78183'
     - name: latestRound
       type: uint256
       value: '110.680464442257319337'
@@ -81,19 +81,19 @@
       value: '110680464442257319337'
     - name: latestRoundData.answer
       type: int256
-      value: '235278183000'
+      value: '2352.78183'
     - name: latestRoundData.startedAt
       type: uint256
-      value: '0.000000001703822135'
+      value: '1703822135'
     - name: latestRoundData.updatedAt
       type: uint256
-      value: '0.000000001703822135'
+      value: '1703822135'
     - name: latestRoundData.answeredInRound
       type: uint80
       value: '110680464442257319337'
     - name: latestTimestamp
       type: uint256
-      value: '0.000000001703822135'
+      value: '1703822135'
     - name: phaseId
       type: uint16
       value: '6'
@@ -124,7 +124,7 @@
         'No proposed aggregator present'
     - name: version
       type: uint256
-      value: '0.000000000000000004'
+      value: '4'
 '0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8':
   contract: EACAggregatorProxy
   measurements:
@@ -133,7 +133,7 @@
       value: '8'
     - name: latestAnswer
       type: int256
-      value: '235430211112'
+      value: '2354.30211112'
     - name: latestRound
       type: uint256
       value: '18.446744073709574477'
@@ -142,19 +142,19 @@
       value: '18446744073709574477'
     - name: latestRoundData.answer
       type: int256
-      value: '235430211112'
+      value: '2354.30211112'
     - name: latestRoundData.startedAt
       type: uint256
-      value: '0.000000001703821343'
+      value: '1703821343'
     - name: latestRoundData.updatedAt
       type: uint256
-      value: '0.000000001703821343'
+      value: '1703821343'
     - name: latestRoundData.answeredInRound
       type: uint80
       value: '18446744073709574477'
     - name: latestTimestamp
       type: uint256
-      value: '0.000000001703821343'
+      value: '1703821343'
     - name: phaseId
       type: uint16
       value: '1'
@@ -185,7 +185,7 @@
         'No proposed aggregator present'
     - name: version
       type: uint256
-      value: '0.000000000000000004'
+      value: '4'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   contract: FractionalToken
   measurements:
@@ -218,7 +218,7 @@
       value: '1047280.171993911715747992'
     - name: decimals
       type: uint256
-      value: '0.000000000000000018'
+      value: '18'
     - name: INITIAL_RATE
       type: uint256
       value: '0.003107559614408929'
@@ -233,7 +233,7 @@
       value: '0.003107559614408929'
     - name: start_epoch_time
       type: uint256
-      value: '0.000000001695045779'
+      value: '1695045779'
     - name: totalSupply
       type: uint256
       value: '1020000.0'
@@ -251,22 +251,22 @@
       value: '0'
     - name: time_total
       type: uint256
-      value: '0.0000000016946496'
+      value: '1694649600'
 '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB':
   contract: Market
   measurements:
     - name: fTokenMintFeeRatio.defaultFeeRatio
       type: uint128
-      value: '2500000000000000'
+      value: '0.25'
     - name: fTokenMintFeeRatio.extraFeeRatio
       type: int128
       value: '0'
     - name: fTokenRedeemFeeRatio.defaultFeeRatio
       type: uint128
-      value: '2500000000000000'
+      value: '0.25'
     - name: fTokenRedeemFeeRatio.extraFeeRatio
       type: int128
-      value: '-2500000000000000'
+      value: '-0.25'
     - name: incentiveConfig.stabilityIncentiveRatio
       type: uint64
       value: '0'
@@ -278,34 +278,34 @@
       value: '0'
     - name: marketConfig.stabilityRatio
       type: uint64
-      value: '1305500000000000000'
+      value: '1.3055'
     - name: marketConfig.liquidationRatio
       type: uint64
-      value: '1206700000000000000'
+      value: '1.2067'
     - name: marketConfig.selfLiquidationRatio
       type: uint64
-      value: '1143900000000000000'
+      value: '1.1439'
     - name: marketConfig.recapRatio
       type: uint64
-      value: '1000000000000000000'
+      value: '1.0'
     - name: xTokenMintFeeRatio.defaultFeeRatio
       type: uint128
-      value: '10000000000000000'
+      value: '1.0'
     - name: xTokenMintFeeRatio.extraFeeRatio
       type: int128
-      value: '-10000000000000000'
+      value: '-1.0'
     - name: xTokenRedeemFeeRatio.defaultFeeRatio
       type: uint128
-      value: '10000000000000000'
+      value: '1.0'
     - name: xTokenRedeemFeeRatio.extraFeeRatio
       type: int128
-      value: '70000000000000000'
+      value: '7.0'
 '0x0084C2e1B1823564e597Ff4848a88D61ac63D703':
   contract: PlatformFeeSpliter
   measurements:
     - name: getRewardCount
       type: uint256
-      value: '0.000000000000000001'
+      value: '1'
 '0xa677d95B91530d56791FbA72C01a862f1B01A49e':
   contract: RebalancePool
   measurements:
@@ -365,7 +365,7 @@
       value: '0.000000005'
     - name: decimals
       type: uint256
-      value: '0.000000000000000018'
+      value: '18'
     - name: ema_price
       type: uint256
       value: '0.999587597349320961'
@@ -467,10 +467,10 @@
   measurements:
     - name: decimals
       type: uint256
-      value: '0.000000000000000018'
+      value: '18'
     - name: epoch
       type: uint256
-      value: '0.000000000000000194'
+      value: '194'
     - name: supply
       type: uint256
       value: '115331.908808027700163144'

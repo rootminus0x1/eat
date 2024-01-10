@@ -37,8 +37,10 @@ const sortFormats = (formats: any[]): any => {
             .sort((a, b) => {
                 const valueof = (x: any): number => {
                     let value = 0;
-                    if (x.contract) value++;
-                    if (x.name) value++;
+                    if (x.contract) value += 100;
+                    if (x.name) value += 100;
+                    if (!x.digits) value += 10; // no format
+                    if (x.type) value += 1;
                     return value;
                 };
                 const av = valueof(a.format);

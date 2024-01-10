@@ -14,7 +14,7 @@ import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
 import { digGraph } from './dig';
 import { Measurement, calculateMeasures } from './delve';
-import { ContractTransactionResponse, MaxInt256, formatEther, parseEther } from 'ethers';
+import { ContractTransactionResponse, MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
 import { ensureDirectory } from './eat-cache';
 
 async function main() {
@@ -55,21 +55,6 @@ async function main() {
             );
         }
 
-        const formatUint256 = (value: any): any => {
-            // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-            if (typeof value === 'object' && typeof value.measurements === 'object') {
-                value = lodash.cloneDeep(value);
-                for (const name of Object.keys(value.measurements)) {
-                    // value.contract
-                    const measurement = value.measurements[name];
-                    if (measurement.type === 'uint256') {
-                        measurement.value = formatEther(measurement.value);
-                    }
-                }
-                return value;
-            }
-        };
-
         const formatFromConfig = (address: any): any => {
             // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
             if (typeof address === 'object' && typeof address.measurements === 'object') {
@@ -88,9 +73,12 @@ async function main() {
                                 // TODO: handle values that are arrays
                                 // we have a match - so what kind of formatting
                                 if (format.digits) {
-                                    newAddress.measurements[index].value = formatEther((measurement as any).value);
-                                    break; // only do one format, the first
+                                    newAddress.measurements[index].value = formatUnits(
+                                        (measurement as any).value,
+                                        format.digits,
+                                    );
                                 }
+                                break; // only do one format, the first
                             }
                         }
                 });
