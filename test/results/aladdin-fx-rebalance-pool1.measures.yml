@@ -1,105 +1,105 @@
 '0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
   contract: BoostableRebalancePool
   measurements:
-    gauge.claimAt:
+    - name: gauge.claimAt
       type: uint64
       value: '0'
-    lastAssetLossError:
+    - name: lastAssetLossError
       type: uint256
-      value: '0'
-    liquidatableCollateralRatio:
+      value: '0.0'
+    - name: liquidatableCollateralRatio
       type: uint256
-      value: '1305500000000000000'
-    numTotalSupplyHistory:
+      value: '1.3055'
+    - name: numTotalSupplyHistory
       type: uint256
-      value: '68'
-    periodLength:
+      value: '0.000000000000000068'
+    - name: periodLength
       type: uint40
       value: '604800'
-    totalSupply:
+    - name: totalSupply
       type: uint256
-      value: '2723055141145695996658868'
+      value: '2723055.141145695996658868'
 '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
   contract: FractionalToken
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    nav:
+    - name: nav
       type: uint256
-      value: '1000000000000000000'
-    totalSupply:
+      value: '1.0'
+    - name: totalSupply
       type: uint256
-      value: '6650842598065295621717671'
+      value: '6650842.598065295621717671'
 '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
   contract: Curve DAO Token
   measurements:
-    available_supply:
+    - name: available_supply
       type: uint256
-      value: '1047280171993911715747992'
-    decimals:
+      value: '1047280.171993911715747992'
+    - name: decimals
       type: uint256
-      value: '18'
-    INITIAL_RATE:
+      value: '0.000000000000000018'
+    - name: INITIAL_RATE
       type: uint256
-      value: '3107559614408929'
-    mining_epoch:
+      value: '0.003107559614408929'
+    - name: mining_epoch
       type: int128
       value: '0'
-    RATE_REDUCTION_COEFFICIENT:
+    - name: RATE_REDUCTION_COEFFICIENT
       type: uint256
-      value: '1111111111111111111'
-    rate:
+      value: '1.111111111111111111'
+    - name: rate
       type: uint256
-      value: '3107559614408929'
-    start_epoch_time:
+      value: '0.003107559614408929'
+    - name: start_epoch_time
       type: uint256
-      value: '1695045779'
-    totalSupply:
+      value: '0.000000001695045779'
+    - name: totalSupply
       type: uint256
-      value: '1020000000000000000000000'
+      value: '1020000.0'
 '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
   contract: Gauge Controller
   measurements:
-    get_total_weight:
+    - name: get_total_weight
       type: uint256
-      value: '0'
-    n_gauge_types:
+      value: '0.0'
+    - name: n_gauge_types
       type: int128
       value: '0'
-    n_gauges:
+    - name: n_gauges
       type: int128
       value: '0'
-    time_total:
+    - name: time_total
       type: uint256
-      value: '1694649600'
+      value: '0.0000000016946496'
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
-    decimals:
+    - name: decimals
       type: uint256
-      value: '18'
-    epoch:
+      value: '0.000000000000000018'
+    - name: epoch
       type: uint256
-      value: '194'
-    supply:
+      value: '0.000000000000000194'
+    - name: supply
       type: uint256
-      value: '115331908808027700163144'
-    totalSupply:
+      value: '115331.908808027700163144'
+    - name: totalSupply
       type: uint256
-      value: '94540343792368370153142'
+      value: '94540.343792368370153142'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   contract: WstETH
   measurements:
-    decimals:
+    - name: decimals
       type: uint8
       value: '18'
-    stEthPerToken:
+    - name: stEthPerToken
       type: uint256
-      value: '1151765726593883840'
-    tokensPerStEth:
+      value: '1.15176572659388384'
+    - name: tokensPerStEth
       type: uint256
-      value: '868232121264190989'
-    totalSupply:
+      value: '0.868232121264190989'
+    - name: totalSupply
       type: uint256
-      value: '3247614816540003642107369'
+      value: '3247614.816540003642107369'

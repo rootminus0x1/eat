@@ -5,7 +5,7 @@ format:
   - type: uint256
     digits: 18
   - contract: eek
-    call: getCurrentNav._baseNav
+    name: getCurrentNav._baseNav
     digits: 20
   - type: unit128
     digits: 0
