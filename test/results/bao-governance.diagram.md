@@ -5,7 +5,7 @@ title: contract graph as of block 18888888, 2023-12-29T04:33:47.000Z
 %%{init: {"flowchart": {"defaultRenderer": "default"}} }%%
 flowchart TB
 
-0x840e75261c2934f33C8766F6eA6235330DC1D72d["<b>Gauge Controller</b><br><i>Vyper_contract</i>"]:::contract
+0x840e75261c2934f33C8766F6eA6235330DC1D72d["<b>Gauge_Controller</b>"]:::contract
 click 0x840e75261c2934f33C8766F6eA6235330DC1D72d "https://etherscan.io/address/0x840e75261c2934f33C8766F6eA6235330DC1D72d#code"
 
 0x840e75261c2934f33C8766F6eA6235330DC1D72d -- admin --> 0x3dFc49e5112005179Da613BdE5973229082dAc35
@@ -33,14 +33,14 @@ click 0x3dFc49e5112005179Da613BdE5973229082dAc35 "https://etherscan.io/address/0
 
 0x3dFc49e5112005179Da613BdE5973229082dAc35 -- getOwners[6] --> 0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
 
-0xCe391315b414D4c7555956120461D21808A69F3A["BAO (Bao Token V2)<br><b>BAO Token</b><br><i>Vyper_contract</i>"]:::contract
+0xCe391315b414D4c7555956120461D21808A69F3A["BAO (Bao Token V2)<br><b>BAO_Token</b>"]:::contract
 click 0xCe391315b414D4c7555956120461D21808A69F3A "https://etherscan.io/address/0xCe391315b414D4c7555956120461D21808A69F3A#code"
 
 0xCe391315b414D4c7555956120461D21808A69F3A -- admin --> 0x3dFc49e5112005179Da613BdE5973229082dAc35
 
 0xCe391315b414D4c7555956120461D21808A69F3A -- minter --> 0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380
 
-0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6["veBAO (Vote Escrowed BAO)<br><b>Voting Escrow</b><br><i>Vyper_contract</i>"]:::contract
+0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6["veBAO (Vote Escrowed BAO)<br><b>Voting_Escrow</b>"]:::contract
 click 0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6 "https://etherscan.io/address/0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6#code"
 
 0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6 -- admin --> 0x3dFc49e5112005179Da613BdE5973229082dAc35
@@ -80,7 +80,7 @@ click 0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6 "https://etherscan.io/address/0
 0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1(["0x18d..0F1"]):::address
 click 0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1 "https://etherscan.io/address/0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1"
 
-0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380["<b>Token Minter</b><br><i>Vyper_contract</i>"]:::contract
+0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380["<b>Token_Minter</b>"]:::contract
 click 0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380 "https://etherscan.io/address/0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380#code"
 
 0x7492Aa25Dcb4013925c199Ded466Fdf9baa6A380 -- controller --> 0x840e75261c2934f33C8766F6eA6235330DC1D72d

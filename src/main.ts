@@ -87,57 +87,59 @@ async function main() {
             }
         };
 
-        const allMeasuresUnformatted = await calculateMeasures(graph);
-        writeYaml(config, 'measures.yml', allMeasuresUnformatted, formatFromConfig);
-
-        // get all the users
-        const users: any = {};
-        if (config.users)
-            for (const name of config.users) {
-                users[name] = await blockchain.getUser(name);
-            }
+        const allBaseMeasurements = await calculateMeasures(graph);
+        writeYaml(config, 'measures.yml', allBaseMeasurements, formatFromConfig);
 
         // get all the things
         const contracts: any = {};
         for (const [name, address] of graph.namedAddresses) {
-            console.log(`contract ${name} at ${address}`);
             contracts[name] = await graph.nodes.get(address)?.getContract();
         }
 
-        // get some stETH for some users and let market use it
-        const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
-        for (const user of [users.fMinter, users.xMinter]) {
-            if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
-                throw Error('could not get enough stETH, find another whale');
+        // get all the users
+        const users: any = {};
+        if (config.users) {
+            for (const name of config.users) {
+                users[name] = await blockchain.getUser(name);
             }
-            await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
-        }
-
-        type ActionFunction = () => Promise<ContractTransactionResponse>;
-        const allActions = new Map<string, ActionFunction>();
-
-        allActions.set('fMinter_mint_1ETH', async () => {
-            // TODO: add actions to config
-            //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
-            return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
-        });
-
-        for (const [name, action] of allActions) {
-            let result = '-';
-            let actionGas = 0n;
-            try {
-                let tx = await action();
-                let receipt = await tx.wait();
-                actionGas = receipt ? receipt.gasUsed : MaxInt256;
-                result = '\\o/'; // success
-            } catch (e: any) {
-                result = e.message; // failure
+            // TODO: make the users do something under config
+            // get some stETH for some users and let market use it
+            const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+            for (const user of [users.fMinter, users.xMinter]) {
+                if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
+                    throw Error('could not get enough stETH, find another whale');
+                }
+                await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
             }
 
-            const allMeasuresUnformatted = await calculateMeasures(graph);
-            writeYaml(config, `${name}.measures.yml`, allMeasuresUnformatted, formatFromConfig);
+            type ActionFunction = () => Promise<ContractTransactionResponse>;
+            const allActions = new Map<string, ActionFunction>();
 
-            console.log(`${name}: result: ${result}, gas:${actionGas}`);
+            allActions.set('fMinter_mint_1ETH', async () => {
+                // TODO: add actions to config
+                //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+                return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
+            });
+
+            for (const [name, action] of allActions) {
+                let result = '-';
+                let actionGas = 0n;
+                try {
+                    let tx = await action();
+                    let receipt = await tx.wait();
+                    actionGas = receipt ? receipt.gasUsed : MaxInt256;
+                    result = '\\o/'; // success
+                } catch (e: any) {
+                    result = e.message; // failure
+                }
+
+                const allActionedMeasurements = await calculateMeasures(graph);
+                // TODO: add in the measure name, gass etc.
+
+                writeYaml(config, `${name}.measures.yml`, allActionedMeasurements, formatFromConfig);
+
+                console.log(`${name}: result: ${result}, gas:${actionGas}`);
+            }
         }
     }
 }

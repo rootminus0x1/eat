@@ -53,9 +53,18 @@ export const digGraph = async (addresses: string[], stopafter?: string[]) => {
         }
     }
 
-    // make node names unique
+    // make node names unique &  javascript identifiers
     const nodeNames = new Map<string, string[]>();
     for (const [address, node] of graph.nodes) {
+        // make it javascript id
+        // replace multiple whitespaces with underscores
+        node.name = node.name.replace(/\s+/g, '_');
+        // replace invalid characters with a dollar sign
+        node.name = node.name.replace(/[^a-zA-Z0-9$_]/g, '$');
+        // ensure the identifier doesn't start with a digit
+        if (/^\d/.test(node.name)) node.name = '$' + node.name;
+
+        // then add it to the list for uniqueness check below
         nodeNames.set(node.name, (nodeNames.get(node.name) ?? []).concat(address));
     }
     for (const [name, addresses] of nodeNames) {
@@ -65,13 +74,12 @@ export const digGraph = async (addresses: string[], stopafter?: string[]) => {
             for (const address of addresses) {
                 const node = graph.nodes.get(address);
                 if (node) {
-                    //console.log(`for ${address},`);
                     const backLinks = graph.backLinks.get(address);
                     let done = false;
                     if (backLinks && backLinks.length == 1) {
                         const index = backLinks[0].name.match(/\[(\d+)\]$/);
                         if (index && index.length == 2) {
-                            node.name += `_${index[1]}`;
+                            node.name += `_at_${index[1]}`;
                             done = true;
                         }
                     }

@@ -1,4 +1,5 @@
-'0xCe391315b414D4c7555956120461D21808A69F3A':
+- address: '0xCe391315b414D4c7555956120461D21808A69F3A'
+  name: BAO_Token
   contract: BAO Token
   measurements:
     - name: available_supply
@@ -19,34 +20,8 @@
     - name: totalSupply
       type: uint256
       value: '1320116065.635125541877393702'
-'0x3dFc49e5112005179Da613BdE5973229082dAc35':
-  contract: GnosisSafe
-  measurements:
-    - name: getChainId
-      type: uint256
-      value: '31337'
-    - name: getThreshold
-      type: uint256
-      value: '3'
-    - name: nonce
-      type: uint256
-      value: '1400'
-'0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6':
-  contract: Voting Escrow
-  measurements:
-    - name: decimals
-      type: uint256
-      value: '18'
-    - name: epoch
-      type: uint256
-      value: '969'
-    - name: supply
-      type: uint256
-      value: '174846060.816462883671490561'
-    - name: totalSupply
-      type: uint256
-      value: '127481437.679363369597663159'
-'0x840e75261c2934f33C8766F6eA6235330DC1D72d':
+- address: '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
+  name: Gauge_Controller
   contract: Gauge Controller
   measurements:
     - name: get_total_weight
@@ -61,3 +36,32 @@
     - name: time_total
       type: uint256
       value: '1704326400'
+- address: '0x3dFc49e5112005179Da613BdE5973229082dAc35'
+  name: GnosisSafe
+  contract: GnosisSafe
+  measurements:
+    - name: getChainId
+      type: uint256
+      value: '31337'
+    - name: getThreshold
+      type: uint256
+      value: '3'
+    - name: nonce
+      type: uint256
+      value: '1400'
+- address: '0x8Bf70DFE40F07a5ab715F7e888478d9D3680a2B6'
+  name: Voting_Escrow
+  contract: Voting Escrow
+  measurements:
+    - name: decimals
+      type: uint256
+      value: '18'
+    - name: epoch
+      type: uint256
+      value: '969'
+    - name: supply
+      type: uint256
+      value: '174846060.816462883671490561'
+    - name: totalSupply
+      type: uint256
+      value: '127481437.679363369597663159'

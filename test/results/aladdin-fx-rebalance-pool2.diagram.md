@@ -39,7 +39,7 @@ click 0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726 "https://etherscan.io/address/0
 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84[["stETH (Liquid staked Ether 2.0)<br><b>Lido</b><br><i>AppProxyUpgradeable</i><br><hr>"]]:::contract
 click 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84 "https://etherscan.io/address/0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84#code"
 
-0x365AccFCa291e7D3914637ABf1F7635dB165Bb09["FXN (FXN Token)<br><b>Curve DAO Token</b>"]:::contract
+0x365AccFCa291e7D3914637ABf1F7635dB165Bb09["FXN (FXN Token)<br><b>Curve_DAO_Token</b>"]:::contract
 click 0x365AccFCa291e7D3914637ABf1F7635dB165Bb09 "https://etherscan.io/address/0x365AccFCa291e7D3914637ABf1F7635dB165Bb09#code"
 
 0x365AccFCa291e7D3914637ABf1F7635dB165Bb09 -- admin --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
@@ -61,7 +61,7 @@ click 0xe063F04f280c60aECa68b38341C2eEcBeC703ae2 "https://etherscan.io/address/0
 0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB[["<b>Market</b><br><i>TransparentUpgradeableProxy</i><br><hr>"]]:::contract
 click 0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB "https://etherscan.io/address/0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB#code"
 
-0xC8b194925D55d5dE9555AD1db74c149329F71DeF["<b>Token Minter</b>"]:::contract
+0xC8b194925D55d5dE9555AD1db74c149329F71DeF["<b>Token_Minter</b>"]:::contract
 click 0xC8b194925D55d5dE9555AD1db74c149329F71DeF "https://etherscan.io/address/0xC8b194925D55d5dE9555AD1db74c149329F71DeF#code"
 
 0xC8b194925D55d5dE9555AD1db74c149329F71DeF -- controller --> 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37
@@ -71,7 +71,7 @@ click 0xC8b194925D55d5dE9555AD1db74c149329F71DeF "https://etherscan.io/address/0
 0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0[["<b>stETHTreasury</b><br><i>TransparentUpgradeableProxy</i><br><hr>"]]:::contract
 click 0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0 "https://etherscan.io/address/0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0#code"
 
-0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469["veFXN (Voting Escrow FXN)<br><b>Voting Escrow</b>"]:::contract
+0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469["veFXN (Voting Escrow FXN)<br><b>Voting_Escrow</b>"]:::contract
 click 0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469 "https://etherscan.io/address/0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469#code"
 
 0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469 -- admin --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
@@ -100,7 +100,7 @@ click 0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E "https://etherscan.io/address/0
 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF[["<b>GnosisSafe</b><br><i>GnosisSafeProxy</i><br><hr>"]]:::contract
 click 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF "https://etherscan.io/address/0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF#code"
 
-0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37["<b>Gauge Controller</b>"]:::contract
+0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37["<b>Gauge_Controller</b>"]:::contract
 click 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 "https://etherscan.io/address/0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37#code"
 
 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37 -- admin --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF

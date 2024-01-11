@@ -71,8 +71,48 @@ export type Measurement = {
     type: string;
 } & ({ value: bigint | bigint[] } | { error: string });
 
+export type Action = {
+    name: string;
+    success: boolean;
+    gas: bigint;
+};
+export type MeasurementForContract = {
+    address: string;
+    name: string;
+    contract: string;
+    measurements: Measurement[];
+};
+export type Measurements = (MeasurementForContract | Action)[];
+
 // returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
-export const calculateMeasures = async (graph: Graph): Promise<Object> => {
+export const calculateMeasures = async (graph: Graph): Promise<Measurements> => {
+    const result: Measurements = [];
+
+    for (const [address, node] of sort(graph.nodes, (v) => v.name)) {
+        const measures = graph.measures.get(address);
+        if (measures && measures.length > 0) {
+            let values: Measurement[] = [];
+            for (const measure of measures) {
+                try {
+                    const value = await measure.calculation();
+                    values.push({ name: measure.name, type: measure.type, value: value });
+                } catch (e: any) {
+                    values.push({ name: measure.name, type: measure.type, error: e.message });
+                }
+            }
+            result.push({
+                address: address,
+                name: node.name,
+                contract: await node.contractNamish(),
+                measurements: values,
+            });
+        }
+    }
+    return result;
+};
+
+/*
+export const calculateDeltaMeasures = (base: Object, actioned: Object): Object => {
     const result: any = {}; // use any to shut typescript up here :-)
 
     for (const [address, node] of sort(graph.nodes, (v) => v.name)) {
@@ -95,3 +135,4 @@ export const calculateMeasures = async (graph: Graph): Promise<Object> => {
     }
     return result;
 };
+*/

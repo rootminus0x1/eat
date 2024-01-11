@@ -1,4 +1,5 @@
-'0xc6dEe5913e010895F3702bc43a40d661B13a40BD':
+- address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
+  name: BoostableRebalancePool
   contract: BoostableRebalancePool
   measurements:
     - name: gauge.claimAt
@@ -19,19 +20,8 @@
     - name: totalSupply
       type: uint256
       value: '2723055.141145695996658868'
-'0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726':
-  contract: FractionalToken
-  measurements:
-    - name: decimals
-      type: uint8
-      value: '18'
-    - name: nav
-      type: uint256
-      value: '1.0'
-    - name: totalSupply
-      type: uint256
-      value: '6650842.598065295621717671'
-'0x365AccFCa291e7D3914637ABf1F7635dB165Bb09':
+- address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
+  name: Curve_DAO_Token
   contract: Curve DAO Token
   measurements:
     - name: available_supply
@@ -58,7 +48,21 @@
     - name: totalSupply
       type: uint256
       value: '1020000.0'
-'0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37':
+- address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
+  name: FractionalToken
+  contract: FractionalToken
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: nav
+      type: uint256
+      value: '1.0'
+    - name: totalSupply
+      type: uint256
+      value: '6650842.598065295621717671'
+- address: '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37'
+  name: Gauge_Controller
   contract: Gauge Controller
   measurements:
     - name: get_total_weight
@@ -73,7 +77,8 @@
     - name: time_total
       type: uint256
       value: '1694649600'
-'0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
+- address: '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469'
+  name: Voting_Escrow
   contract: Voting Escrow
   measurements:
     - name: decimals
@@ -88,7 +93,8 @@
     - name: totalSupply
       type: uint256
       value: '94540.343792368370153142'
-'0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
+- address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
+  name: WstETH
   contract: WstETH
   measurements:
     - name: decimals
