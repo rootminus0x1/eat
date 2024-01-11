@@ -6,14 +6,12 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-
 import { getConfig, write, writeYaml } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
 import { digGraph } from './dig';
-import { Measurement, calculateMeasures } from './delve';
+import { Measurement, calculateDeltaMeasures, calculateMeasures } from './delve';
 import { ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther } from 'ethers';
 import { ensureDirectory } from './eat-cache';
 import { ethers } from 'hardhat';
@@ -61,9 +59,11 @@ async function main() {
             if (typeof address === 'object' && typeof address.measurements === 'object') {
                 let newAddress: any = undefined;
                 address.measurements.forEach((measurement: Measurement, index: number) => {
-                    // TODO: work out why we need an "as any" below (2 places)
-                    if ((measurement as any).value && config.format && measurement)
+                    if (measurement && config.format && (measurement.value || measurement.delta)) {
                         for (const format of config.format) {
+                            // TODO: could some things,
+                            // like timestamps be represented as date/times
+                            // or numbers
                             if (
                                 (!format.type || format.type === measurement.type) &&
                                 (!format.name || format.name === measurement.name) &&
@@ -74,14 +74,20 @@ async function main() {
                                 // TODO: handle values that are arrays
                                 // we have a match - so what kind of formatting
                                 if (format.digits) {
-                                    newAddress.measurements[index].value = formatUnits(
-                                        (measurement as any).value,
-                                        format.digits,
-                                    );
+                                    const formatByUnits = (field: string) => {
+                                        newAddress.measurements[index][field] = formatUnits(
+                                            (measurement as any)[field] as bigint, // << this should handle bigint[] too
+                                            format.digits,
+                                        );
+                                    };
+                                    // TODO: make this more dynamic
+                                    if (measurement.value) formatByUnits('value');
+                                    if (measurement.delta) formatByUnits('delta');
                                 }
                                 break; // only do one format, the first
                             }
                         }
+                    }
                 });
                 return newAddress;
             }
@@ -134,7 +140,11 @@ async function main() {
                 }
 
                 const allActionedMeasurements = await calculateMeasures(graph);
-                // TODO: add in the measure name, gass etc.
+
+                const allDeltaMeasurements = calculateDeltaMeasures(allBaseMeasurements, allActionedMeasurements);
+                writeYaml(config, `${name}.measures.delta.yml`, allDeltaMeasurements, formatFromConfig);
+                // TODO: add in the measure name, gas etc.
+                // need to know the contact, etc.
 
                 writeYaml(config, `${name}.measures.yml`, allActionedMeasurements, formatFromConfig);
 
