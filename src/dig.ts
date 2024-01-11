@@ -25,13 +25,13 @@ export const digGraph = async (addresses: string[], stopafter?: string[]) => {
             const blockchainAddress = dig(address);
             if (blockchainAddress) {
                 const stopper = stopafter?.includes(address);
-                const name =
-                    (await blockchainAddress.erc20Symbol()) ||
-                    (await blockchainAddress.implementationContractName()) ||
-                    (await blockchainAddress.contractName()) ||
-                    ((await blockchainAddress.isAddress()) ? address.slice(0, 5) + '..' + address.slice(-3) : address);
-
-                graph.nodes.set(address, Object.assign({ name: name, stopper: stopper }, blockchainAddress));
+                graph.nodes.set(
+                    address,
+                    Object.assign(
+                        { name: await blockchainAddress.contractNamish(), stopper: stopper },
+                        blockchainAddress,
+                    ),
+                );
 
                 if (!stopper) {
                     const digResults = await digDeep(blockchainAddress);
@@ -69,19 +69,23 @@ export const digGraph = async (addresses: string[], stopafter?: string[]) => {
                     const backLinks = graph.backLinks.get(address);
                     let done = false;
                     if (backLinks && backLinks.length == 1) {
-                        const index = backLinks[0].name.match(/\[\d+\]$/);
-                        if (index && index.length == 1) {
-                            node.name += index[0];
+                        const index = backLinks[0].name.match(/\[(\d+)\]$/);
+                        if (index && index.length == 2) {
+                            node.name += `_${index[1]}`;
                             done = true;
                         }
                     }
                     if (!done) {
-                        node.name += `_${unique}`;
+                        node.name += `__${unique}`;
                         unique++;
                     }
                 }
             }
         }
+    }
+    // save named addresses lookup
+    for (const [address, node] of graph.nodes) {
+        graph.namedAddresses.set(node.name, address);
     }
     return graph;
 };
@@ -93,13 +97,13 @@ export const dig = (address: string): BlockchainAddress | null => {
 export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResults> => {
     const links: Link[] = [];
     const measures: Measure[] = [];
-    if (await address.isContract()) {
+    const contract = await address.getContract();
+    if (contract) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
         // TODO: follow also the proxy contained addresses
-        const rpcContract = await address.getContract();
 
         let functions: FunctionFragment[] = [];
-        rpcContract.interface.forEachFunction((func) => functions.push(func));
+        contract.interface.forEachFunction((func) => functions.push(func));
 
         // Explore each parameterless view (or pure) functions in the contract's interface
         for (let func of functions.filter(
@@ -115,7 +119,7 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
             // if any interesting function
             if (addressIndices.length > 0) {
                 try {
-                    const funcResults = await rpcContract[func.name]();
+                    const funcResults = await contract[func.name]();
                     if (func.outputs.length == 1) {
                         // single result - containing an address or address[]
                         if (func.outputs[0].type === 'address') {
@@ -172,7 +176,7 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                         );
                     // single number
                     measures.push({
-                        calculation: async () => await rpcContract[func.name](),
+                        calculation: async () => await contract[func.name](),
                         name: `${func.name}`,
                         type: func.outputs[0].type,
                     });
@@ -186,7 +190,7 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                                 } returns ${func.outputs[0].type}[]`,
                             );
                         measures.push({
-                            calculation: async () => (await rpcContract[func.name]())[outputIndex],
+                            calculation: async () => (await contract[func.name]())[outputIndex],
                             name: `${func.name}.${func.outputs[outputIndex].name}`,
                             type: func.outputs[outputIndex].type,
                         });

@@ -13,6 +13,38 @@ import { asDateString } from './datetime';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
+export type ContractWithAddress = Contract & {
+    address: string;
+};
+
+/*
+export async function deploy<T extends Contract>(
+    factoryName: string,
+    deployer: SignerWithAddress,
+    ...deployArgs: any[]
+): Promise<ContractWithAddress<T>> {
+    const contractFactory = await ethers.getContractFactory(factoryName, deployer);
+    const contract = await contractFactory.deploy(...deployArgs);
+    await contract.waitForDeployment();
+    let address = await contract.getAddress();
+
+    let erc20 = await getERC20Fields(address);
+
+    return Object.assign(contract as T, {
+        name: factoryName,
+        address: address,
+        contractName: factoryName,
+        implementationContractName: undefined,
+        tokenName: erc20.name,
+        tokenSymbol: erc20.symbol,
+        connect: (signer: SignerWithAddress): T => {
+            return new BaseContract(contract.target, contract.interface, signer) as T;
+        },
+    }) as ContractWithAddress<T>;
+}
+
+*/
+
 export class Blockchain {
     private allSigners = ethers.getSigners();
     private allocatedSigners = 0;
@@ -149,14 +181,17 @@ export class BlockchainAddress {
         return result;
     };
 
-    public getContract = async (signer?: SignerWithAddress): Promise<Contract> => {
+    public getContract = async (signer?: SignerWithAddress): Promise<ContractWithAddress | null> => {
         const info = await this.info;
-        // get abi
+        // get abi, handling proxies
         const abi = info.implementationContractInfo?.sourceCode?.ABI || info.contractInfo?.sourceCode?.ABI;
-        if (!abi) throw Error(`unable to locate contract ABI: ${this.address}`);
-
+        // if (!abi) throw Error(`unable to locate contract ABI: ${this.address}`);
         // create the contract from the abi
-        return new ethers.Contract(this.address, abi, signer || ethers.provider);
+        return abi
+            ? Object.assign(new ethers.Contract(this.address, abi, signer || ethers.provider), {
+                  address: this.address,
+              })
+            : null;
     };
 
     public getProxyContract = async (signer?: SignerWithAddress): Promise<Contract | null> => {

@@ -14,8 +14,9 @@ import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
 import { digGraph } from './dig';
 import { Measurement, calculateMeasures } from './delve';
-import { ContractTransactionResponse, MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
+import { ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther } from 'ethers';
 import { ensureDirectory } from './eat-cache';
+import { ethers } from 'hardhat';
 
 async function main() {
     // process the command line
@@ -87,35 +88,38 @@ async function main() {
         };
 
         const allMeasuresUnformatted = await calculateMeasures(graph);
-        // const allMeasures = lodash.cloneDeepWith(allMeasuresUnformatted, );
-
         writeYaml(config, 'measures.yml', allMeasuresUnformatted, formatFromConfig);
+
         // get all the users
-        const allUsers = new Map<string, SignerWithAddress>();
+        const users: any = {};
         if (config.users)
             for (const name of config.users) {
-                allUsers.set(name, await blockchain.getUser(name));
+                users[name] = await blockchain.getUser(name);
             }
+
+        // get all the things
+        const contracts: any = {};
+        for (const [name, address] of graph.namedAddresses) {
+            console.log(`contract ${name} at ${address}`);
+            contracts[name] = await graph.nodes.get(address)?.getContract();
+        }
+
+        // get some stETH for some users and let market use it
+        const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+        for (const user of [users.fMinter, users.xMinter]) {
+            if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
+                throw Error('could not get enough stETH, find another whale');
+            }
+            await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
+        }
+
         type ActionFunction = () => Promise<ContractTransactionResponse>;
         const allActions = new Map<string, ActionFunction>();
 
-        allActions.set('fMinter.mint(1 ETH)', async () => {
-            const fMinter = allUsers.get('fMinter');
-            if (!fMinter) throw Error('could not find fMinter user');
-
-            // const treasuryNode = graph.nodes.get("stETHTreasury");
-            // if (! treasuryNode) throw Error("could not find stETHTreasury contract");
-            // const treasury: any = treasuryNode.getContract(fMinter);
-            // // TODO: access the Calculation for this
-            // const fNav = await treasury.getCurrentNav().then((res: any) => res._fNav);
-            //
-
-            const marketNode = graph.nodes.get('0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB');
-            if (!marketNode) throw Error('could not find Market contract');
-            const market = await marketNode.getContract(fMinter);
-
+        allActions.set('fMinter_mint_1ETH', async () => {
+            // TODO: add actions to config
             //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
-            return market.mintFToken(parseEther('1'), fMinter.address, 0n);
+            return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
         });
 
         for (const [name, action] of allActions) {
@@ -129,6 +133,9 @@ async function main() {
             } catch (e: any) {
                 result = e.message; // failure
             }
+
+            const allMeasuresUnformatted = await calculateMeasures(graph);
+            writeYaml(config, `${name}.measures.yml`, allMeasuresUnformatted, formatFromConfig);
 
             console.log(`${name}: result: ${result}, gas:${actionGas}`);
         }

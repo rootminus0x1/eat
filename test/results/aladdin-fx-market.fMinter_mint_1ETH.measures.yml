@@ -69,7 +69,7 @@
   measurements:
     - name: available_supply
       type: uint256
-      value: '1047280.171993911715747992'
+      value: '1047280.187531709787792637'
     - name: decimals
       type: uint256
       value: '18'
@@ -224,7 +224,7 @@
       value: '1.0'
     - name: totalSupply
       type: uint256
-      value: '6650842.598065295621717671'
+      value: '6653126.66064062874783894'
 '0xa84360896cE9152d1780c546305BB54125F962d9':
   contract: FxETHTwapOracle
   measurements:
@@ -260,7 +260,7 @@
       value: '18'
     - name: nav
       type: uint256
-      value: '0.832299813951458409'
+      value: '0.832219786588964216'
     - name: totalSupply
       type: uint256
       value: '5646434.225742690599105577'
@@ -419,7 +419,7 @@
       value: '0'
     - name: price_oracle
       type: uint256
-      value: '0.999585642014764018'
+      value: '0.999585641984017069'
     - name: totalSupply
       type: uint256
       value: '45363.931240034965729028'
@@ -434,19 +434,19 @@
       value: '0.1'
     - name: collateralRatio
       type: uint256
-      value: '2.127502112512926719'
+      value: '2.127115033548379869'
     - name: emaLeverageRatio.lastTime
       type: uint40
-      value: '1703792975'
+      value: '1703824432'
     - name: emaLeverageRatio.sampleInterval
       type: uint24
       value: '86400'
     - name: emaLeverageRatio.lastValue
       type: uint96
-      value: '1767249637152348130'
+      value: '1773235678532359425'
     - name: emaLeverageRatio.lastEmaValue
       type: uint96
-      value: '1822162261482861300'
+      value: '1805404668232143410'
     - name: getCurrentNav._baseNav
       type: uint256
       value: '2354.30211112'
@@ -464,7 +464,7 @@
       value: '1836.7853'
     - name: leverageRatio
       type: uint256
-      value: '1.805406876341814937'
+      value: '1.80540466823214341'
     - name: rebalancePoolRatio
       type: uint128
       value: '500000000000000000'
@@ -473,7 +473,7 @@
       value: '0'
     - name: totalBaseToken
       type: uint256
-      value: '6179.474952048061425555'
+      value: '6180.472452048061425555'
 '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469':
   contract: Voting Escrow
   measurements:
@@ -488,7 +488,7 @@
       value: '115331.908808027700163144'
     - name: totalSupply
       type: uint256
-      value: '94540.343792368370153142'
+      value: '94540.339228861235131872'
 '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0':
   contract: WstETH
   measurements:

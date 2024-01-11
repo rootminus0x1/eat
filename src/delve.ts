@@ -1,16 +1,7 @@
-import { ContractWithAddress, UserWithAddress, deploy, getUser, getContract } from './blockchain-old';
-import { PAMSystem } from './PokeAndMeasure';
-import { Contract } from 'ethers';
 import { Graph } from './graph';
-import { string } from 'yargs';
-
-export const addUser = async (system: PAMSystem, name: string, types: string[] = []): Promise<UserWithAddress> => {
-    const user = await getUser(name);
-    types.map((type) => system.defThing(user, type));
-    return user;
-};
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
+/*
 export const addContract = async (
     system: PAMSystem,
     address: string,
@@ -41,6 +32,7 @@ export const addContract = async (
 
     return contract;
 };
+*/
 
 /*
 export const calculateAllActions async (): Promise<Object> => {

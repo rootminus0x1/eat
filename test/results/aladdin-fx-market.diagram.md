@@ -94,7 +94,7 @@ click 0xe063F04f280c60aECa68b38341C2eEcBeC703ae2 "https://etherscan.io/address/0
 
 0xe063F04f280c60aECa68b38341C2eEcBeC703ae2 -- treasury --> 0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0
 
-0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF[["<b>GnosisSafe</b><br><i>GnosisSafeProxy</i><br><hr>"]]:::contract
+0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF[["<b>GnosisSafe__0</b><br><i>GnosisSafeProxy</i><br><hr>"]]:::contract
 click 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF "https://etherscan.io/address/0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF#code"
 
 0x11E91BB6d1334585AA37D8F4fde3932C7960B938(["0x11E..938"]):::address
@@ -119,7 +119,7 @@ click 0xa677d95B91530d56791FbA72C01a862f1B01A49e "https://etherscan.io/address/0
 
 0xa677d95B91530d56791FbA72C01a862f1B01A49e -- wrapper --> 0xb09e34dD25d5E88a1E9Ff6F6418109927675B658
 
-0xc6dEe5913e010895F3702bc43a40d661B13a40BD[["<b>BoostableRebalancePool</b><br><i>TransparentUpgradeableProxy</i>"]]:::contract
+0xc6dEe5913e010895F3702bc43a40d661B13a40BD[["<b>BoostableRebalancePool_1</b><br><i>TransparentUpgradeableProxy</i>"]]:::contract
 click 0xc6dEe5913e010895F3702bc43a40d661B13a40BD "https://etherscan.io/address/0xc6dEe5913e010895F3702bc43a40d661B13a40BD#code"
 
 0xc6dEe5913e010895F3702bc43a40d661B13a40BD -- asset --> 0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726
@@ -143,7 +143,7 @@ click 0xc6dEe5913e010895F3702bc43a40d661B13a40BD "https://etherscan.io/address/0
 
 0xc6dEe5913e010895F3702bc43a40d661B13a40BD -- wrapper --> 0xb09e34dD25d5E88a1E9Ff6F6418109927675B658
 
-0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9[["<b>BoostableRebalancePool</b><br><i>TransparentUpgradeableProxy</i>"]]:::contract
+0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9[["<b>BoostableRebalancePool_2</b><br><i>TransparentUpgradeableProxy</i>"]]:::contract
 click 0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9 "https://etherscan.io/address/0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9#code"
 
 0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9 -- asset --> 0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726
@@ -247,21 +247,21 @@ click 0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E "https://etherscan.io/address/0
 
 0xC2BdBF323304eaBd9260b42E4d0d429Ca3481d6E -- src --> 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84
 
-0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230["<b>ChainlinkTwapOracleV3</b>"]:::contract
+0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230["<b>ChainlinkTwapOracleV3__0</b>"]:::contract
 click 0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230 "https://etherscan.io/address/0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230#code"
 
 0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230 -- chainlinkAggregator --> 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
 
 0x460B3CdE57DfbA90DBed02fd83d3990a92DA1230 -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-0xD24AC180e6769Fd5F624e7605B93084171074A77["<b>ChainlinkTwapOracleV3</b>"]:::contract
+0xD24AC180e6769Fd5F624e7605B93084171074A77["<b>ChainlinkTwapOracleV3__1</b>"]:::contract
 click 0xD24AC180e6769Fd5F624e7605B93084171074A77 "https://etherscan.io/address/0xD24AC180e6769Fd5F624e7605B93084171074A77#code"
 
 0xD24AC180e6769Fd5F624e7605B93084171074A77 -- chainlinkAggregator --> 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8
 
 0xD24AC180e6769Fd5F624e7605B93084171074A77 -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-0x21E27a5E5513D6e65C4f830167390997aA84843a["stETH-ng-f (Curve.fi Factory Pool: stETH-ng)<br><b>StableSwap</b><br><i>Vyper_contract</i>"]:::contract
+0x21E27a5E5513D6e65C4f830167390997aA84843a["stETH-ng-f (Curve.fi Factory Pool: stETH-ng)<br><b>StableSwap</b>"]:::contract
 click 0x21E27a5E5513D6e65C4f830167390997aA84843a "https://etherscan.io/address/0x21E27a5E5513D6e65C4f830167390997aA84843a#code"
 
 0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37["<b>Gauge Controller</b>"]:::contract
@@ -287,7 +287,7 @@ click 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea "https://etherscan.io/address/0
 
 0xD71B8B76015F296E53D41e8288a8a13eAfFff2ea -- owner --> 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF
 
-0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419["<b>EACAggregatorProxy</b>"]:::contract
+0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419["<b>EACAggregatorProxy__0</b>"]:::contract
 click 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 "https://etherscan.io/address/0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419#code"
 
 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-accessController0x0((0x0))
@@ -300,7 +300,7 @@ click 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 "https://etherscan.io/address/0
 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-proposedAggregator0x0((0x0))
 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419 -- proposedAggregator --> 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419-proposedAggregator0x0
 
-0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8["<b>EACAggregatorProxy</b>"]:::contract
+0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8["<b>EACAggregatorProxy__1</b>"]:::contract
 click 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 "https://etherscan.io/address/0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8#code"
 
 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-accessController0x0((0x0))
@@ -313,13 +313,13 @@ click 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 "https://etherscan.io/address/0
 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-proposedAggregator0x0((0x0))
 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8 -- proposedAggregator --> 0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8-proposedAggregator0x0
 
-0xE62B71cf983019BFf55bC83B48601ce8419650CC["<b>AccessControlledOffchainAggregator</b><br><hr>"]:::contract
+0xE62B71cf983019BFf55bC83B48601ce8419650CC["<b>AccessControlledOffchainAggregator__0</b><br><hr>"]:::contract
 click 0xE62B71cf983019BFf55bC83B48601ce8419650CC "https://etherscan.io/address/0xE62B71cf983019BFf55bC83B48601ce8419650CC#code"
 
-0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA[["<b>GnosisSafe</b><br><i>Proxy</i><br><hr>"]]:::contract
+0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA[["<b>GnosisSafe__1</b><br><i>Proxy</i><br><hr>"]]:::contract
 click 0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA "https://etherscan.io/address/0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA#code"
 
-0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196["<b>AccessControlledOffchainAggregator</b><br><hr>"]:::contract
+0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196["<b>AccessControlledOffchainAggregator__1</b><br><hr>"]:::contract
 click 0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196 "https://etherscan.io/address/0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196#code"
 
 ```

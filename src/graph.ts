@@ -15,4 +15,5 @@ export class Graph {
     public links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
     public backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
     public measures = new Map<string, Measure[]>();
+    public namedAddresses = new Map<string, string>();
 }

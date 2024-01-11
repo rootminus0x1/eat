@@ -18,16 +18,18 @@ function cl(f: string[], what: string) {
 }
 
 const makeContractName = (
+    name: string,
     contractName?: string,
     logicName?: string,
     vyperName?: string,
     tokenSymbol?: string,
     tokenName?: string,
 ): string => {
-    let result = contractName;
-    result = logicName || vyperName ? `<b>${logicName || vyperName}</b><br><i>${result}</i>` : `<b>${result}</b>`;
-    result = tokenName || tokenSymbol ? `${tokenSymbol} (${tokenName})<br>${result}` : result;
-    return result;
+    let result: string[] = [];
+    if (tokenName || tokenSymbol) result.push(`${tokenSymbol} (${tokenName})`);
+    result.push(`<b>${name}</b>`);
+    if (logicName) result.push(`<i>${contractName}</i>`);
+    return result.join('<br>');
 };
 
 const makeStopper = (name: string, stopper?: boolean): string => {
@@ -39,6 +41,7 @@ const mergeProxyandLogic = true;
 const nodeMermaid = (
     address: string,
     type: AddressType,
+    name: string,
     stopper?: boolean,
     contractName?: string,
     logic?: string,
@@ -54,7 +57,7 @@ const nodeMermaid = (
                 cl(
                     f,
                     `${address}[["${makeStopper(
-                        makeContractName(contractName, logicName, vyperName, tokenSymbol, tokenName),
+                        makeContractName(name, contractName, logicName, vyperName, tokenSymbol, tokenName),
                         stopper,
                     )}"]]:::contract`,
                 );
@@ -67,6 +70,7 @@ const nodeMermaid = (
                 cl(
                     f,
                     `${address}[["${makeContractName(
+                        name,
                         contractName,
                         logicName,
                         vyperName,
@@ -87,7 +91,7 @@ const nodeMermaid = (
             cl(
                 f,
                 `${address}["${makeStopper(
-                    makeContractName(contractName, logicName, vyperName, tokenSymbol, tokenName),
+                    makeContractName(name, contractName, logicName, vyperName, tokenSymbol, tokenName),
                     stopper,
                 )}"]:::contract`,
             );
@@ -172,6 +176,7 @@ export const mermaid = async (graph: Graph, blockNumber: number, asOf: string, c
                     : (await node.isAddress())
                     ? AddressType.address
                     : AddressType.invalid,
+                node.name,
                 node.stopper,
                 await node.contractName(),
                 await node.implementationAddress(),
