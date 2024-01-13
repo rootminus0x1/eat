@@ -1,6 +1,12 @@
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { BlockchainAddress } from './Blockchain';
+
 // the nodes, also contains static information about the nodes, name, etc
-export type GraphNode = { name: string; stopper: boolean | undefined } & BlockchainAddress;
+export type GraphNode = {
+    name: string;
+    signer?: SignerWithAddress;
+    stopper?: boolean;
+} & BlockchainAddress;
 // the links - between a from address (key) and to list of named addresses (value)
 export type Link = { name: string; address: string };
 
@@ -10,10 +16,25 @@ export type Measure = {
     type: string; // solidity type
 };
 
+export type Variable = {
+    name: string;
+    value: bigint;
+};
+
+export type Action = {
+    name: string;
+    // the function gets evaluated by eval()?
+    addressName: string; // foreign key
+    userName: string;
+    functionName: string;
+    arguments: string[];
+};
+
 export class Graph {
     public nodes = new Map<string, GraphNode>(); // address to object
     public links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
     public backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
+
     public measures = new Map<string, Measure[]>();
     public namedAddresses = new Map<string, string>();
 }

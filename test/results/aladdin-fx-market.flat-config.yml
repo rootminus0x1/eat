@@ -21,21 +21,21 @@ format:
   - name: getRewardCount
   - name: latestAnswer
     type: int256
-    digits: 8
+    unit: 8
   - name: latestRoundData.answer
     type: int256
-    digits: 8
+    unit: 8
   - contract: Market
     type: uint128
-    digits: 16
+    unit: 16
   - contract: Market
     type: int128
-    digits: 16
+    unit: 16
   - contract: Market
     type: uint64
-    digits: 18
+    unit: 18
   - type: uint256
-    digits: 18
+    unit: ether
 stopafter:
   - '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
   - '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'
@@ -50,12 +50,24 @@ stopafter:
 start:
   - '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB'
 users:
-  - admin
-  - fMinter
-  - fHolderLiquidator
-  - fHolderRedeemer
-  - xMinter
-  - xHolderRedeemer
+  - name: admin
+  - name: fMinter
+    wallet:
+      - contract: Lido
+        amount: 1
+  - name: fHolderLiquidator
+  - name: fHolderRedeemer
+  - name: xMinter
+  - name: xHolderRedeemer
+actions:
+  - name: fMinter => Market.mintfToken(1 eth)
+    user: fMinter,
+    contract: Market
+    function: mintFToken
+    args:
+      - 1 ether
+      - fMinter.address
+      - 0
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
 configFilePath: /home/tfras/github/rootminus0x1/eat/test/aladdin-fx-market.config.yml
 configName: aladdin-fx-market

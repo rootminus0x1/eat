@@ -53,7 +53,7 @@ export class Blockchain {
 
     constructor(public blockNumber: number) {}
 
-    public getUser = async (name: string): Promise<SignerWithAddress> => {
+    public getSigner = async (name: string): Promise<SignerWithAddress> => {
         await this.allSigners;
         return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
     };
@@ -204,7 +204,13 @@ export class BlockchainAddress {
 
     public isContract = async (): Promise<boolean> => {
         const info = await this.info;
-        return info.contractInfo ? true : false;
+        // TODO: remove isContract - the absence of contract info should be enough?
+        return info.isContract ? true : false;
+    };
+
+    public isERC20Contract = async (): Promise<boolean> => {
+        const info = await this.info;
+        return info.erc20Fields?.name ? true : false;
     };
 
     public isAddress = async (): Promise<boolean> => {

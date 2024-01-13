@@ -14,12 +14,21 @@ stopafter:
   - "0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196" # "           ",
 
 users:
-  - "admin" # bao admin
-  - "fMinter" #user who mints fTokens
-  - "fHolderLiquidator" # user who mints/liquidates fTokens
-  - "fHolderRedeemer" # user who mint/redeems fTokens
-  - "xMinter" # user who mint/redeems xTokens
-  - "xHolderRedeemer" # user who mint/redeems xTokens
+  - name: admin # bao admin
+  - name: fMinter #user who mints fTokens
+    wallet:
+      - { contract: Lido, amount: 1 }
+  - name: fHolderLiquidator # user who mints/liquidates fTokens
+  - name: fHolderRedeemer # user who mint/redeems fTokens
+  - name: xMinter # user who mint/redeems xTokens
+  - name: xHolderRedeemer # user who mint/redeems xTokens
+
+actions:
+  - name: "fMinter => Market.mintfToken(1 eth)" #TODO: auto generate this name?
+    user: fMinter,
+    contract: "Market"
+    function: "mintFToken"
+    args: [1 ether, fMinter.address, 0]
 
 diagram:
   renderer: "elk"

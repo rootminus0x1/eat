@@ -1,4 +1,9 @@
-import { Graph } from './graph';
+import { ethers } from 'hardhat';
+
+import { Graph, Action, Variable } from './graph';
+import { Blockchain } from './Blockchain';
+import { dig } from './dig';
+import { ContractTransactionResponse, MaxUint256, parseEther } from 'ethers';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -60,6 +65,71 @@ export const calculateAllActions async (): Promise<Object> => {
 }
 */
 
+type ActionFunction = () => Promise<ContractTransactionResponse>;
+type Actions = Map<string, ActionFunction>;
+
+// TODO: return users and contracts for complex user defined actions
+export const setupActions = async (config: any, graph: Graph, blockchain: Blockchain): Promise<Actions> => {
+    const contracts: any = {};
+    for (const [name, address] of graph.namedAddresses) {
+        // wrap contract in a proxy
+
+        // TODO: intercept all calls for each contract into structure for action information
+        /*
+        class Proxy <T extends Object> {
+            private className: string;
+            constructor(private wrapped: T, private name: string) {
+                this.className = wrapped.constructor.name;
+            }
+            private intercept = (target: any, func: string, receiver: any) => {
+                return (...args: any[]) => {
+                    console.log(`name: ${this.name}, contract: ${this.className}, ${func}(${JSON.stringify(args)})`);
+                    return target[func].apply(this.wrapped, args);
+                }
+            }
+
+            public create = () {
+                const hander
+            }
+
+        }
+        */
+        contracts[name] = await graph.nodes.get(address)?.getContract();
+    }
+
+    // TODO: all graphnodes that aren't contracts get treated as wallets.
+    // like owners, and other special addresses, we set them up as impersonated signers
+
+    const users: any = {};
+    for (const user of config.users) {
+        const signer = await blockchain.getSigner(user.name);
+        users[user.name] = signer; // to be used in actions
+        graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, dig(signer.address)));
+    }
+
+    // TODO: make the users do something under config
+    // get some stETH for some users and let market use it
+    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+    for (const user of [users.fMinter, users.xMinter]) {
+        if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
+            throw Error('could not get enough stETH, find another whale');
+        }
+        await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
+    }
+
+    const actions: Actions = new Map<string, ActionFunction>();
+
+    actions.set('fMinter_mint_1ETH', async () => {
+        // TODO: add actions to config
+        //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+        return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
+    });
+    // TODO: all erc20 graphnodes are added to tokens for wallets to hold
+    // TODO: some non-erc20 graphnodes are defined in config
+
+    return actions;
+};
+
 export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
     return Array.from(unsorted.entries()).sort((a, b) =>
         field(a[1]).localeCompare(field(b[1]), 'en', { sensitivity: 'base' }),
@@ -88,7 +158,7 @@ export type MeasurementForContract = {
     success: boolean;
     gas: bigint;
 }>;
-export type Measurements = MeasurementForContract[];
+export type Measurements = Variable[] & Action[] & MeasurementForContract[];
 
 // returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
 export const calculateMeasures = async (graph: Graph): Promise<Measurements> => {

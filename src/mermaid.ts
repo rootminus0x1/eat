@@ -4,7 +4,6 @@
 import { ZeroAddress } from 'ethers';
 
 import { Graph } from './graph';
-import { string } from 'hardhat/internal/core/params/argumentTypes';
 
 export enum AddressType {
     invalid,
@@ -21,7 +20,6 @@ const makeContractName = (
     name: string,
     contractName?: string,
     logicName?: string,
-    vyperName?: string,
     tokenSymbol?: string,
     tokenName?: string,
 ): string => {
@@ -36,8 +34,6 @@ const makeStopper = (name: string, stopper?: boolean): string => {
     return stopper ? `${name}<br><hr>` : name;
 };
 
-const useSubgraphForProxy = false;
-const mergeProxyandLogic = true;
 const nodeMermaid = (
     address: string,
     type: AddressType,
@@ -46,57 +42,22 @@ const nodeMermaid = (
     contractName?: string,
     logic?: string,
     logicName?: string,
-    vyperName?: string,
     tokenSymbol?: string,
     tokenName?: string,
 ): string => {
     const f: string[] = [];
     if (type === AddressType.contract) {
-        if (logicName) {
-            if (mergeProxyandLogic) {
-                cl(
-                    f,
-                    `${address}[["${makeStopper(
-                        makeContractName(name, contractName, logicName, vyperName, tokenSymbol, tokenName),
-                        stopper,
-                    )}"]]:::contract`,
-                );
-                cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-            } else {
-                const logicid = `${address}-${logic}`;
-                if (useSubgraphForProxy) {
-                    cl(f, `subgraph ${address}-subgraph [" "]`);
-                }
-                cl(
-                    f,
-                    `${address}[["${makeContractName(
-                        name,
-                        contractName,
-                        logicName,
-                        vyperName,
-                        tokenSymbol,
-                        tokenName,
-                    )}"]]:::contract`,
-                );
-                cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-                cl(f, `${logicid}["${makeStopper(makeContractName(logicName), stopper)}"]:::contract`);
-                cl(f, `click ${logicid} "https://etherscan.io/address/${logic}#code"`);
-                cl(f, `${address} o--o ${logicid}`);
-                if (useSubgraphForProxy) {
-                    cl(f, 'end');
-                    cl(f, `style ${address}-subgraph stroke-width:0px,fill:#ffffff`);
-                }
-            }
-        } else {
-            cl(
-                f,
-                `${address}["${makeStopper(
-                    makeContractName(name, contractName, logicName, vyperName, tokenSymbol, tokenName),
-                    stopper,
-                )}"]:::contract`,
-            );
-            cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
-        }
+        const pre = logicName ? '[[' : '[';
+        const post = logicName ? ']]' : ']';
+        cl(
+            f,
+            `${address}${pre}"${makeStopper(
+                makeContractName(name, contractName, logicName, tokenSymbol, tokenName),
+                // TODO: add the measurements (values or deltas here)
+                stopper,
+            )}"${post}:::contract`,
+        );
+        cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
     } else if (type === AddressType.address) {
         cl(f, `${address}(["${makeStopper(address.slice(0, 5) + '..' + address.slice(-3), stopper)}"]):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
@@ -108,23 +69,14 @@ const nodeMermaid = (
     return f.join('\n');
 };
 
-const useNodesInLinks = false; // TODO: add a style command line arg
 const linkMermaid = (from: string, to: string, name: string, logic?: string): string => {
     const f: string[] = [];
-    // TODO: put this v into a single place for this function and outputNodeMermaid
-    const fromid = logic && !mergeProxyandLogic ? `${from}-${logic}` : from;
     // replace zero addresses
     if (to === ZeroAddress) {
-        to = `${fromid}-${name}0x0`;
+        to = `${from}-${name}0x0`;
         cl(f, `${to}((0x0))`);
     }
-    if (useNodesInLinks) {
-        const nodeid = `${fromid}-${name}`;
-        cl(f, `${nodeid}[${name}]:::link`);
-        cl(f, `${fromid} --- ${nodeid} --> ${to}`);
-    } else {
-        cl(f, `${fromid} -- ${name} --> ${to}`);
-    }
+    cl(f, `${from} -- ${name} --> ${to}`);
     cl(f, '');
     return f.join('\n');
 };
@@ -138,7 +90,6 @@ const headerMermaid = (blockNumber: number, asOf: string, config?: any): string 
     if (config?.renderer) {
         cl(f, `%%{init: {"flowchart": {"defaultRenderer": "${config.renderer}"}} }%%`);
     }
-    //%%{init: {"flowchart": {"htmlLabels": false}} }%%
     //%%{ init: { 'flowchart': { 'curve': 'stepBefore' } } }%%
 
     cl(f, 'flowchart TB');
@@ -181,7 +132,6 @@ export const mermaid = async (graph: Graph, blockNumber: number, asOf: string, c
                 await node.contractName(),
                 await node.implementationAddress(),
                 await node.implementationContractName(),
-                await node.vyperContractName(),
                 await node.erc20Symbol(),
                 await node.erc20Name(),
             ),

@@ -3,22 +3,22 @@ diagram:
   renderer: default
 format:
   - type: uint256
-    digits: 18
+    unit: ether
   - name: latestAnswer
     type: int256
-    digits: 8
+    unit: 8
   - name: latestRoundData.answer
     type: int256
-    digits: 8
+    unit: 8
   - contract: Market
     type: uint128
-    digits: 16
+    unit: 16
   - contract: Market
     type: int128
-    digits: 16
+    unit: 16
   - contract: Market
     type: uint64
-    digits: 18
+    unit: 18
   # no formatting
   - contract: BoostableRebalancePool
     name: numTotalSupplyHistory
