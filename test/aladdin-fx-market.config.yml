@@ -25,10 +25,10 @@ users:
 
 actions:
   - name: "fMinter => Market.mintfToken(1 eth)" #TODO: auto generate this name?
-    user: fMinter,
+    user: fMinter
     contract: "Market"
     function: "mintFToken"
-    args: [1 ether, fMinter.address, 0]
+    args: [1 ether, fMinter, 0]
 
 diagram:
   renderer: "elk"

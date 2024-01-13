@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { Format, getConfig, write, writeYaml } from './config';
+import { ConfigFormat, getConfig, write, writeYaml } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
@@ -63,7 +63,7 @@ async function main() {
                 address.measurements.forEach((measurement: Measurement, index: number) => {
                     if (measurement && config.format && (measurement.value || measurement.delta)) {
                         for (const anyformat of config.format) {
-                            const format: Format = anyformat; // TODO: make config fully typed
+                            const format: ConfigFormat = anyformat; // TODO: make config fully typed
                             // TODO: could some things,
                             // like timestamps be represented as date/times
                             // or numbers

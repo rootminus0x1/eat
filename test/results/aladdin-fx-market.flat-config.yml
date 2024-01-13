@@ -61,12 +61,12 @@ users:
   - name: xHolderRedeemer
 actions:
   - name: fMinter => Market.mintfToken(1 eth)
-    user: fMinter,
+    user: fMinter
     contract: Market
     function: mintFToken
     args:
       - 1 ether
-      - fMinter.address
+      - fMinter
       - 0
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
 configFilePath: /home/tfras/github/rootminus0x1/eat/test/aladdin-fx-market.config.yml

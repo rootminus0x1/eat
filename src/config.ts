@@ -25,14 +25,22 @@ export const writeYaml = (config: any, name: string, results: any, formatter?: F
     write(config, name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
 };
 
-export type Format = {
+export type ConfigFormat = {
     type: string;
     contract: string;
     name: string;
     unit: string | number; // supports "eth", "wei", or precision digits
 };
 
-const sortFormats = (formats: Format[]): any => {
+export type ConfigAction = {
+    name: string;
+    user: string;
+    contract: string;
+    function: string;
+    args: (string | bigint)[];
+};
+
+const sortFormats = (formats: ConfigFormat[]): any => {
     // those with both contract and name come first
     // second are those with one of contract and name, retaining the same order as given
     // last are those with no contract and name
@@ -42,7 +50,7 @@ const sortFormats = (formats: Format[]): any => {
             .map((format, index) => ({ format, index }))
             // sort them
             .sort((a, b) => {
-                const valueof = (x: Format): number => {
+                const valueof = (x: ConfigFormat): number => {
                     let value = 0;
                     if (x.contract) value += 100;
                     if (x.name) value += 100;

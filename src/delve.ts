@@ -4,6 +4,7 @@ import { Graph } from './graph';
 import { Blockchain } from './Blockchain';
 import { dig } from './dig';
 import { ContractTransactionResponse, MaxUint256, parseEther } from 'ethers';
+import { ConfigAction } from './config';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -119,11 +120,35 @@ export const setupActions = async (config: any, graph: Graph, blockchain: Blockc
 
     const actions: Actions = new Map<string, ActionFunction>();
 
+    /*
+    TODO: check each argument against the ABI for the contract to see what kind of conversion is needed
+    for (const configAction of config.actions) {
+        const action: ConfigAction = configAction;
+        actions.set(
+            'fMinter_mint_1ETH',
+            //`${action.user} => ${action.contract}(${JSON.stringify(action.args})`,
+            async () => {
+                // process the args
+                const workingArgs: (string | bigint)[] = [];
+                for (const arg of action.args) {
+                    if (typeof arg === 'bigint')
+                        workingArgs.push(arg);
+                    else if
+                }
+
+                }
+                return contracts[action.contract].connect(users[action.user])[action.function](...workingA`rgs);
+            },
+        );
+    }
+    */
+
     actions.set('fMinter_mint_1ETH', async () => {
         // TODO: add actions to config
         //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
         return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
     });
+
     // TODO: all erc20 graphnodes are added to tokens for wallets to hold
     // TODO: some non-erc20 graphnodes are defined in config
 
@@ -209,9 +234,6 @@ export const calculateDeltaMeasures = (
     actionedMeasurements: Measurements,
 ): Measurements => {
     const results: Measurements = [];
-
-    const m: Measurement[] = [{ name: 'x', type: 'y', error: 'eek' }];
-    if (m[0] as { error: string } | undefined) console.log((m[0] as any).error);
 
     // loop through actioned measurements, just the actual measurements
     const actionedContractMeasurements: Measurements = actionedMeasurements.filter((m: any) =>
