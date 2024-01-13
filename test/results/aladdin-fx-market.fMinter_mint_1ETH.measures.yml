@@ -1,10 +1,4 @@
-- name: fMinter_mint_1ETH
-  addressName: address
-  userName: user
-  functionName: func
-  arguments:
-    - hello
-    - world
+- actionName: fMinter_mint_1ETH
   gas: '335120'
 - address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
   name: BoostableRebalancePool_at_1

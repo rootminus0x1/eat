@@ -109,12 +109,12 @@ export type ContractMeasurements = {
     name: string; // node name
     contract: string; // contract nameish
     measurements: Measurement[];
-} /*
-& Partial<{
-    action: string;
-    success: boolean;
-    gas: bigint;
-}>*/;
+} & Partial<{
+    actionName: string;
+    // TODO: should be error | gas not both
+    error?: string;
+    gas?: bigint;
+}>;
 
 export type Measurements = (Partial<Variable> & Partial<Action> & Partial<ContractMeasurements>)[];
 
@@ -233,7 +233,7 @@ export const calculateDeltaMeasures = (
 };
 
 // TODO: return users and contracts for complex user defined actions
-export const setupActions = async (config: any, graph: Graph, blockchain: Blockchain): Promise<Actions> => {
+export const setupActions = async (config: Config, graph: Graph, blockchain: Blockchain): Promise<any[]> => {
     const contracts: any = {};
     for (const [name, address] of graph.namedAddresses) {
         // wrap contract in a proxy
@@ -306,16 +306,10 @@ export const setupActions = async (config: any, graph: Graph, blockchain: Blockc
     }
     */
 
-    actions.set('fMinter_mint_1ETH', async () => {
-        // TODO: add actions to config
-        //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
-        return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
-    });
-
     // TODO: all erc20 graphnodes are added to tokens for wallets to hold
     // TODO: some non-erc20 graphnodes are defined in config
 
-    return actions;
+    return [actions, contracts, users];
 };
 
 export const calculateActions = async (actions: Actions, config: Config, graph: Graph): Promise<void> => {
@@ -374,17 +368,18 @@ export const calculateActions = async (actions: Actions, config: Config, graph: 
         }
 
         const actionedMeasurements = await calculateMeasures(graph);
-        // TODO: add in the measure name, gas etc.
+        // TODO: need to know the contact, etc.
         actionedMeasurements.unshift({
-            name: name,
-            addressName: 'address', // foreign key
+            actionName: name,
+            /*
+            addressName: action.'address', // foreign key
             userName: 'user',
             functionName: 'func',
             arguments: ['hello', 'world'],
+            */
             error: error,
             gas: gas,
         });
-        // need to know the contact, etc.
 
         const deltaMeasurements = calculateDeltaMeasures(baseMeasurements, actionedMeasurements);
 

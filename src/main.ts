@@ -11,6 +11,7 @@ import { Blockchain } from './Blockchain';
 import { digGraph } from './dig';
 import { setupActions, calculateActions } from './delve';
 import { ensureDirectory } from './eat-cache';
+import { parseEther } from 'ethers';
 
 async function main() {
     // process the command line
@@ -51,7 +52,13 @@ async function main() {
             );
         }
 
-        const actions = await setupActions(config, graph, blockchain);
+        const [actions, contracts, users] = await setupActions(config, graph, blockchain);
+
+        actions.set('fMinter_mint_1ETH', async () => {
+            // TODO: add actions to config
+            //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+            return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
+        });
 
         calculateActions(actions, config, graph);
     }
