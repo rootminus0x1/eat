@@ -3,8 +3,9 @@ import { ethers } from 'hardhat';
 import { Graph } from './graph';
 import { Blockchain } from './Blockchain';
 import { dig } from './dig';
-import { ContractTransactionResponse, MaxUint256, parseEther } from 'ethers';
-import { ConfigAction } from './config';
+import { ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther } from 'ethers';
+import { Config, ConfigAction, ConfigFormat, writeYaml } from './config';
+import lodash from 'lodash';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -68,92 +69,6 @@ export const calculateAllActions async (): Promise<Object> => {
 
 type ActionFunction = () => Promise<ContractTransactionResponse>;
 type Actions = Map<string, ActionFunction>;
-
-// TODO: return users and contracts for complex user defined actions
-export const setupActions = async (config: any, graph: Graph, blockchain: Blockchain): Promise<Actions> => {
-    const contracts: any = {};
-    for (const [name, address] of graph.namedAddresses) {
-        // wrap contract in a proxy
-
-        // TODO: intercept all calls for each contract into structure for action information
-        /*
-        class Proxy <T extends Object> {
-            private className: string;
-            constructor(private wrapped: T, private name: string) {
-                this.className = wrapped.constructor.name;
-            }
-            private intercept = (target: any, func: string, receiver: any) => {
-                return (...args: any[]) => {
-                    console.log(`name: ${this.name}, contract: ${this.className}, ${func}(${JSON.stringify(args)})`);
-                    return target[func].apply(this.wrapped, args);
-                }
-            }
-
-            public create = () {
-                const hander
-            }
-
-        }
-        */
-        contracts[name] = await graph.nodes.get(address)?.getContract();
-    }
-
-    // TODO: all graphnodes that aren't contracts get treated as wallets.
-    // like owners, and other special addresses, we set them up as impersonated signers
-
-    const users: any = {};
-    for (const user of config.users) {
-        const signer = await blockchain.getSigner(user.name);
-        users[user.name] = signer; // to be used in actions
-        graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, dig(signer.address)));
-    }
-
-    // TODO: make the users do something under config
-    // get some stETH for some users and let market use it
-    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
-    for (const user of [users.fMinter, users.xMinter]) {
-        if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
-            throw Error('could not get enough stETH, find another whale');
-        }
-        await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
-    }
-
-    const actions: Actions = new Map<string, ActionFunction>();
-
-    /*
-    TODO: check each argument against the ABI for the contract to see what kind of conversion is needed
-    for (const configAction of config.actions) {
-        const action: ConfigAction = configAction;
-        actions.set(
-            'fMinter_mint_1ETH',
-            //`${action.user} => ${action.contract}(${JSON.stringify(action.args})`,
-            async () => {
-                // process the args
-                const workingArgs: (string | bigint)[] = [];
-                for (const arg of action.args) {
-                    if (typeof arg === 'bigint')
-                        workingArgs.push(arg);
-                    else if
-                }
-
-                }
-                return contracts[action.contract].connect(users[action.user])[action.function](...workingA`rgs);
-            },
-        );
-    }
-    */
-
-    actions.set('fMinter_mint_1ETH', async () => {
-        // TODO: add actions to config
-        //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
-        return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
-    });
-
-    // TODO: all erc20 graphnodes are added to tokens for wallets to hold
-    // TODO: some non-erc20 graphnodes are defined in config
-
-    return actions;
-};
 
 export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
     return Array.from(unsorted.entries()).sort((a, b) =>
@@ -315,4 +230,165 @@ export const calculateDeltaMeasures = (
             });
     }
     return results;
+};
+
+// TODO: return users and contracts for complex user defined actions
+export const setupActions = async (config: any, graph: Graph, blockchain: Blockchain): Promise<Actions> => {
+    const contracts: any = {};
+    for (const [name, address] of graph.namedAddresses) {
+        // wrap contract in a proxy
+
+        // TODO: intercept all calls for each contract into structure for action information
+        /*
+        class Proxy <T extends Object> {
+            private className: string;
+            constructor(private wrapped: T, private name: string) {
+                this.className = wrapped.constructor.name;
+            }
+            private intercept = (target: any, func: string, receiver: any) => {
+                return (...args: any[]) => {
+                    console.log(`name: ${this.name}, contract: ${this.className}, ${func}(${JSON.stringify(args)})`);
+                    return target[func].apply(this.wrapped, args);
+                }
+            }
+
+            public create = () {
+                const hander
+            }
+
+        }
+        */
+        contracts[name] = await graph.nodes.get(address)?.getContract();
+    }
+
+    // TODO: all graphnodes that aren't contracts get treated as wallets.
+    // like owners, and other special addresses, we set them up as impersonated signers
+
+    const users: any = {};
+    for (const user of config.users) {
+        const signer = await blockchain.getSigner(user.name);
+        users[user.name] = signer; // to be used in actions
+        graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, dig(signer.address)));
+    }
+
+    // TODO: make the users do something under config
+    // get some stETH for some users and let market use it
+    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+    for (const user of [users.fMinter, users.xMinter]) {
+        if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
+            throw Error('could not get enough stETH, find another whale');
+        }
+        await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
+    }
+
+    const actions: Actions = new Map<string, ActionFunction>();
+
+    /*
+    TODO: check each argument against the ABI for the contract to see what kind of conversion is needed
+    for (const configAction of config.actions) {
+        const action: ConfigAction = configAction;
+        actions.set(
+            'fMinter_mint_1ETH',
+            //`${action.user} => ${action.contract}(${JSON.stringify(action.args})`,
+            async () => {
+                // process the args
+                const workingArgs: (string | bigint)[] = [];
+                for (const arg of action.args) {
+                    if (typeof arg === 'bigint')
+                        workingArgs.push(arg);
+                    else if
+                }
+
+                }
+                return contracts[action.contract].connect(users[action.user])[action.function](...workingA`rgs);
+            },
+        );
+    }
+    */
+
+    actions.set('fMinter_mint_1ETH', async () => {
+        // TODO: add actions to config
+        //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
+        return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
+    });
+
+    // TODO: all erc20 graphnodes are added to tokens for wallets to hold
+    // TODO: some non-erc20 graphnodes are defined in config
+
+    return actions;
+};
+
+export const calculateActions = async (actions: Actions, config: Config, graph: Graph): Promise<void> => {
+    const formatFromConfig = (address: any): any => {
+        // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+        if (typeof address === 'object' && typeof address.measurements === 'object') {
+            let newAddress: any = undefined;
+            address.measurements.forEach((measurement: Measurement, index: number) => {
+                if (measurement && config.format && (measurement.value || measurement.delta)) {
+                    for (const anyformat of config.format) {
+                        const format: ConfigFormat = anyformat; // TODO: make config fully typed
+                        // TODO: could some things,
+                        // like timestamps be represented as date/times
+                        // or numbers
+                        if (
+                            (!format.type || format.type === measurement.type) &&
+                            (!format.name || format.name === measurement.name) &&
+                            (!format.contract || format.contract === address.contract)
+                        ) {
+                            // we're about to change it so clone it
+                            if (!newAddress) newAddress = lodash.cloneDeep(address);
+                            // TODO: handle values that are arrays
+                            // we have a match - so what kind of formatting
+                            if (format.unit) {
+                                const formatByUnits = (field: string) => {
+                                    newAddress.measurements[index][field] = formatUnits(
+                                        (measurement as any)[field] as bigint, // << this should handle bigint[] too
+                                        format.unit,
+                                    );
+                                };
+                                // TODO: make this more dynamic
+                                if (measurement.value) formatByUnits('value');
+                                if (measurement.delta) formatByUnits('delta');
+                            }
+                            break; // only do one format, the first
+                        }
+                    }
+                }
+            });
+            return newAddress;
+        }
+    };
+
+    const baseMeasurements = await calculateMeasures(graph);
+    writeYaml(config, 'measures.yml', baseMeasurements, formatFromConfig);
+
+    for (const [name, action] of actions) {
+        let error: string | undefined = undefined;
+        let gas: bigint | undefined = undefined;
+        try {
+            let tx = await action();
+            let receipt = await tx.wait();
+            gas = receipt ? receipt.gasUsed : MaxInt256;
+        } catch (e: any) {
+            error = e.message; // failure
+        }
+
+        const actionedMeasurements = await calculateMeasures(graph);
+        // TODO: add in the measure name, gas etc.
+        actionedMeasurements.unshift({
+            name: name,
+            addressName: 'address', // foreign key
+            userName: 'user',
+            functionName: 'func',
+            arguments: ['hello', 'world'],
+            error: error,
+            gas: gas,
+        });
+        // need to know the contact, etc.
+
+        const deltaMeasurements = calculateDeltaMeasures(baseMeasurements, actionedMeasurements);
+        writeYaml(config, `${name}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
+
+        writeYaml(config, `${name}.measures.yml`, actionedMeasurements, formatFromConfig);
+    }
 };

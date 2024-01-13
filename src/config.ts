@@ -40,6 +40,16 @@ export type ConfigAction = {
     args: (string | bigint)[];
 };
 
+export type Config = {
+    block: number;
+    start: string[];
+    stopafter: string[];
+    diagram: any;
+    format: ConfigFormat[];
+    actions: any[];
+    users: any[];
+};
+
 const sortFormats = (formats: ConfigFormat[]): any => {
     // those with both contract and name come first
     // second are those with one of contract and name, retaining the same order as given

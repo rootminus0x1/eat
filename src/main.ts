@@ -1,21 +1,16 @@
-import * as yaml from 'js-yaml'; // config files are in yaml
 import yargs from 'yargs/yargs';
-import lodash from 'lodash';
 
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { ConfigFormat, getConfig, write, writeYaml } from './config';
+import { getConfig, write } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
-import { dig, digGraph } from './dig';
-import { Measurement, calculateDeltaMeasures, calculateMeasures, setupActions } from './delve';
-import { Contract, ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther } from 'ethers';
+import { digGraph } from './dig';
+import { setupActions, calculateActions } from './delve';
 import { ensureDirectory } from './eat-cache';
-import { ethers } from 'hardhat';
-import { any } from 'hardhat/internal/core/params/argumentTypes';
 
 async function main() {
     // process the command line
@@ -56,82 +51,9 @@ async function main() {
             );
         }
 
-        const formatFromConfig = (address: any): any => {
-            // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-            if (typeof address === 'object' && typeof address.measurements === 'object') {
-                let newAddress: any = undefined;
-                address.measurements.forEach((measurement: Measurement, index: number) => {
-                    if (measurement && config.format && (measurement.value || measurement.delta)) {
-                        for (const anyformat of config.format) {
-                            const format: ConfigFormat = anyformat; // TODO: make config fully typed
-                            // TODO: could some things,
-                            // like timestamps be represented as date/times
-                            // or numbers
-                            if (
-                                (!format.type || format.type === measurement.type) &&
-                                (!format.name || format.name === measurement.name) &&
-                                (!format.contract || format.contract === address.contract)
-                            ) {
-                                // we're about to change it so clone it
-                                if (!newAddress) newAddress = lodash.cloneDeep(address);
-                                // TODO: handle values that are arrays
-                                // we have a match - so what kind of formatting
-                                if (format.unit) {
-                                    const formatByUnits = (field: string) => {
-                                        newAddress.measurements[index][field] = formatUnits(
-                                            (measurement as any)[field] as bigint, // << this should handle bigint[] too
-                                            format.unit,
-                                        );
-                                    };
-                                    // TODO: make this more dynamic
-                                    if (measurement.value) formatByUnits('value');
-                                    if (measurement.delta) formatByUnits('delta');
-                                }
-                                break; // only do one format, the first
-                            }
-                        }
-                    }
-                });
-                return newAddress;
-            }
-        };
-
-        const allBaseMeasurements = await calculateMeasures(graph);
-        writeYaml(config, 'measures.yml', allBaseMeasurements, formatFromConfig);
-
         const actions = await setupActions(config, graph, blockchain);
 
-        for (const [name, action] of actions) {
-            let error: string | undefined = undefined;
-            let gas: bigint | undefined = undefined;
-            try {
-                let tx = await action();
-                let receipt = await tx.wait();
-                gas = receipt ? receipt.gasUsed : MaxInt256;
-            } catch (e: any) {
-                error = e.message; // failure
-            }
-
-            const allActionedMeasurements = await calculateMeasures(graph);
-            // TODO: add in the measure name, gas etc.
-            allActionedMeasurements.unshift({
-                name: name,
-                addressName: 'address', // foreign key
-                userName: 'user',
-                functionName: 'func',
-                arguments: ['hello', 'world'],
-                error: error,
-                gas: gas,
-            });
-            // need to know the contact, etc.
-
-            const allDeltaMeasurements = calculateDeltaMeasures(allBaseMeasurements, allActionedMeasurements);
-            writeYaml(config, `${name}.measures.delta.yml`, allDeltaMeasurements, formatFromConfig);
-
-            writeYaml(config, `${name}.measures.yml`, allActionedMeasurements, formatFromConfig);
-
-            console.log(`${name}: result: ${error ? error : '\\o/ gas:' + gas}`);
-        }
+        calculateActions(actions, config, graph);
     }
 }
 
