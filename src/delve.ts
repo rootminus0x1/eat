@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 
-import { Graph, Action, Variable } from './graph';
+import { Graph } from './graph';
 import { Blockchain } from './Blockchain';
 import { dig } from './dig';
 import { ContractTransactionResponse, MaxUint256, parseEther } from 'ethers';
@@ -148,19 +148,36 @@ export type Measurement = {
     error?: string;
 };
 
-export type MeasurementForContract = {
-    address: string;
+export type Variable = {
     name: string;
-    contract: string;
+    value: bigint;
+};
+
+export type Action = {
+    name: string;
+    // the function gets evaluated by eval()?
+    addressName: string; // foreign key
+    userName: string;
+    functionName: string;
+    arguments: string[];
+    gas?: bigint;
+    error?: string;
+};
+
+export type ContractMeasurements = {
+    address: string;
+    name: string; // node name
+    contract: string; // contract nameish
     measurements: Measurement[];
-} & Partial<{
+} /*
+& Partial<{
     action: string;
     success: boolean;
     gas: bigint;
-}>;
-export type Measurements = Variable[] & Action[] & MeasurementForContract[];
+}>*/;
 
-// returning an object allows us to print it in differnt formats and cheaply, e.g. JSON.stringify
+export type Measurements = (Partial<Variable> & Partial<Action> & Partial<ContractMeasurements>)[];
+
 export const calculateMeasures = async (graph: Graph): Promise<Measurements> => {
     const result: Measurements = [];
 
@@ -196,53 +213,84 @@ export const calculateDeltaMeasures = (
     const m: Measurement[] = [{ name: 'x', type: 'y', error: 'eek' }];
     if (m[0] as { error: string } | undefined) console.log((m[0] as any).error);
 
-    // loop through actioned measurements
-    for (let a = 0; a < actionedMeasurements.length; a++) {
-        const address = actionedMeasurements[a].address;
-        const name = actionedMeasurements[a].name;
-        const contract = actionedMeasurements[a].contract;
-        const measurements = actionedMeasurements[a].measurements;
+    // loop through actioned measurements, just the actual measurements
+    const actionedContractMeasurements: Measurements = actionedMeasurements.filter((m: any) =>
+        m.measurements ? true : false,
+    );
+    if (baseMeasurements.length !== actionedContractMeasurements.length)
+        throw Error(
+            `contract measurements differ: baseMeasurements ${baseMeasurements.length} actionedMeasurements ${actionedContractMeasurements.length}`,
+        );
+
+    for (let a = 0; a < actionedContractMeasurements.length; a++) {
+        const baseContract = baseMeasurements[a] as ContractMeasurements;
+        const actionedContract = actionedContractMeasurements[a] as ContractMeasurements;
 
         if (
-            !baseMeasurements[a] ||
-            address !== baseMeasurements[a]?.address ||
-            name !== baseMeasurements[a]?.name ||
-            contract !== baseMeasurements[a]?.contract ||
-            measurements.length !== baseMeasurements[a].measurements.length
+            actionedContract.address !== baseContract.address ||
+            actionedContract.name !== baseContract.name ||
+            actionedContract.contract !== baseContract.contract
         )
-            throw Error('attempt to diff measurements of different structures');
+            throw Error(
+                `contract measurements[${a}] mismatch base: ${JSON.stringify(baseContract)}; actioned: ${JSON.stringify(
+                    actionedContract,
+                )}`,
+            );
+
+        if (actionedContract.measurements.length !== baseContract.measurements.length)
+            throw Error(`contract measurements[${a}] mismatch on number of measurements`);
 
         const deltas: Measurement[] = [];
-        for (let m = 0; m < measurements.length; m++) {
-            const name = measurements[m].name;
-            const type = measurements[m].type;
-            if (
-                !baseMeasurements[a].measurements[m] ||
-                name !== baseMeasurements[a].measurements[m].name ||
-                type !== baseMeasurements[a].measurements[m].type
-            )
+        for (let m = 0; m < actionedContract.measurements.length; m++) {
+            const baseMeasurement = baseContract.measurements[m];
+            const actionedMeasurement = actionedContract.measurements[m];
+
+            if (actionedMeasurement.name !== baseMeasurement.name || actionedMeasurement.type !== baseMeasurement.type)
                 throw Error('attempt to diff measurements of different structures');
 
-            const base = baseMeasurements[a].measurements[m] as any;
-            const actioned = measurements[m] as any;
             // TODO: handle arrays of values wherever a "value:" or "delta:" is written below
-            if (base.error && actioned.error) {
+            if (baseMeasurement.error && actionedMeasurement.error) {
                 // both errors
-                if (base.error !== actioned.error)
-                    deltas.push({ name: name, type: type, error: `"${base.error}" => "${actioned.error}"` });
-            } else if (base.error && !actioned.error) {
+                if (baseMeasurement.error !== actionedMeasurement.error)
+                    deltas.push({
+                        name: actionedMeasurement.name,
+                        type: actionedMeasurement.type,
+                        error: `"${baseMeasurement.error}" => "${actionedMeasurement.error}"`,
+                    });
+            } else if (baseMeasurement.error && !actionedMeasurement.error) {
                 // different kind of result
-                deltas.push({ name: name, type: type, error: `"${base.error}" => value`, value: actioned.value });
-            } else if (!base.error && actioned.error) {
+                deltas.push({
+                    name: actionedMeasurement.name,
+                    type: actionedMeasurement.type,
+                    error: `"${baseMeasurement.error}" => value`,
+                    value: actionedMeasurement.value,
+                });
+            } else if (!baseMeasurement.error && actionedMeasurement.error) {
                 // different kind of result
-                deltas.push({ name: name, type: type, error: `value => "${actioned.error}"`, value: base.value });
+                deltas.push({
+                    name: actionedMeasurement.name,
+                    type: actionedMeasurement.type,
+                    error: `value => "${actionedMeasurement.error}"`,
+                    value: baseMeasurement.value,
+                });
             } else {
                 // both values
-                if (base.value !== actioned.value)
-                    deltas.push({ name: name, type: type, delta: ((actioned.value as bigint) - base.value) as bigint });
+                if (baseMeasurement.value !== actionedMeasurement.value)
+                    // TODO: handle arrays of bigints
+                    deltas.push({
+                        name: actionedMeasurement.name,
+                        type: actionedMeasurement.type,
+                        delta: (actionedMeasurement.value as bigint) - (baseMeasurement.value as bigint),
+                    });
             }
         }
-        if (deltas.length > 0) results.push({ address: address, name: name, contract: contract, measurements: deltas });
+        if (deltas.length > 0)
+            results.push({
+                address: actionedContract.address,
+                name: actionedContract.name,
+                contract: actionedContract.contract,
+                measurements: deltas,
+            });
     }
     return results;
 };

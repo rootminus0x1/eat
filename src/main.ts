@@ -102,28 +102,27 @@ async function main() {
         const actions = await setupActions(config, graph, blockchain);
 
         for (const [name, action] of actions) {
-            let result = '-';
-            let actionGas = 0n;
+            let error: string | undefined = undefined;
+            let gas: bigint | undefined = undefined;
             try {
                 let tx = await action();
                 let receipt = await tx.wait();
-                actionGas = receipt ? receipt.gasUsed : MaxInt256;
-                result = '\\o/'; // success
+                gas = receipt ? receipt.gasUsed : MaxInt256;
             } catch (e: any) {
-                result = e.message; // failure
+                error = e.message; // failure
             }
 
             const allActionedMeasurements = await calculateMeasures(graph);
             // TODO: add in the measure name, gas etc.
-            /*
             allActionedMeasurements.unshift({
                 name: name,
                 addressName: 'address', // foreign key
                 userName: 'user',
                 functionName: 'func',
                 arguments: ['hello', 'world'],
+                error: error,
+                gas: gas,
             });
-            */
             // need to know the contact, etc.
 
             const allDeltaMeasurements = calculateDeltaMeasures(allBaseMeasurements, allActionedMeasurements);
@@ -131,7 +130,7 @@ async function main() {
 
             writeYaml(config, `${name}.measures.yml`, allActionedMeasurements, formatFromConfig);
 
-            console.log(`${name}: result: ${result}, gas:${actionGas}`);
+            console.log(`${name}: result: ${error ? error : '\\o/ gas:' + gas}`);
         }
     }
 }

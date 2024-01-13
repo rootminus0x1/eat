@@ -16,20 +16,6 @@ export type Measure = {
     type: string; // solidity type
 };
 
-export type Variable = {
-    name: string;
-    value: bigint;
-};
-
-export type Action = {
-    name: string;
-    // the function gets evaluated by eval()?
-    addressName: string; // foreign key
-    userName: string;
-    functionName: string;
-    arguments: string[];
-};
-
 export class Graph {
     public nodes = new Map<string, GraphNode>(); // address to object
     public links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
