@@ -387,6 +387,7 @@ export const calculateActions = async (actions: Actions, config: Config, graph: 
         // need to know the contact, etc.
 
         const deltaMeasurements = calculateDeltaMeasures(baseMeasurements, actionedMeasurements);
+
         writeYaml(config, `${name}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
 
         writeYaml(config, `${name}.measures.yml`, actionedMeasurements, formatFromConfig);
