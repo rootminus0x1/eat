@@ -21,21 +21,21 @@ format:
   - name: getRewardCount
   - name: latestAnswer
     type: int256
-    digits: 8
+    unit: 8
   - name: latestRoundData.answer
     type: int256
-    digits: 8
+    unit: 8
   - contract: Market
     type: uint128
-    digits: 16
+    unit: 16
   - contract: Market
     type: int128
-    digits: 16
+    unit: 16
   - contract: Market
     type: uint64
-    digits: 18
+    unit: 18
   - type: uint256
-    digits: 18
+    unit: ether
 start:
   - '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
