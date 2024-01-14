@@ -74,7 +74,7 @@
   measurements:
     - name: available_supply
       type: uint256
-      value: '1047280.184424150173383708'
+      value: '1047280.171993911715747992'
     - name: decimals
       type: uint256
       value: '18'
@@ -436,7 +436,7 @@
       value: '0'
     - name: price_oracle
       type: uint256
-      value: '0.999585641990161724'
+      value: '0.999585642014764018'
     - name: totalSupply
       type: uint256
       value: '45363.931240034965729028'
@@ -482,7 +482,7 @@
       value: '1836.7853'
     - name: leverageRatio
       type: uint256
-      value: '1.805405109843855045'
+      value: '1.805406876341814937'
     - name: rebalancePoolRatio
       type: uint128
       value: '500000000000000000'
@@ -507,7 +507,7 @@
       value: '115331.908808027700163144'
     - name: totalSupply
       type: uint256
-      value: '94540.340141562662136126'
+      value: '94540.343792368370153142'
 - address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
   name: WstETH
   contract: WstETH

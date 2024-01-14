@@ -1,5 +1,5 @@
 - actionName: Market-mintFToken([1_ether,fMinter,0]-fMinter
-  gas: '317978'
+  gas: '335120'
 - address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
   name: BoostableRebalancePool_at_1
   contract: BoostableRebalancePool
@@ -76,7 +76,7 @@
   measurements:
     - name: available_supply
       type: uint256
-      value: '1047280.190639269402201566'
+      value: '1047280.187531709787792637'
     - name: decimals
       type: uint256
       value: '18'
@@ -234,7 +234,7 @@
       value: '1.0'
     - name: totalSupply
       type: uint256
-      value: '6655410.723215961873960209'
+      value: '6653126.66064062874783894'
 - address: '0xa84360896cE9152d1780c546305BB54125F962d9'
   name: FxETHTwapOracle
   contract: FxETHTwapOracle
@@ -273,7 +273,7 @@
       value: '18'
     - name: nav
       type: uint256
-      value: '0.832139759226470024'
+      value: '0.832219786588964216'
     - name: totalSupply
       type: uint256
       value: '5646434.225742690599105577'
@@ -438,7 +438,7 @@
       value: '0'
     - name: price_oracle
       type: uint256
-      value: '0.999585641977874779'
+      value: '0.999585641984017069'
     - name: totalSupply
       type: uint256
       value: '45363.931240034965729028'
@@ -454,19 +454,19 @@
       value: '0.1'
     - name: collateralRatio
       type: uint256
-      value: '2.126728220266181829'
+      value: '2.127115033548379869'
     - name: emaLeverageRatio.lastTime
       type: uint40
-      value: '1703824433'
+      value: '1703824432'
     - name: emaLeverageRatio.sampleInterval
       type: uint24
       value: '86400'
     - name: emaLeverageRatio.lastValue
       type: uint96
-      value: '1773501226641370731'
+      value: '1773235678532359425'
     - name: emaLeverageRatio.lastEmaValue
       type: uint96
-      value: '1805404295908028394'
+      value: '1805404668232143410'
     - name: getCurrentNav._baseNav
       type: uint256
       value: '2354.30211112'
@@ -484,7 +484,7 @@
       value: '1836.7853'
     - name: leverageRatio
       type: uint256
-      value: '1.805404295908028394'
+      value: '1.80540466823214341'
     - name: rebalancePoolRatio
       type: uint128
       value: '500000000000000000'
@@ -493,7 +493,7 @@
       value: '0'
     - name: totalBaseToken
       type: uint256
-      value: '6181.469952048061425555'
+      value: '6180.472452048061425555'
 - address: '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469'
   name: Voting_Escrow
   contract: Voting Escrow
@@ -509,7 +509,7 @@
       value: '115331.908808027700163144'
     - name: totalSupply
       type: uint256
-      value: '94540.338316159808127618'
+      value: '94540.339228861235131872'
 - address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
   name: WstETH
   contract: WstETH
