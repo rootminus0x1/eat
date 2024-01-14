@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 import { Graph } from './graph';
 import { Blockchain } from './Blockchain';
 import { dig } from './dig';
-import { ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther } from 'ethers';
+import { ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther, parseUnits } from 'ethers';
 import { Config, ConfigAction, ConfigFormat, writeYaml } from './config';
 import lodash from 'lodash';
 
@@ -39,32 +39,6 @@ export const addContract = async (
 
     return contract;
 };
-*/
-
-/*
-export const calculateAllActions async (): Promise<Object> => {
-    for (let action of ['', ...this.actions]) {
-        let dataLine = this.independents.map((variable) => this.formatEther(variable.value));
-
-        let result = '-'; // no action
-        let actionGas = 0n;
-        const fn = this.system.actions.get(action);
-        if (fn) {
-            try {
-                let tx = await fn();
-                let receipt = await tx.wait();
-                actionGas = receipt ? receipt.gasUsed : MaxInt256;
-                result = '\\o/'; // success
-            } catch (e: any) {
-                result = this.formatError(e); // failure
-            }
-        }
-        dataLine.push(action);
-        dataLine.push(result);
-        dataLine.push(this.formatWei(actionGas));
-        dataLine.push('$' + formatEther(actionGas * 50n * 10n ** 9n * 2500n));
-    }
-}
 */
 
 type ActionFunction = () => Promise<ContractTransactionResponse>;
@@ -232,87 +206,8 @@ export const calculateDeltaMeasures = (
     return results;
 };
 
-// TODO: return users and contracts for complex user defined actions
-export const setupActions = async (config: Config, graph: Graph, blockchain: Blockchain): Promise<any[]> => {
-    const contracts: any = {};
-    for (const [name, address] of graph.namedAddresses) {
-        // wrap contract in a proxy
-
-        // TODO: intercept all calls for each contract into structure for action information
-        /*
-        class Proxy <T extends Object> {
-            private className: string;
-            constructor(private wrapped: T, private name: string) {
-                this.className = wrapped.constructor.name;
-            }
-            private intercept = (target: any, func: string, receiver: any) => {
-                return (...args: any[]) => {
-                    console.log(`name: ${this.name}, contract: ${this.className}, ${func}(${JSON.stringify(args)})`);
-                    return target[func].apply(this.wrapped, args);
-                }
-            }
-
-            public create = () {
-                const hander
-            }
-
-        }
-        */
-        contracts[name] = await graph.nodes.get(address)?.getContract();
-    }
-
-    // TODO: all graphnodes that aren't contracts get treated as wallets.
-    // like owners, and other special addresses, we set them up as impersonated signers
-
-    const users: any = {};
-    for (const user of config.users) {
-        const signer = await blockchain.getSigner(user.name);
-        users[user.name] = signer; // to be used in actions
-        graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, dig(signer.address)));
-    }
-
-    // TODO: make the users do something under config
-    // get some stETH for some users and let market use it
-    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
-    for (const user of [users.fMinter, users.xMinter]) {
-        if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
-            throw Error('could not get enough stETH, find another whale');
-        }
-        await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
-    }
-
-    const actions: Actions = new Map<string, ActionFunction>();
-
-    /*
-    TODO: check each argument against the ABI for the contract to see what kind of conversion is needed
-    for (const configAction of config.actions) {
-        const action: ConfigAction = configAction;
-        actions.set(
-            'fMinter_mint_1ETH',
-            //`${action.user} => ${action.contract}(${JSON.stringify(action.args})`,
-            async () => {
-                // process the args
-                const workingArgs: (string | bigint)[] = [];
-                for (const arg of action.args) {
-                    if (typeof arg === 'bigint')
-                        workingArgs.push(arg);
-                    else if
-                }
-
-                }
-                return contracts[action.contract].connect(users[action.user])[action.function](...workingA`rgs);
-            },
-        );
-    }
-    */
-
-    // TODO: all erc20 graphnodes are added to tokens for wallets to hold
-    // TODO: some non-erc20 graphnodes are defined in config
-
-    return [actions, contracts, users];
-};
-
-export const calculateActions = async (actions: Actions, config: Config, graph: Graph): Promise<void> => {
+export const delve = async (config: Config, graph: Graph, blockchain: Blockchain): Promise<void> => {
+    // formatting of output
     const formatFromConfig = (address: any): any => {
         // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
         if (typeof address === 'object' && typeof address.measurements === 'object') {
@@ -320,7 +215,7 @@ export const calculateActions = async (actions: Actions, config: Config, graph: 
             address.measurements.forEach((measurement: Measurement, index: number) => {
                 if (measurement && config.format && (measurement.value || measurement.delta)) {
                     for (const anyformat of config.format) {
-                        const format: ConfigFormat = anyformat; // TODO: make config fully typed
+                        const format: ConfigFormat = anyformat;
                         // TODO: could some things,
                         // like timestamps be represented as date/times
                         // or numbers
@@ -353,10 +248,71 @@ export const calculateActions = async (actions: Actions, config: Config, graph: 
         }
     };
 
+    // measures before the action
     const baseMeasurements = await calculateMeasures(graph);
     writeYaml(config, 'measures.yml', baseMeasurements, formatFromConfig);
 
-    for (const [name, action] of actions) {
+    // TODO: allow this to be passed in for user defined actions
+    for (const configAction of config.actions) {
+        // start with a fresh blockchain
+        blockchain.reset();
+
+        let contracts: any = {};
+        let users: any = {};
+
+        // set up the graph contracts and users for executing the actions
+        for (const [name, address] of graph.namedAddresses) {
+            const contract = await graph.nodes.get(address)?.getContract();
+            if (contract) {
+                contracts[name] = contract;
+            } else {
+                users[name] = await ethers.getImpersonatedSigner(address);
+            }
+        }
+        // add in the users from the config
+        for (const user of config.users) {
+            const signer = await blockchain.getSigner(user.name);
+            users[user.name] = signer; // to be used in actions
+            // add them to the graph, too
+            graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, dig(signer.address)));
+        }
+
+        // preconditions of actions
+        // TODO: under config
+        // get some stETH for some users and let market use it
+        const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+        for (const user of [users.fMinter, users.xMinter]) {
+            if (!(await contracts.Lido.connect(stEthWhale).transfer(user.address, parseEther('10')))) {
+                throw Error('could not get enough stETH, find another whale');
+            }
+            await contracts.Lido.connect(user).approve(contracts.Market.address, MaxUint256);
+        }
+
+        const actionName = `${configAction.contract}-${configAction.function}(${JSON.stringify(configAction.args)
+            .replace(/[/\\:*?"<>|]/g, '')
+            .replace(/\s+/g, '_')}-${configAction.user}`;
+
+        const action: ActionFunction = async () => {
+            // process the args
+            let args: (string | bigint)[] = [];
+            for (const configArg of configAction.args) {
+                let arg: any;
+                if (typeof configArg === 'bigint') {
+                    arg = configArg;
+                } else if (typeof configArg === 'string') {
+                    // contract or user or address or string or number
+                    const match = configArg.match(/^\s*(\d+)\s*(\w+)\s*$/);
+                    if (match && match.length === 3) arg = parseUnits(match[1], match[2]);
+                    else if (users[configArg]) arg = users[configArg].address;
+                    else if (contracts[configArg]) arg = contracts[configArg].address;
+                } else if (typeof configArg === 'number') arg = BigInt(configArg);
+                else arg = 0n;
+                args.push(arg);
+            }
+            return contracts[configAction.contract].connect(users[configAction.user])[configAction.function](...args);
+        };
+
+        // execute action
         let error: string | undefined = undefined;
         let gas: bigint | undefined = undefined;
         try {
@@ -367,24 +323,27 @@ export const calculateActions = async (actions: Actions, config: Config, graph: 
             error = e.message; // failure
         }
 
+        // do the post action measures
         const actionedMeasurements = await calculateMeasures(graph);
-        // TODO: need to know the contact, etc.
-        actionedMeasurements.unshift({
-            actionName: name,
-            /*
-            addressName: action.'address', // foreign key
-            userName: 'user',
-            functionName: 'func',
-            arguments: ['hello', 'world'],
-            */
-            error: error,
-            gas: gas,
-        });
-
+        // difference the measures
         const deltaMeasurements = calculateDeltaMeasures(baseMeasurements, actionedMeasurements);
 
-        writeYaml(config, `${name}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
-
-        writeYaml(config, `${name}.measures.yml`, actionedMeasurements, formatFromConfig);
+        for (const measurements of [actionedMeasurements, deltaMeasurements]) {
+            // TODO: need to know the contact, etc.
+            measurements.unshift({
+                actionName: actionName,
+                /*
+                    addressName: action.'address', // foreign key
+                    userName: 'user',
+                    functionName: 'func',
+                    arguments: ['hello', 'world'],
+                    */
+                error: error,
+                gas: gas,
+            });
+        }
+        // write the results
+        writeYaml(config, `${actionName}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
+        writeYaml(config, `${actionName}.measures.yml`, actionedMeasurements, formatFromConfig);
     }
 };

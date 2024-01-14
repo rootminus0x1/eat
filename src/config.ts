@@ -46,7 +46,7 @@ export type Config = {
     stopafter: string[];
     diagram: any;
     format: ConfigFormat[];
-    actions: any[];
+    actions: ConfigAction[];
     users: any[];
 };
 

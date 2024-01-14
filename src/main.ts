@@ -9,7 +9,7 @@ import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
 import { digGraph } from './dig';
-import { setupActions, calculateActions } from './delve';
+import { delve } from './delve';
 import { ensureDirectory } from './eat-cache';
 import { parseEther } from 'ethers';
 
@@ -36,7 +36,7 @@ async function main() {
 
         const blockchain = new Blockchain(config.block);
         // TODO: make this work when disconnected
-        await blockchain.reset(config.quiet);
+        await blockchain.reset(!config.quiet);
 
         // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
         // we build up the graph structure as we go for future processing
@@ -52,15 +52,7 @@ async function main() {
             );
         }
 
-        const [actions, contracts, users] = await setupActions(config, graph, blockchain);
-
-        actions.set('fMinter_mint_1ETH', async () => {
-            // TODO: add actions to config
-            //return market.mintFToken((fNav * parseEther('100')) / ethPrice.value, fMinter.address, 0n);
-            return contracts.Market.connect(users.fMinter).mintFToken(parseEther('1'), users.fMinter.address, 0n);
-        });
-
-        calculateActions(actions, config, graph);
+        await delve(config, graph, blockchain);
     }
 }
 

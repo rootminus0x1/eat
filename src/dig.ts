@@ -205,6 +205,9 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
                     }
                 }
             }
+
+            // TODO: all erc20 graphnodes are added to tokens for wallets to hold
+            // TODO: some non-erc20 graphnodes are defined in config
         }
     }
     return { links: links, measures: measures };

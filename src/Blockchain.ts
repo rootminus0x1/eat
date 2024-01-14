@@ -58,11 +58,11 @@ export class Blockchain {
         return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
     };
 
-    public reset = async (quiet: boolean) => {
+    public reset = async (shout: boolean = false) => {
         await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
         this.blockNumber = await ethers.provider.getBlockNumber();
         this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
-        if (!quiet)
+        if (shout)
             console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
     };
 }
