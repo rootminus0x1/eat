@@ -39,6 +39,13 @@ export type ConfigAction = {
     function: string;
     args: (string | bigint)[];
 };
+export const nullAction = {
+    name: '',
+    user: '',
+    contract: '',
+    function: '',
+    args: [],
+};
 
 export type Config = {
     block: number;

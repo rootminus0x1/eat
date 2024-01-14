@@ -2,10 +2,11 @@ import { ethers } from 'hardhat';
 
 import { Graph } from './graph';
 import { Blockchain } from './Blockchain';
-import { dig } from './dig';
+import { digOne } from './dig';
 import { ContractTransactionResponse, MaxInt256, MaxUint256, formatUnits, parseEther, parseUnits } from 'ethers';
-import { Config, ConfigAction, ConfigFormat, writeYaml } from './config';
+import { Config, ConfigAction, ConfigFormat, nullAction, writeYaml } from './config';
 import lodash from 'lodash';
+import { string } from 'yargs';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -54,6 +55,7 @@ export type MeasurementValue = bigint | bigint[];
 export type Measurement = {
     name: string;
     type: string;
+    target?: string;
     // TODO: revisit the design of deltas and values/errors overlaying each other
     // value can hold a value or a delta value for comparisons
     delta?: MeasurementValue;
@@ -92,13 +94,17 @@ export type ContractMeasurements = {
 
 export type Measurements = (Partial<Variable> & Partial<Action> & Partial<ContractMeasurements>)[];
 
+////////////////////////////////////////////////////////////////////////
+// calculateMeasures
 export const calculateMeasures = async (graph: Graph): Promise<Measurements> => {
     const result: Measurements = [];
+    let count = 0;
 
-    for (const [address, node] of sort(graph.nodes, (v) => v.name)) {
+    const sortedNodes = sort(graph.nodes, (v) => v.name);
+    for (const [address, node] of sortedNodes) {
+        let values: Measurement[] = []; // values for this graph node
         const measures = graph.measures.get(address);
         if (measures && measures.length > 0) {
-            let values: Measurement[] = [];
             for (const measure of measures) {
                 try {
                     const value = await measure.calculation();
@@ -107,6 +113,33 @@ export const calculateMeasures = async (graph: Graph): Promise<Measurements> => 
                     values.push({ name: measure.name, type: measure.type, error: e.message });
                 }
             }
+            count++;
+        }
+        const measuresOnAddress = graph.measuresOnAddress.get(address);
+        if (measuresOnAddress && measuresOnAddress.length > 0) {
+            for (const [targetAddress, targetNode] of sortedNodes) {
+                for (const measure of measuresOnAddress) {
+                    try {
+                        const value = await measure.calculation(targetAddress);
+                        values.push({
+                            name: measure.name,
+                            type: measure.type,
+                            target: targetNode.name,
+                            value: value,
+                        });
+                    } catch (e: any) {
+                        values.push({
+                            name: measure.name,
+                            type: measure.type,
+                            target: targetNode.name,
+                            error: e.message,
+                        });
+                    }
+                    count++;
+                }
+            }
+        }
+        if (values.length > 0) {
             result.push({
                 address: address,
                 name: node.name,
@@ -115,9 +148,12 @@ export const calculateMeasures = async (graph: Graph): Promise<Measurements> => 
             });
         }
     }
+    console.log(`Measurements: ${count}`);
     return result;
 };
 
+////////////////////////////////////////////////////////////////////////
+// calculateDeltaMeasures
 export const calculateDeltaMeasures = (
     baseMeasurements: Measurements,
     actionedMeasurements: Measurements,
@@ -191,6 +227,7 @@ export const calculateDeltaMeasures = (
                     deltas.push({
                         name: actionedMeasurement.name,
                         type: actionedMeasurement.type,
+                        target: actionedMeasurement.target,
                         delta: (actionedMeasurement.value as bigint) - (baseMeasurement.value as bigint),
                     });
             }
@@ -206,6 +243,8 @@ export const calculateDeltaMeasures = (
     return results;
 };
 
+////////////////////////////////////////////////////////////////////////
+// delve
 export const delve = async (config: Config, graph: Graph, blockchain: Blockchain): Promise<void> => {
     // formatting of output
     const formatFromConfig = (address: any): any => {
@@ -248,12 +287,10 @@ export const delve = async (config: Config, graph: Graph, blockchain: Blockchain
         }
     };
 
-    // measures before the action
-    const baseMeasurements = await calculateMeasures(graph);
-    writeYaml(config, 'measures.yml', baseMeasurements, formatFromConfig);
+    // TODO: allow additional actions this to be passed in for user defined actions?
 
-    // TODO: allow this to be passed in for user defined actions
-    for (const configAction of config.actions) {
+    let baseMeasurements: Measurements;
+    for (const configAction of [nullAction, ...config.actions]) {
         // start with a fresh blockchain
         blockchain.reset();
 
@@ -274,7 +311,7 @@ export const delve = async (config: Config, graph: Graph, blockchain: Blockchain
             const signer = await blockchain.getSigner(user.name);
             users[user.name] = signer; // to be used in actions
             // add them to the graph, too
-            graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, dig(signer.address)));
+            graph.nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, digOne(signer.address)));
         }
 
         // preconditions of actions
@@ -323,27 +360,30 @@ export const delve = async (config: Config, graph: Graph, blockchain: Blockchain
             error = e.message; // failure
         }
 
-        // do the post action measures
-        const actionedMeasurements = await calculateMeasures(graph);
-        // difference the measures
-        const deltaMeasurements = calculateDeltaMeasures(baseMeasurements, actionedMeasurements);
-
-        for (const measurements of [actionedMeasurements, deltaMeasurements]) {
-            // TODO: need to know the contact, etc.
-            measurements.unshift({
+        if (configAction === nullAction) {
+            // measures before the actual actions
+            baseMeasurements = await calculateMeasures(graph);
+            writeYaml(config, 'measures.yml', baseMeasurements, formatFromConfig);
+        } else {
+            // do the post action measures
+            const actionedMeasurements = await calculateMeasures(graph);
+            actionedMeasurements.unshift({
                 actionName: actionName,
                 /*
-                    addressName: action.'address', // foreign key
-                    userName: 'user',
-                    functionName: 'func',
-                    arguments: ['hello', 'world'],
-                    */
+                        addressName: action.'address', // foreign key
+                        userName: 'user',
+                        functionName: 'func',
+                        arguments: ['hello', 'world'],
+                        */
                 error: error,
                 gas: gas,
             });
+            writeYaml(config, `${actionName}.measures.yml`, actionedMeasurements, formatFromConfig);
+
+            // difference the measures
+            const deltaMeasurements = calculateDeltaMeasures(baseMeasurements!, actionedMeasurements);
+            // write the results
+            writeYaml(config, `${actionName}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
         }
-        // write the results
-        writeYaml(config, `${actionName}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
-        writeYaml(config, `${actionName}.measures.yml`, actionedMeasurements, formatFromConfig);
     }
 };

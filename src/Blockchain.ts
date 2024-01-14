@@ -46,12 +46,19 @@ export async function deploy<T extends Contract>(
 */
 
 export class Blockchain {
-    private allSigners = ethers.getSigners();
-    private allocatedSigners = 0;
+    private allSigners!: Promise<SignerWithAddress[]>;
+    private allocatedSigners!: number;
 
     public timestamp = 0;
 
-    constructor(public blockNumber: number) {}
+    constructor(public blockNumber: number) {
+        this.resetSigners();
+    }
+
+    private resetSigners = () => {
+        this.allSigners = ethers.getSigners();
+        this.allocatedSigners = 0;
+    };
 
     public getSigner = async (name: string): Promise<SignerWithAddress> => {
         await this.allSigners;
@@ -62,6 +69,7 @@ export class Blockchain {
         await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
         this.blockNumber = await ethers.provider.getBlockNumber();
         this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
+        this.resetSigners();
         if (shout)
             console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
     };

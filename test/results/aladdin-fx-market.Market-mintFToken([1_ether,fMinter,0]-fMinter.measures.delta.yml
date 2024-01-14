@@ -1,18 +1,44 @@
-- actionName: Market-mintFToken([1_ether,fMinter,0]-fMinter
-  gas: '335120'
+- address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
+  name: BoostableRebalancePool_at_1
+  contract: BoostableRebalancePool
+  measurements:
+    - name: pendingRewards.0
+      type: uint256
+      target: WstETH
+      delta: '0.000001510775830407'
+    - name: pendingRewards.1
+      type: uint256
+      target: WstETH
+      delta: '-0.000001510775830407'
+- address: '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9'
+  name: BoostableRebalancePool_at_2
+  contract: BoostableRebalancePool
+  measurements:
+    - name: pendingRewards.0
+      type: uint256
+      target: WstETH
+      delta: '0.000001510775830407'
+    - name: pendingRewards.1
+      type: uint256
+      target: WstETH
+      delta: '-0.000001510775830407'
 - address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
   name: Curve_DAO_Token
   contract: Curve DAO Token
   measurements:
     - name: available_supply
       type: uint256
-      delta: '0.015537798072044645'
+      delta: '0.003107559614408929'
 - address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
   name: FractionalToken
   contract: FractionalToken
   measurements:
     - name: totalSupply
       type: uint256
+      delta: '2284.062575333126121269'
+    - name: balanceOf
+      type: uint256
+      target: fMinter
       delta: '2284.062575333126121269'
 - address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2'
   name: LeveragedToken
@@ -27,7 +53,7 @@
   measurements:
     - name: price_oracle
       type: uint256
-      delta: '-0.000000000030746949'
+      delta: '-0.000000000006144655'
 - address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
   name: stETHTreasury
   contract: stETHTreasury
@@ -46,7 +72,7 @@
       delta: '-16757593250717890'
     - name: leverageRatio
       type: uint256
-      delta: '-0.000002208109671527'
+      delta: '-0.000000441611711635'
     - name: totalBaseToken
       type: uint256
       delta: '0.9975'
@@ -56,4 +82,4 @@
   measurements:
     - name: totalSupply
       type: uint256
-      delta: '-0.00456350713502127'
+      delta: '-0.000912701427004254'

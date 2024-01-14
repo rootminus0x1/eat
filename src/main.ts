@@ -8,7 +8,7 @@ import { getConfig, write } from './config';
 import { mermaid } from './mermaid';
 import { asDateString } from './datetime';
 import { Blockchain } from './Blockchain';
-import { digGraph } from './dig';
+import { dig } from './dig';
 import { delve } from './delve';
 import { ensureDirectory } from './eat-cache';
 import { parseEther } from 'ethers';
@@ -41,7 +41,7 @@ async function main() {
         // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
         // we build up the graph structure as we go for future processing
 
-        const graph = await digGraph(config.start, config.stopafter);
+        const graph = await dig(config.start, config.stopafter);
 
         // output a diagram
         if (!config.nodiagram) {

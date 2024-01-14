@@ -16,11 +16,18 @@ export type Measure = {
     type: string; // solidity type
 };
 
+export type MeasureOnAddress = {
+    name: string;
+    calculation: (address: string) => Promise<bigint | bigint[]>;
+    type: string; // solidity type
+};
+
 export class Graph {
     public nodes = new Map<string, GraphNode>(); // address to object
     public links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
     public backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
 
     public measures = new Map<string, Measure[]>();
+    public measuresOnAddress = new Map<string, MeasureOnAddress[]>();
     public namedAddresses = new Map<string, string>();
 }
