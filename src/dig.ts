@@ -151,6 +151,8 @@ export const dig = async () => {
                 }
             }
         }
+        //TODO:
+        // now we've added the users, we can fill their wallets
     }
 };
 

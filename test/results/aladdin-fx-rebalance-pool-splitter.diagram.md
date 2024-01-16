@@ -16,6 +16,6 @@ click 0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb "https://etherscan.io/address/0
 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF[["<b>GnosisSafe</b><br><i>GnosisSafeProxy</i><br><hr>"]]:::contract
 click 0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF "https://etherscan.io/address/0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF#code"
 
-0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266{{"fMinter"}}:::address
+0x70997970C51812dc3A010C7d01b50e0d17dc79C8{{"fMinter"}}:::address
 
 ```

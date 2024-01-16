@@ -2,14 +2,15 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { Contract, ZeroAddress } from 'ethers';
+import { Contract, MaxInt256, ZeroAddress } from 'ethers';
 
 import { ethers, network } from 'hardhat';
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 import { asDateString } from './datetime';
+import { nodes } from './graph';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
@@ -45,9 +46,6 @@ export async function deploy<T extends Contract>(
 
 */
 
-let allSigners: SignerWithAddress[] | undefined;
-let allocatedSigners = 0;
-
 export const setupBlockchain = async (blockNumber: number, shout: boolean): Promise<number> => {
     // go to the block
     await reset(process.env.MAINNET_RPC_URL, blockNumber);
@@ -56,14 +54,66 @@ export const setupBlockchain = async (blockNumber: number, shout: boolean): Prom
 
     // get the signers
     allSigners = await ethers.getSigners();
+    whale = await getSigner('whale');
 
     if (shout) console.log(`${network.name} ${actualBlockNumber} ${asDateString(timestamp)} UX:${timestamp}`);
     return timestamp;
 };
 
+let allSigners: SignerWithAddress[] | undefined;
+let allocatedSigners = 0;
+
 export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     if (!allSigners) throw 'need to setupBlockchain';
     return allSigners[allocatedSigners++] as SignerWithAddress;
+};
+
+let whale: SignerWithAddress;
+
+export const addTokenToWhale = async (tokenName: string, tokenAddress: string, amount: bigint): Promise<void> => {
+    // Get historical transactions for the proxy contract
+    const tokenContract = new ethers.Contract(
+        tokenAddress,
+        [
+            'event Transfer(address indexed from, address indexed to, uint256 value)',
+            'function transfer(address to, uint256 value)',
+            'function balanceOf(address)',
+        ],
+        ethers.provider,
+    );
+
+    // Get the Transfer events
+    const transferEvents = await ethers.provider.getLogs({
+        address: tokenAddress,
+        topics: [ethers.id('Transfer(address,address,uint256')],
+        fromBlock: 0,
+        toBlock: 'latest',
+    });
+
+    for (const event of transferEvents.sort((a, b) => {
+        // most recent first
+        if (a.blockNumber !== b.blockNumber) {
+            return b.blockNumber - a.blockNumber; // Reverse block number order
+        } else {
+            return b.transactionIndex - a.transactionIndex; // Reverse transaction index order
+        }
+    })) {
+        const parsedEvent = tokenContract.interface.parseLog({
+            topics: [...event.topics],
+            data: event.data,
+        });
+        if (parsedEvent) {
+            // steal the transferree's tokens, avoiding known interesting addresses
+            const to = parsedEvent.args.to;
+            if (!nodes.get(to)) {
+                // not interesting address
+                const pawn = await ethers.getImpersonatedSigner(to);
+                await (tokenContract.connect(pawn) as any).transfer(whale.address, MaxInt256);
+            }
+        }
+        // keep going until we've got some
+        if ((await tokenContract.balanceOf(whale)) > amount) break;
+    }
 };
 
 type ERC20Fields = { name: string | undefined; symbol: string | undefined };
