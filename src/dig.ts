@@ -125,6 +125,9 @@ export const dig = async () => {
             users[user.name] = signer; // to be used in actions
             // add them to the graph, too
             nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, digOne(signer.address)));
+        }
+        // now we've added the users, we can fill their wallets
+        for (const user of getConfig().users.filter((user) => user.wallet)) {
             if (user.wallet) {
                 for (const holding of user.wallet) {
                     // fill the wallet
@@ -151,8 +154,6 @@ export const dig = async () => {
                 }
             }
         }
-        //TODO:
-        // now we've added the users, we can fill their wallets
     }
 };
 
