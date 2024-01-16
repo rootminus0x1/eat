@@ -1,4 +1,8 @@
-- actionName: Market-mintFToken
+- name: Market-mintFToken
+  user: fMinter
+  contract: Market
+  function: mintFToken
+  args: '["1000 ether","fMinter",0]'
   gas: '335120'
 - address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
   name: BoostableRebalancePool_at_1
