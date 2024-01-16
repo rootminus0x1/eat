@@ -362,10 +362,10 @@ export const delve = async (): Promise<void> => {
         // do the post action measures
         const actionedMeasurements = await calculateMeasures();
         actionedMeasurements.unshift({
-            actionName: actionName,
+            name: actionName,
+            user: configAction.user,
             contract: configAction.contract,
             function: configAction.function,
-            user: configAction.user,
             args: JSON.stringify(configAction.args),
             error: error,
             gas: gas,
