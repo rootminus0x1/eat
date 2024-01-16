@@ -17,7 +17,7 @@ users:
   - name: admin # bao admin
   - name: fMinter #user who mints fTokens
     wallet:
-      - { contract: Lido, amount: 1 ether }
+      - { contract: Lido, amount: 10000 ether }
   - name: fHolderLiquidator # user who mints/liquidates fTokens
   - name: fHolderRedeemer # user who mint/redeems fTokens
   - name: xMinter # user who mint/redeems xTokens
@@ -27,7 +27,7 @@ actions:
   - user: fMinter
     contract: "Market"
     function: "mintFToken"
-    args: [1 ether, fMinter, 0]
+    args: [1000 ether, fMinter, 0]
 
 diagram:
   renderer: "elk"

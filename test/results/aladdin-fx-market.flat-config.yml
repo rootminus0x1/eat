@@ -54,7 +54,7 @@ users:
   - name: fMinter
     wallet:
       - contract: Lido
-        amount: 1 ether
+        amount: 10000 ether
   - name: fHolderLiquidator
   - name: fHolderRedeemer
   - name: xMinter
@@ -64,7 +64,7 @@ actions:
     contract: Market
     function: mintFToken
     args:
-      - 1 ether
+      - 1000 ether
       - fMinter
       - 0
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/

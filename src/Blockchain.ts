@@ -2,15 +2,15 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { Contract, MaxInt256, ZeroAddress } from 'ethers';
+import { Contract, ZeroAddress } from 'ethers';
 
 import { ethers, network } from 'hardhat';
-import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 import { asDateString } from './datetime';
-import { nodes } from './graph';
+import { contracts, nodes } from './graph';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
@@ -68,10 +68,12 @@ export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     return allSigners[allocatedSigners++] as SignerWithAddress;
 };
 
-let whale: SignerWithAddress;
+export let whale: SignerWithAddress;
 
-export const addTokenToWhale = async (tokenName: string, tokenAddress: string, amount: bigint): Promise<void> => {
+export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
+    //console.log(`stealing ${formatEther(amount)} of ${tokenName}, ${contracts[tokenName].address} ...`);
     // Get historical transactions for the proxy contract
+    /*
     const tokenContract = new ethers.Contract(
         tokenAddress,
         [
@@ -79,18 +81,18 @@ export const addTokenToWhale = async (tokenName: string, tokenAddress: string, a
             'function transfer(address to, uint256 value)',
             'function balanceOf(address)',
         ],
-        ethers.provider,
+        whale,
     );
+    */
+    const tokenContract = contracts[tokenName];
 
     // Get the Transfer events
-    const transferEvents = await ethers.provider.getLogs({
-        address: tokenAddress,
-        topics: [ethers.id('Transfer(address,address,uint256')],
-        fromBlock: 0,
-        toBlock: 'latest',
-    });
+    const transferEvents = await tokenContract.queryFilter(tokenContract.filters.Transfer(), 0xaf2c74, 0xb4d9f4);
 
-    for (const event of transferEvents.sort((a, b) => {
+    let currentBalance: bigint = await tokenContract.balanceOf(whale); // to meet the target amount
+
+    const done = new Set(nodes.keys()); // don't do interesting addresses
+    for (const event of transferEvents.sort((a: any, b: any) => {
         // most recent first
         if (a.blockNumber !== b.blockNumber) {
             return b.blockNumber - a.blockNumber; // Reverse block number order
@@ -105,14 +107,19 @@ export const addTokenToWhale = async (tokenName: string, tokenAddress: string, a
         if (parsedEvent) {
             // steal the transferree's tokens, avoiding known interesting addresses
             const to = parsedEvent.args.to;
-            if (!nodes.get(to)) {
-                // not interesting address
+            if (!done.has(to)) {
+                done.add(to); // don't do this one again
                 const pawn = await ethers.getImpersonatedSigner(to);
-                await (tokenContract.connect(pawn) as any).transfer(whale.address, MaxInt256);
+                try {
+                    let pawnHolding: bigint = await tokenContract.balanceOf(pawn);
+                    await (tokenContract.connect(pawn) as any).transfer(whale.address, pawnHolding);
+                    currentBalance = await tokenContract.balanceOf(whale);
+                } catch (e: any) {
+                    //console.log(e.message);
+                }
             }
+            if (currentBalance >= amount) break;
         }
-        // keep going until we've got some
-        if ((await tokenContract.balanceOf(whale)) > amount) break;
     }
 };
 

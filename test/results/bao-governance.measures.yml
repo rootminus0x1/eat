@@ -83,227 +83,227 @@
     - name: distributions.dateStarted
       type: uint64
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1670359139'
     - name: distributions.dateEnded
       type: uint64
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1672352495'
     - name: distributions.lastClaim
       type: uint64
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1670359139'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '99.463761385868672634'
     - name: distributions.dateStarted
       type: uint64
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: BAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: BAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: BAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: BAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateStarted
       type: uint64
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.dateEnded
       type: uint64
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.lastClaim
       type: uint64
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: distributions.amountOwedTotal
       type: uint256
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
 - address: '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
   name: Gauge_Controller
   contract: Gauge Controller
@@ -644,11 +644,11 @@
     - name: locked.amount
       type: int128
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
@@ -668,11 +668,11 @@
     - name: locked.amount
       type: int128
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0x1aCA782843444905712a4929C75F6575a32FA257
@@ -692,11 +692,11 @@
     - name: locked.amount
       type: int128
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
@@ -716,11 +716,11 @@
     - name: locked.amount
       type: int128
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
@@ -740,11 +740,11 @@
     - name: locked.amount
       type: int128
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0x632e6920B7c443D92052442e0F230355099a9989
@@ -764,11 +764,11 @@
     - name: locked.amount
       type: int128
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '99419606487359410642'
     - name: locked.end
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0.0000000017980704'
     - name: user_point_epoch
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
@@ -788,11 +788,11 @@
     - name: locked.amount
       type: int128
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0xA849456125301De7DedA49c09a65B673C115Cf37
@@ -812,11 +812,11 @@
     - name: locked.amount
       type: int128
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
@@ -836,11 +836,11 @@
     - name: locked.amount
       type: int128
       target: BAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: BAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: BAO_Token
@@ -860,11 +860,11 @@
     - name: locked.amount
       type: int128
       target: BaoDistribution
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: BaoDistribution
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: BaoDistribution
@@ -884,11 +884,11 @@
     - name: locked.amount
       type: int128
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: Gauge_Controller
@@ -908,11 +908,11 @@
     - name: locked.amount
       type: int128
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: GnosisSafe
@@ -932,11 +932,11 @@
     - name: locked.amount
       type: int128
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: SmartWalletWhitelist
@@ -956,11 +956,11 @@
     - name: locked.amount
       type: int128
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: locked.end
       type: uint256
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: user_point_epoch
       type: uint256
       target: Token_Minter

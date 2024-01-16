@@ -8,12 +8,8 @@ import { asDateString } from './datetime';
 import { setupBlockchain } from './Blockchain';
 import { dig } from './dig';
 import { delve } from './delve';
-import { ensureDirectory } from './eat-cache';
 
 async function main() {
-    // TODO: move more into config
-    ensureDirectory(getConfig().outputFileRoot);
-
     const timestamp = await setupBlockchain(getConfig().block, false);
 
     // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop

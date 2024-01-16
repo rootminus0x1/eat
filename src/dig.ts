@@ -5,7 +5,7 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
-import { BlockchainAddress, getSigner } from './Blockchain';
+import { BlockchainAddress, addTokenToWhale, getSigner, whale } from './Blockchain';
 import {
     Link,
     Measure,
@@ -120,35 +120,50 @@ export const dig = async () => {
 
     // add in the users from the config
     if (getConfig().users) {
+        const holdings = new Map<string, Map<string, bigint>>(); // username to {contractname, amount}
+        const totalHoldings = new Map<string, bigint>(); // contractname to total amount
         for (const user of getConfig().users) {
             const signer = await getSigner(user.name);
             users[user.name] = signer; // to be used in actions
             // add them to the graph, too
             nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, digOne(signer.address)));
+            if (user.wallet) {
+                const userHoldings = new Map<string, bigint>();
+                for (const holding of user.wallet) {
+                    const contract = holding.contract;
+                    const amount = parseArg(holding.amount) as bigint;
+                    userHoldings.set(contract, userHoldings.get(contract) ?? 0n + amount);
+                    totalHoldings.set(contract, totalHoldings.get(contract) ?? 0n + amount);
+                }
+                holdings.set(user.name, userHoldings);
+            }
         }
         // now we've added the users, we can fill their wallets
-        for (const user of getConfig().users.filter((user) => user.wallet)) {
-            if (user.wallet) {
-                for (const holding of user.wallet) {
-                    // fill the wallet
-                    // TODO: create a whales file that hands out dosh
-                    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
-                    if (
-                        !(await contracts[holding.contract]
-                            .connect(stEthWhale)
-                            .transfer(users[user.name].address, parseArg(holding.amount)))
-                    ) {
-                        throw Error('could not get enough stETH, find another whale');
-                    }
-                    // find all the contracts this user interacts with and allow them to spend there
-                    if (getConfig().actions) {
-                        for (const contract of getConfig()
-                            .actions.filter((a) => a.user && a.user === user.name)
-                            .map((a) => a.contract)) {
-                            // allow the wallet to be spent
-                            await contracts[holding.contract]
-                                .connect(users[user.name])
-                                .approve(contracts[contract].address, MaxUint256);
+        for (const [contract, amount] of totalHoldings) {
+            await addTokenToWhale(contract, amount);
+        }
+        for (const [userName, userHoldings] of holdings) {
+            // fill the wallet
+            for (const [tokenName, amount] of userHoldings) {
+                console.log(`transferring ${tokenName} from whale to ${userName}`);
+                if (!(await contracts[tokenName].connect(whale).transfer(users[userName].address, amount))) {
+                    throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
+                }
+                // find all the contracts this user interacts with and allow them to spend there
+                if (getConfig().actions) {
+                    for (const contract of getConfig()
+                        .actions.filter((a) => a.user && a.user === userName)
+                        .map((a) => a.contract)) {
+                        // allow the wallet to be spent
+                        console.log(`approving ${contract} to use ${userName}'s ${tokenName}`);
+                        if (
+                            !(await contracts[tokenName]
+                                .connect(users[userName])
+                                .approve(contracts[contract].address, MaxUint256))
+                        ) {
+                            throw Error(
+                                `could not approve ${contracts[contract].name} to use ${userName}'s ${contracts[tokenName]}`,
+                            );
                         }
                     }
                 }

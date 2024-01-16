@@ -69,11 +69,10 @@ export type Variable = {
 
 export type Action = {
     name: string;
-    // the function gets evaluated by eval()?
-    addressName: string; // foreign key
-    userName: string;
-    functionName: string;
-    arguments: string[];
+    user: string;
+    contract: string;
+    function: string;
+    args: string;
     gas?: bigint;
     error?: string;
 };
@@ -100,6 +99,7 @@ export const calculateMeasures = async (): Promise<Measurements> => {
 
     const sortedNodes = sort(nodes, (v) => v.name);
     for (const [address, node] of sortedNodes) {
+        //console.log(`measuring node ${node.name}`);
         let values: Measurement[] = []; // values for this graph node
         const measuresForAddress = measures.get(address);
         if (measuresForAddress && measuresForAddress.length > 0) {
@@ -342,12 +342,7 @@ export const delve = async (): Promise<void> => {
 
     let i = 0;
     for (const configAction of getConfig().actions ?? []) {
-        //const graph = lodash.cloneDeep(dugGraph);
-
-        const actionName = `${configAction.contract}-${configAction.function}(${JSON.stringify(configAction.args)
-            .replace(/[/\\:*?"<>|]/g, '')
-            .replace(/\s+/g, '_')}-${configAction.user}`;
-
+        const actionName = `${configAction.contract}-${configAction.function}`;
         const action: ActionFunction = async () => {
             const args = configAction.args.map((a) => parseArg(a, users, contracts));
             return contracts[configAction.contract].connect(users[configAction.user])[configAction.function](...args);
@@ -368,12 +363,10 @@ export const delve = async (): Promise<void> => {
         const actionedMeasurements = await calculateMeasures();
         actionedMeasurements.unshift({
             actionName: actionName,
-            /*
-                        addressName: action.'address', // foreign key
-                        userName: 'user',
-                        functionName: 'func',
-                        arguments: ['hello', 'world'],
-                        */
+            contract: configAction.contract,
+            function: configAction.function,
+            user: configAction.user,
+            args: JSON.stringify(configAction.args),
             error: error,
             gas: gas,
         });

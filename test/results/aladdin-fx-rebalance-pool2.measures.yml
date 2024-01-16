@@ -27,15 +27,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
@@ -43,27 +43,27 @@
     - name: pendingRewards.0
       type: uint256
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: Curve_DAO_Token
@@ -71,15 +71,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: Curve_DAO_Token
@@ -87,27 +87,27 @@
     - name: pendingRewards.0
       type: uint256
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: Curve_DAO_Token
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: FractionalToken
@@ -115,15 +115,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: FractionalToken
@@ -131,27 +131,27 @@
     - name: pendingRewards.0
       type: uint256
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: FractionalToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: Gauge_Controller
@@ -159,15 +159,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: Gauge_Controller
@@ -175,27 +175,27 @@
     - name: pendingRewards.0
       type: uint256
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: Gauge_Controller
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: GnosisSafe
@@ -203,15 +203,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: GnosisSafe
@@ -219,27 +219,27 @@
     - name: pendingRewards.0
       type: uint256
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: GnosisSafe
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: LeveragedToken
@@ -247,15 +247,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: LeveragedToken
@@ -263,27 +263,27 @@
     - name: pendingRewards.0
       type: uint256
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1703823851'
     - name: rewardData.finishAt
       type: uint40
       target: LeveragedToken
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: Lido
@@ -291,15 +291,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: Lido
@@ -307,27 +307,27 @@
     - name: pendingRewards.0
       type: uint256
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: Lido
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: Market
@@ -335,15 +335,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: Market
@@ -351,27 +351,27 @@
     - name: pendingRewards.0
       type: uint256
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: Market
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: PlatformFeeSpliter
@@ -379,15 +379,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: PlatformFeeSpliter
@@ -395,27 +395,27 @@
     - name: pendingRewards.0
       type: uint256
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: PlatformFeeSpliter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: ReservePool
@@ -423,15 +423,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: ReservePool
@@ -439,27 +439,27 @@
     - name: pendingRewards.0
       type: uint256
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: ReservePool
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: SmartWalletWhitelist
@@ -467,15 +467,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: SmartWalletWhitelist
@@ -483,27 +483,27 @@
     - name: pendingRewards.0
       type: uint256
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: SmartWalletWhitelist
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: StETHAndxETHWrapper
@@ -511,15 +511,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: StETHAndxETHWrapper
@@ -527,27 +527,27 @@
     - name: pendingRewards.0
       type: uint256
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: StETHAndxETHWrapper
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: stETHTreasury
@@ -555,15 +555,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: stETHTreasury
@@ -571,27 +571,27 @@
     - name: pendingRewards.0
       type: uint256
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: stETHTreasury
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: Token_Minter
@@ -599,15 +599,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: Token_Minter
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: Token_Minter
@@ -655,15 +655,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: Voting_Escrow
@@ -671,27 +671,27 @@
     - name: pendingRewards.0
       type: uint256
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: pendingRewards.1
       type: uint256
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.queued
       type: uint96
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.rate
       type: uint80
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.lastUpdate
       type: uint40
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: rewardData.finishAt
       type: uint40
       target: Voting_Escrow
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: balanceOf
       type: uint256
       target: WstETH
@@ -699,15 +699,15 @@
     - name: boostCheckpoint.veBalance
       type: uint112
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.veSupply
       type: uint112
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: boostCheckpoint.historyIndex
       type: uint32
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0'
     - name: getBoostRatio
       type: uint256
       target: WstETH
@@ -715,27 +715,27 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0.000870206878314432'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '0.173334332574255924'
     - name: rewardData.queued
       type: uint96
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '492945732942624529'
     - name: rewardData.rate
       type: uint80
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1510775830407'
     - name: rewardData.lastUpdate
       type: uint40
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1703823851'
     - name: rewardData.finishAt
       type: uint40
       target: WstETH
-      error: (intermediate value)[outputIndex].map is not a function
+      value: '1703939159'
 - address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
   name: Curve_DAO_Token
   contract: Curve DAO Token

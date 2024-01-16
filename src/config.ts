@@ -7,12 +7,25 @@ import path from 'path';
 
 export type ConfigItem = { name: string; config: Config };
 
+export const ensureDirectory = (dir: string) => {
+    // ensure the cache directory exists
+    try {
+        // Check if the directory already exists
+        fs.accessSync(dir);
+    } catch (error: any) {
+        // If the directory doesn't exist, create it
+        if (error.code === 'ENOENT') {
+            fs.mkdirSync(dir, { recursive: true });
+        } else {
+            // If there was an error other than the directory not existing, throw the error
+            throw error;
+        }
+    }
+};
+
 export const write = (name: string, results: string): void => {
-    const outputFile = fs.createWriteStream(getConfig().outputFileRoot + getConfig().configName + '.' + name, {
-        encoding: 'utf-8',
-    });
-    outputFile.write(results);
-    outputFile.end();
+    const outputFileName = getConfig().outputFileRoot + getConfig().configName + '.' + name;
+    fs.writeFileSync(outputFileName, results, { encoding: 'utf-8' });
 };
 
 type Formatter = (value: any) => any;
@@ -42,6 +55,16 @@ export type ConfigAction = {
     args: (string | bigint)[];
 };
 
+export type ConfigHolding = {
+    contract: string;
+    amount: string | bigint;
+};
+
+export type ConfigUser = {
+    name: string;
+    wallet: ConfigHolding[];
+};
+
 export type Config = {
     // from the command line
     configName: string;
@@ -56,7 +79,7 @@ export type Config = {
     diagram: any;
     format: ConfigFormat[];
     actions: ConfigAction[];
-    users: any[];
+    users: ConfigUser[];
 };
 
 const sortFormats = (formats: ConfigFormat[]): any => {
@@ -155,6 +178,7 @@ export const getConfig = (): Config => {
 
         // finally, finally, add additional fields
         config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
+        ensureDirectory(config.outputFileRoot);
         config.configFilePath = configFilePath;
         config.configName = configName;
 
