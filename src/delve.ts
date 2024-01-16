@@ -301,14 +301,15 @@ const formatFromConfig = (address: any): any => {
                                     const field = (measurement as any)[fieldName];
                                     if (field !== undefined) {
                                         if (lodash.isArray(field)) {
-                                            newAddress.measurements[index][fieldName] = field.map((elem) =>
-                                                formatUnits(elem, format.unit),
+                                            newAddress.measurements[index][fieldName] = field.map(
+                                                (elem) =>
+                                                    (fieldName === 'delta' && elem > 0 ? '+' : '') +
+                                                    formatUnits(elem, format.unit),
                                             );
                                         } else {
-                                            newAddress.measurements[index][fieldName] = formatUnits(
-                                                field as bigint,
-                                                format.unit,
-                                            );
+                                            newAddress.measurements[index][fieldName] =
+                                                (fieldName === 'delta' && (field as bigint) > 0 ? '+' : '') +
+                                                formatUnits(field as bigint, format.unit);
                                         }
                                     }
                                 }
