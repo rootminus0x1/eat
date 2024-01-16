@@ -1,10 +1,8 @@
-import { ethers } from 'hardhat';
-
 import { contracts, measures, measuresOnAddress, nodes, users } from './graph';
 import { ContractTransactionResponse, MaxInt256, formatUnits } from 'ethers';
-import { Config, ConfigAction, ConfigFormat, getConfig, parseArg, writeYaml } from './config';
+import { ConfigFormat, getConfig, parseArg, writeYaml } from './config';
 import lodash from 'lodash';
-import { SnapshotRestorer, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
+import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -54,7 +52,6 @@ export type Measurement = {
     name: string;
     type: string;
     target?: string;
-    // TODO: revisit the design of deltas and values/errors overlaying each other
     // value can hold a value or a delta value for comparisons
     delta?: MeasurementValue;
     value?: MeasurementValue;
@@ -82,12 +79,7 @@ export type ContractMeasurements = {
     name: string; // node name
     contract: string; // contract nameish
     measurements: Measurement[];
-} & Partial<{
-    actionName: string;
-    // TODO: should be error | gas not both
-    error?: string;
-    gas?: bigint;
-}>;
+} & Partial<Action>;
 
 export type Measurements = (Partial<Variable> & Partial<Action> & Partial<ContractMeasurements>)[];
 
