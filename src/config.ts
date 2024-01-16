@@ -1,12 +1,14 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as yaml from 'js-yaml'; // config files are in yaml
 import lodash from 'lodash';
+import { parseUnits } from 'ethers';
+import yargs from 'yargs';
+import path from 'path';
 
-type ConfigItem = { name: string; config: any };
+export type ConfigItem = { name: string; config: Config };
 
-export const write = (config: any, name: string, results: string): void => {
-    const outputFile = fs.createWriteStream(config.outputFileRoot + config.configName + '.' + name, {
+export const write = (name: string, results: string): void => {
+    const outputFile = fs.createWriteStream(getConfig().outputFileRoot + getConfig().configName + '.' + name, {
         encoding: 'utf-8',
     });
     outputFile.write(results);
@@ -20,9 +22,9 @@ const removeInvalidYamlTypes: Formatter = (value: any): any => {
     }
 };
 
-export const writeYaml = (config: any, name: string, results: any, formatter?: Formatter): void => {
+export const writeYaml = (name: string, results: any, formatter?: Formatter): void => {
     if (formatter) results = lodash.cloneDeepWith(results, formatter);
-    write(config, name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
+    write(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
 };
 
 export type ConfigFormat = {
@@ -39,15 +41,15 @@ export type ConfigAction = {
     function: string;
     args: (string | bigint)[];
 };
-export const nullAction = {
-    name: '',
-    user: '',
-    contract: '',
-    function: '',
-    args: [],
-};
 
 export type Config = {
+    // from the command line
+    configName: string;
+    configFilePath: string;
+    outputFileRoot: string;
+    nodiagram: boolean;
+
+    // from the files
     block: number;
     start: string[];
     stopafter: string[];
@@ -84,44 +86,69 @@ const sortFormats = (formats: ConfigFormat[]): any => {
     );
 };
 
-export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] => {
-    const result = [];
-    // functions
-    const getConfigName = (configFilePath: string) =>
-        path.basename(configFilePath, '.config' + path.extname(configFilePath));
+export const parseArg = (configArg: any, users?: any, contracts?: any): string | bigint => {
+    let arg: any;
+    if (typeof configArg === 'bigint') {
+        arg = configArg;
+    } else if (typeof configArg === 'string') {
+        // contract or user or address or string or number
+        const match = configArg.match(/^\s*(\d+)\s*(\w+)\s*$/);
+        if (match && match.length === 3) arg = parseUnits(match[1], match[2]);
+        else if (users[configArg]) arg = users[configArg].address;
+        else if (contracts[configArg]) arg = contracts[configArg].address;
+    } else if (typeof configArg === 'number') arg = BigInt(configArg);
+    else arg = 0n;
+    return arg;
+};
 
-    const loadYaml = (configFilePath: string) => yaml.load(fs.readFileSync(configFilePath).toString());
+const getConfigName = (configFilePath: string) =>
+    path.basename(configFilePath, '.config' + path.extname(configFilePath));
 
-    const merge = (object: any, source: any) =>
-        lodash.mergeWith(object, source, (o: any, s: any) => {
-            if (lodash.isArray(o)) return o.concat(s);
-        });
+const loadYaml = (configFilePath: string) => yaml.load(fs.readFileSync(configFilePath).toString());
 
-    // load the default-configs
-    let defaults: ConfigItem[] = [];
-    try {
-        fs.readdirSync(defaultconfigsArg)
-            .sort()
-            .forEach((fileName) =>
-                defaults.push({
-                    name: getConfigName(fileName),
-                    config: loadYaml(defaultconfigsArg + '/' + fileName),
-                }),
-            );
-    } catch (error: any) {}
+const merge = (object: any, source: any) =>
+    lodash.mergeWith(object, source, (o: any, s: any) => {
+        if (lodash.isArray(o)) return o.concat(s);
+    });
 
-    for (const fileArg of fileArgs) {
+let config: Config | undefined;
+
+export const getConfig = (): Config => {
+    if (!config) {
+        const argv: any = yargs(process.argv.slice(2))
+            .options({
+                nodiagram: { type: 'boolean', default: false },
+                nomeasures: { type: 'boolean', default: false },
+                showconfig: { type: 'boolean', default: false },
+                quiet: { type: 'boolean', default: false },
+                defaultconfigs: { type: 'string', default: 'test/default-configs' },
+            })
+            .parse();
+
+        // load the default-configs
+        let defaults: ConfigItem[] = [];
+        try {
+            fs.readdirSync(argv.defaultconfigs)
+                .sort()
+                .forEach((fileName) =>
+                    defaults.push({
+                        name: getConfigName(fileName),
+                        config: loadYaml(argv.defaultconfigs + '/' + fileName) as Config,
+                    }),
+                );
+        } catch (error: any) {}
+
         // load the requested config
-        const configFilePath = path.resolve(fileArg);
+        const configFilePath = path.resolve(argv._[0]);
         const configName = getConfigName(configFilePath);
 
         // find matching defaults and merge them
-        const config: any = defaults.reduce((result: any, d) => {
+        config = defaults.reduce((result, d) => {
             if (configName.startsWith(d.name)) {
                 merge(result, d.config);
             }
             return result;
-        }, {} as any);
+        }, {} as Config);
 
         // finally merge in the actual config
         merge(config, loadYaml(configFilePath));
@@ -135,9 +162,7 @@ export const getConfig = (fileArgs: string[], defaultconfigsArg: string): any[] 
         config.format = sortFormats(config.format);
 
         // output the config actually used for debug purposes
-        write(config, 'flat-config.yml', yaml.dump(config));
-
-        result.push(config);
+        write('flat-config.yml', yaml.dump(config));
     }
-    return result;
+    return config;
 };

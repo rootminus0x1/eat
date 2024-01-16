@@ -45,35 +45,26 @@ export async function deploy<T extends Contract>(
 
 */
 
-export class Blockchain {
-    private allSigners!: Promise<SignerWithAddress[]>;
-    private allocatedSigners!: number;
+let allSigners: SignerWithAddress[] | undefined;
+let allocatedSigners = 0;
 
-    public timestamp = 0;
+export const setupBlockchain = async (blockNumber: number, shout: boolean): Promise<number> => {
+    // go to the block
+    await reset(process.env.MAINNET_RPC_URL, blockNumber);
+    const actualBlockNumber = await ethers.provider.getBlockNumber();
+    const timestamp = (await ethers.provider.getBlock(actualBlockNumber))?.timestamp || 0;
 
-    constructor(public blockNumber: number) {
-        this.resetSigners();
-    }
+    // get the signers
+    allSigners = await ethers.getSigners();
 
-    private resetSigners = () => {
-        this.allSigners = ethers.getSigners();
-        this.allocatedSigners = 0;
-    };
+    if (shout) console.log(`${network.name} ${actualBlockNumber} ${asDateString(timestamp)} UX:${timestamp}`);
+    return timestamp;
+};
 
-    public getSigner = async (name: string): Promise<SignerWithAddress> => {
-        await this.allSigners;
-        return (await this.allSigners)[this.allocatedSigners++] as SignerWithAddress;
-    };
-
-    public reset = async (shout: boolean = false) => {
-        await reset(process.env.MAINNET_RPC_URL, this.blockNumber);
-        this.blockNumber = await ethers.provider.getBlockNumber();
-        this.timestamp = (await ethers.provider.getBlock(this.blockNumber))?.timestamp || 0;
-        this.resetSigners();
-        if (shout)
-            console.log(`${network.name} ${this.blockNumber} ${asDateString(this.timestamp)} UX:${this.timestamp}`);
-    };
-}
+export const getSigner = async (name: string): Promise<SignerWithAddress> => {
+    if (!allSigners) throw 'need to setupBlockchain';
+    return allSigners[allocatedSigners++] as SignerWithAddress;
+};
 
 type ERC20Fields = { name: string | undefined; symbol: string | undefined };
 

@@ -24,8 +24,7 @@ users:
   - name: xHolderRedeemer # user who mint/redeems xTokens
 
 actions:
-  - name: "fMinter => Market.mintfToken(1 eth)" #TODO: auto generate this name?
-    user: fMinter
+  - user: fMinter
     contract: "Market"
     function: "mintFToken"
     args: [1 ether, fMinter, 0]

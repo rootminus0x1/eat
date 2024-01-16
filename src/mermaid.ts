@@ -3,12 +3,13 @@
 //
 import { ZeroAddress } from 'ethers';
 
-import { Graph } from './graph';
+import { links, nodes } from './graph';
 
 export enum AddressType {
     invalid,
-    contract,
     address,
+    signer,
+    contract,
 }
 
 function cl(f: string[], what: string) {
@@ -61,6 +62,8 @@ const nodeMermaid = (
     } else if (type === AddressType.address) {
         cl(f, `${address}(["${makeStopper(address.slice(0, 5) + '..' + address.slice(-3), stopper)}"]):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
+    } else if (type === AddressType.signer) {
+        cl(f, `${address}\{{"${makeStopper(name, stopper)}"}\}:::address`);
     } else {
         cl(f, `${address}("${makeStopper(address, stopper)}"):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
@@ -114,10 +117,10 @@ const footerMermaid = (): string => {
     return f.join('\n');
 };
 
-export const mermaid = async (graph: Graph, blockNumber: number, asOf: string, config?: any): Promise<string> => {
+export const mermaid = async (blockNumber: number, asOf: string, config?: any): Promise<string> => {
     const f: string[] = [];
     cl(f, headerMermaid(blockNumber, asOf, config));
-    for (const [address, node] of graph.nodes) {
+    for (const [address, node] of nodes) {
         cl(
             f,
             nodeMermaid(
@@ -125,7 +128,9 @@ export const mermaid = async (graph: Graph, blockNumber: number, asOf: string, c
                 (await node.isContract())
                     ? AddressType.contract
                     : (await node.isAddress())
-                    ? AddressType.address
+                    ? node.signer
+                        ? AddressType.signer
+                        : AddressType.address
                     : AddressType.invalid,
                 node.name,
                 node.stopper,
@@ -136,9 +141,9 @@ export const mermaid = async (graph: Graph, blockNumber: number, asOf: string, c
                 await node.erc20Name(),
             ),
         );
-        const links = graph.links.get(address);
-        if (links)
-            for (let link of links) {
+        const linksForAddress = links.get(address);
+        if (linksForAddress)
+            for (let link of linksForAddress) {
                 cl(f, linkMermaid(address, link.address, link.name, await node.implementationAddress()));
             }
     }

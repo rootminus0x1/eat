@@ -60,8 +60,7 @@ users:
   - name: xMinter
   - name: xHolderRedeemer
 actions:
-  - name: fMinter => Market.mintfToken(1 eth)
-    user: fMinter
+  - user: fMinter
     contract: Market
     function: mintFToken
     args:

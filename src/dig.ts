@@ -2,10 +2,23 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { FunctionFragment, ZeroAddress } from 'ethers';
+import { ethers } from 'hardhat';
+import { FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
-import { BlockchainAddress } from './Blockchain';
-import { Graph, Link, Measure, MeasureOnAddress } from './graph';
+import { BlockchainAddress, getSigner } from './Blockchain';
+import {
+    Link,
+    Measure,
+    MeasureOnAddress,
+    backLinks,
+    contracts,
+    links,
+    measures,
+    measuresOnAddress,
+    nodes,
+    users,
+} from './graph';
+import { getConfig, parseArg } from './config';
 
 export type DigDeepResults = {
     links: Link[];
@@ -13,10 +26,10 @@ export type DigDeepResults = {
     measuresOnAddress: MeasureOnAddress[];
 };
 
-export const dig = async (addresses: string[], stopafter?: string[]) => {
-    // ensure addresses are only visited once
-    const done = new Set<string>();
-    const graph = new Graph();
+export const dig = async () => {
+    const done = new Set<string>(); // ensure addresses are only visited once
+    const addresses = getConfig().start;
+    const stopafter = getConfig().stopafter;
     while (addresses && addresses.length) {
         const address = addresses[0];
         addresses.shift();
@@ -25,7 +38,7 @@ export const dig = async (addresses: string[], stopafter?: string[]) => {
             const blockchainAddress = digOne(address);
             if (blockchainAddress) {
                 const stopper = stopafter?.includes(address);
-                graph.nodes.set(
+                nodes.set(
                     address,
                     Object.assign(
                         { name: await blockchainAddress.contractNamish(), stopper: stopper },
@@ -36,12 +49,12 @@ export const dig = async (addresses: string[], stopafter?: string[]) => {
                 if (!stopper) {
                     const digResults = await digDeep(blockchainAddress);
                     // set the links
-                    graph.links.set(address, digResults.links);
+                    links.set(address, digResults.links);
                     // and consequent backlinks
                     digResults.links.forEach((link) =>
-                        graph.backLinks.set(
+                        backLinks.set(
                             link.address,
-                            (graph.backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
+                            (backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
                         ),
                     );
 
@@ -49,8 +62,8 @@ export const dig = async (addresses: string[], stopafter?: string[]) => {
                     digResults.links.forEach((link) => addresses.push(link.address));
 
                     // add the measures to the contract
-                    graph.measures.set(address, digResults.measures);
-                    graph.measuresOnAddress.set(address, digResults.measuresOnAddress);
+                    measures.set(address, digResults.measures);
+                    measuresOnAddress.set(address, digResults.measuresOnAddress);
                 }
             }
         }
@@ -58,7 +71,7 @@ export const dig = async (addresses: string[], stopafter?: string[]) => {
 
     // make node names unique &  javascript identifiers
     const nodeNames = new Map<string, string[]>();
-    for (const [address, node] of graph.nodes) {
+    for (const [address, node] of nodes) {
         // make it javascript id
         // replace multiple whitespaces with underscores
         node.name = node.name.replace(/\s+/g, '_');
@@ -75,12 +88,12 @@ export const dig = async (addresses: string[], stopafter?: string[]) => {
             // find the links to get some name for them
             let unique = 0;
             for (const address of addresses) {
-                const node = graph.nodes.get(address);
+                const node = nodes.get(address);
                 if (node) {
-                    const backLinks = graph.backLinks.get(address);
+                    const backLinksForAddress = backLinks.get(address);
                     let done = false;
-                    if (backLinks && backLinks.length == 1) {
-                        const index = backLinks[0].name.match(/\[(\d+)\]$/);
+                    if (backLinksForAddress && backLinksForAddress.length == 1) {
+                        const index = backLinksForAddress[0].name.match(/\[(\d+)\]$/);
                         if (index && index.length == 2) {
                             node.name += `_at_${index[1]}`;
                             done = true;
@@ -95,10 +108,57 @@ export const dig = async (addresses: string[], stopafter?: string[]) => {
         }
     }
     // save named addresses lookup
-    for (const [address, node] of graph.nodes) {
-        graph.namedAddresses.set(node.name, address);
+    // TODO: check if this is needed outside dig
+    /*
+    for (const [address, node] of nodes) {
+        namedAddresses.set(node.name, address);
     }
-    return graph;
+    */
+
+    // set up the graph contracts and users for executing the actions
+    for (const [address, node] of nodes) {
+        const contract = await node.getContract();
+        if (contract) {
+            contracts[node.name] = contract;
+        } else {
+            users[node.name] = await ethers.getImpersonatedSigner(address);
+        }
+    }
+
+    // add in the users from the config
+    if (getConfig().users) {
+        for (const user of getConfig().users) {
+            const signer = await getSigner(user.name);
+            users[user.name] = signer; // to be used in actions
+            // add them to the graph, too
+            nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, digOne(signer.address)));
+            if (user.wallet) {
+                for (const holding of user.wallet) {
+                    // fill the wallet
+                    // TODO: create a whales file that hands out dosh
+                    const stEthWhale = await ethers.getImpersonatedSigner('0x95ed9BC02Be94C17392fE819A93dC57E73E1222E');
+                    if (
+                        !(await contracts[holding.contract]
+                            .connect(stEthWhale)
+                            .transfer(users[user.name].address, parseArg(holding.amount)))
+                    ) {
+                        throw Error('could not get enough stETH, find another whale');
+                    }
+                    // find all the contracts this user interacts with and allow them to spend there
+                    if (getConfig().actions) {
+                        for (const contract of getConfig()
+                            .actions.filter((a) => a.user && a.user === user.name)
+                            .map((a) => a.contract)) {
+                            // allow the wallet to be spent
+                            await contracts[holding.contract]
+                                .connect(users[user.name])
+                                .approve(contracts[contract].address, MaxUint256);
+                        }
+                    }
+                }
+            }
+        }
+    }
 };
 
 export const digOne = (address: string): BlockchainAddress | null => {

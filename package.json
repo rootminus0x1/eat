@@ -9,10 +9,9 @@
     "build": "tsc",
     "tsconfig": "tsc --showConfig && ts-node --showConfig",
     "lint": "ts-node test/findGlobals.ts",
-    "test": "ts-node src/main.ts test/*.config.yml",
+    "test": "for file in test/*.config.yml; do ts-node src/main.ts $file; done",
     "test1": "ts-node src/main.ts",
-    "svg": "for file in ./test/results/*.md; do mmdc -i \"$file\" -o \"${file%.md}.svg\" && mv \"${file%.md}-1.svg\" \"${file%.md}.svg\"; done",
-    "view": "for file in ./test/results/*.svg; do firefox 2>/dev/null -new-tab $file & done"
+    "view": "for file in ./test/results/*.md; do mmdc -i \"$file\" -o \"${file%.md}.svg\" && mv \"${file%.md}-1.svg\" \"${file%.md}.svg\" && firefox 2>/dev/null -new-tab \"${file%.md}.svg\" & done"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^10.6.1",

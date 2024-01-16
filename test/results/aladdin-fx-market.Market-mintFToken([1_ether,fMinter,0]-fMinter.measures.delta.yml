@@ -5,11 +5,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      delta: '0.000001510775830407'
+      delta: '0.000007553879152035'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      delta: '-0.000001510775830407'
+      delta: '-0.000007553879152035'
 - address: '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9'
   name: BoostableRebalancePool_at_2
   contract: BoostableRebalancePool
@@ -17,18 +17,18 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      delta: '0.000001510775830407'
+      delta: '0.000007553879152035'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      delta: '-0.000001510775830407'
+      delta: '-0.000007553879152035'
 - address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
   name: Curve_DAO_Token
   contract: Curve DAO Token
   measurements:
     - name: available_supply
       type: uint256
-      delta: '0.003107559614408929'
+      delta: '0.015537798072044645'
 - address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
   name: FractionalToken
   contract: FractionalToken
@@ -53,7 +53,7 @@
   measurements:
     - name: price_oracle
       type: uint256
-      delta: '-0.000000000006144655'
+      delta: '-0.00000000003072328'
 - address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
   name: stETHTreasury
   contract: stETHTreasury
@@ -63,16 +63,16 @@
       delta: '-0.00038707896454685'
     - name: emaLeverageRatio.lastTime
       type: uint40
-      delta: '31457'
+      delta: '31459'
     - name: emaLeverageRatio.lastValue
       type: uint96
       delta: '5986041380011295'
     - name: emaLeverageRatio.lastEmaValue
       type: uint96
-      delta: '-16757593250717890'
+      delta: '-16758476458807567'
     - name: leverageRatio
       type: uint256
-      delta: '-0.000000441611711635'
+      delta: '-0.000002208058558469'
     - name: totalBaseToken
       type: uint256
       delta: '0.9975'
@@ -82,4 +82,4 @@
   measurements:
     - name: totalSupply
       type: uint256
-      delta: '-0.000912701427004254'
+      delta: '-0.00456350713502127'

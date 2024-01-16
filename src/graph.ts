@@ -22,12 +22,15 @@ export type MeasureOnAddress = {
     type: string; // solidity type
 };
 
-export class Graph {
-    public nodes = new Map<string, GraphNode>(); // address to object
-    public links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
-    public backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
+export const nodes = new Map<string, GraphNode>(); // address to object
+export const links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
+export const backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
 
-    public measures = new Map<string, Measure[]>();
-    public measuresOnAddress = new Map<string, MeasureOnAddress[]>();
-    public namedAddresses = new Map<string, string>();
-}
+export const measures = new Map<string, Measure[]>();
+export const measuresOnAddress = new Map<string, MeasureOnAddress[]>();
+
+// export const namedAddresses = new Map<string, string>();
+
+// for use in actions
+export const contracts: any = {};
+export const users: any = {};
