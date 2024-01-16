@@ -20,6 +20,290 @@
     - name: totalSupply
       type: uint256
       value: '1320116065.635125541877393702'
+    - name: balanceOf
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '2100356.054865320503838492'
+    - name: balanceOf
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0.676570906967085549'
+    - name: balanceOf
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BaoDistribution
+      value: '688142740.839666777127967054'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '77581643.192918252812979786'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '174846060.816462883671490561'
+- address: '0x885D90A424f87D362C9369C0F3d9A2d28AF495F4'
+  name: BaoDistribution
+  contract: BaoDistribution
+  measurements:
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: BAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: BAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: BAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: BAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateStarted
+      type: uint64
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.dateEnded
+      type: uint64
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.lastClaim
+      type: uint64
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: distributions.amountOwedTotal
+      type: uint256
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
 - address: '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
   name: Gauge_Controller
   contract: Gauge Controller
@@ -36,6 +320,286 @@
     - name: time_total
       type: uint256
       value: '1704326400'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: BAO_Token
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: BaoDistribution
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: GnosisSafe
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: SmartWalletWhitelist
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Token_Minter
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Voting_Escrow
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
 - address: '0x3dFc49e5112005179Da613BdE5973229082dAc35'
   name: GnosisSafe
   contract: GnosisSafe
@@ -65,3 +629,339 @@
     - name: totalSupply
       type: uint256
       value: '127481437.679363369597663159'
+    - name: balanceOf
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0x18d5D444467Fa53a78e72cB98375F57efDAfF0F1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0x1aCA782843444905712a4929C75F6575a32FA257
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0x4De2494a282B295B08E84dDd0926749fe9964d1A
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0x632e6920B7c443D92052442e0F230355099a9989
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '74.279375544398904465'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '788143760205'
+    - name: locked__end
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0.0000000017980704'
+    - name: locked.amount
+      type: int128
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
+      value: '0.000000000000000001'
+    - name: balanceOf
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0xA849456125301De7DedA49c09a65B673C115Cf37
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: $0xf1674FE69b2920b4de51E909cbf060dd78724CD8
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: BAO_Token
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: BAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: BAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: BAO_Token
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: BaoDistribution
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: BaoDistribution
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: BaoDistribution
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: BaoDistribution
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Gauge_Controller
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: GnosisSafe
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Token_Minter
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: locked.amount
+      type: int128
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: locked.end
+      type: uint256
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: user_point_epoch
+      type: uint256
+      target: Token_Minter
+      value: '0'

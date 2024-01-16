@@ -99,7 +99,6 @@ export const calculateMeasures = async (): Promise<Measurements> => {
     let count = 0;
 
     const sortedNodes = sort(nodes, (v) => v.name);
-    console.log(`Nodes: ${sortedNodes.length}`);
     for (const [address, node] of sortedNodes) {
         let values: Measurement[] = []; // values for this graph node
         const measuresForAddress = measures.get(address);
@@ -116,6 +115,7 @@ export const calculateMeasures = async (): Promise<Measurements> => {
         const measuresOnAddressForAddress = measuresOnAddress.get(address);
         if (measuresOnAddressForAddress && measuresOnAddressForAddress.length > 0) {
             for (const [targetAddress, targetNode] of sortedNodes) {
+                if (targetAddress === address) continue; // skip self
                 for (const measure of measuresOnAddressForAddress) {
                     try {
                         const value = await measure.calculation(targetAddress);
@@ -146,7 +146,7 @@ export const calculateMeasures = async (): Promise<Measurements> => {
             count += values.length;
         }
     }
-    console.log(`Measurements: ${count}`);
+    console.log(`  Nodes: ${sortedNodes.length}, Measurements: ${count}`);
     return result;
 };
 
@@ -220,14 +220,54 @@ export const calculateDeltaMeasures = (
                 });
             } else {
                 // both values
-                if (baseMeasurement.value !== actionedMeasurement.value)
-                    // TODO: handle arrays of bigints
+                const baseIsArray = lodash.isArray(baseMeasurement.value);
+                const actionedIsArray = lodash.isArray(actionedMeasurement.value);
+                if (!baseIsArray && !actionedIsArray) {
+                    // both bigint
+                    if (baseMeasurement.value !== actionedMeasurement.value) {
+                        deltas.push({
+                            name: actionedMeasurement.name,
+                            type: actionedMeasurement.type,
+                            target: actionedMeasurement.target,
+                            delta: (actionedMeasurement.value as bigint) - (baseMeasurement.value as bigint),
+                        });
+                    }
+                } else if (baseIsArray && actionedIsArray) {
+                    // both bigint[]
+                    const baseArray = baseMeasurement.value as bigint[];
+                    const actionedArray = actionedMeasurement.value as bigint[];
+                    if (baseArray.length === actionedArray.length) {
+                        let delta: bigint[] = [];
+                        let diffs = false;
+                        for (let i = 0; i < baseArray.length; i++) {
+                            if (actionedArray[i] !== baseArray[i]) diffs = true;
+                            delta.push(actionedArray[i] - baseArray[i]);
+                        }
+                        if (diffs) {
+                            deltas.push({
+                                name: actionedMeasurement.name,
+                                type: actionedMeasurement.type,
+                                target: actionedMeasurement.target,
+                                delta: delta,
+                            });
+                        }
+                    } else {
+                        deltas.push({
+                            name: actionedMeasurement.name,
+                            type: actionedMeasurement.type,
+                            target: actionedMeasurement.target,
+                            error: `arrays changed length: ${baseArray.length} => ${actionedArray.length}`,
+                        });
+                    }
+                } else {
+                    // but different types
                     deltas.push({
                         name: actionedMeasurement.name,
                         type: actionedMeasurement.type,
                         target: actionedMeasurement.target,
-                        delta: (actionedMeasurement.value as bigint) - (baseMeasurement.value as bigint),
+                        error: `int${baseIsArray ? '[]' : ''} => int${actionedIsArray ? '[]' : ''}`,
                     });
+                }
             }
         }
         if (deltas.length > 0)
@@ -241,16 +281,16 @@ export const calculateDeltaMeasures = (
     return results;
 };
 
-////////////////////////////////////////////////////////////////////////
-// delve
-export const delve = async (): Promise<void> => {
-    // formatting of output
-    const formatFromConfig = (address: any): any => {
-        // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-        if (typeof address === 'object' && typeof address.measurements === 'object') {
-            let newAddress: any = undefined;
-            address.measurements.forEach((measurement: Measurement, index: number) => {
-                if (measurement && getConfig().format && (measurement.value || measurement.delta)) {
+const formatFromConfig = (address: any): any => {
+    // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+    if (typeof address === 'object' && typeof address.measurements === 'object') {
+        // it is something we can handle
+        let newAddress: any = undefined;
+        address.measurements.forEach((measurement: Measurement, index: number) => {
+            if (measurement && (measurement.value || measurement.delta)) {
+                // need to patch up arrays, whether we format them or not
+                const fieldNames = ['value', 'delta'];
+                if (getConfig().format)
                     for (const anyformat of getConfig().format) {
                         const format: ConfigFormat = anyformat;
                         // TODO: could some things,
@@ -263,27 +303,37 @@ export const delve = async (): Promise<void> => {
                         ) {
                             // we're about to change it so clone it
                             if (!newAddress) newAddress = lodash.cloneDeep(address);
-                            // TODO: handle values that are arrays
                             // we have a match - so what kind of formatting
                             if (format.unit) {
-                                const formatByUnits = (field: string) => {
-                                    newAddress.measurements[index][field] = formatUnits(
-                                        (measurement as any)[field] as bigint, // << this should handle bigint[] too
-                                        format.unit,
-                                    );
-                                };
-                                // TODO: make this more dynamic
-                                if (measurement.value) formatByUnits('value');
-                                if (measurement.delta) formatByUnits('delta');
+                                for (const fieldName of fieldNames) {
+                                    const field = (measurement as any)[fieldName];
+                                    if (field !== undefined) {
+                                        if (lodash.isArray(field)) {
+                                            newAddress.measurements[index][fieldName] = field.map((elem) =>
+                                                formatUnits(elem, format.unit),
+                                            );
+                                        } else {
+                                            newAddress.measurements[index][fieldName] = formatUnits(
+                                                field as bigint,
+                                                format.unit,
+                                            );
+                                        }
+                                    }
+                                }
                             }
                             break; // only do one format, the first
                         }
                     }
-                }
-            });
-            return newAddress;
-        }
-    };
+            }
+        });
+        return newAddress; // undefied means it is handled by the callere
+    }
+};
+
+////////////////////////////////////////////////////////////////////////
+// delve
+export const delve = async (): Promise<void> => {
+    // formatting of output
 
     let snapshot = await takeSnapshot(); // the state of the world before
 

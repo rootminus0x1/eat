@@ -24,6 +24,7 @@
       "description": "What type of component do you want to create?",
       "options": [
         "aladdin-fx-market.config.yml",
+        "aladdin-fx-rebalance-pool-splitter.config.yml",
         "aladdin-fx-rebalance-pool1.config.yml",
         "bao-governance.config.yml",
         "token-minter.config.yml"

@@ -200,50 +200,6 @@
       value: '0'
     - name: balanceOf
       type: uint256
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: boostCheckpoint.veBalance
-      type: uint112
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: boostCheckpoint.veSupply
-      type: uint112
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: boostCheckpoint.historyIndex
-      type: uint32
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: getBoostRatio
-      type: uint256
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: pendingRewards.0
-      type: uint256
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: pendingRewards.1
-      type: uint256
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: rewardData.queued
-      type: uint96
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: rewardData.rate
-      type: uint80
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: rewardData.lastUpdate
-      type: uint40
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: rewardData.finishAt
-      type: uint40
-      target: BoostableRebalancePool_at_1
-      value: '0'
-    - name: balanceOf
-      type: uint256
       target: BoostableRebalancePool_at_2
       value: '0'
     - name: boostCheckpoint.veBalance
@@ -1938,50 +1894,6 @@
       value: '0'
     - name: balanceOf
       type: uint256
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: boostCheckpoint.veBalance
-      type: uint112
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: boostCheckpoint.veSupply
-      type: uint112
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: boostCheckpoint.historyIndex
-      type: uint32
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: getBoostRatio
-      type: uint256
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: pendingRewards.0
-      type: uint256
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: pendingRewards.1
-      type: uint256
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: rewardData.queued
-      type: uint96
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: rewardData.rate
-      type: uint80
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: rewardData.lastUpdate
-      type: uint40
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: rewardData.finishAt
-      type: uint40
-      target: BoostableRebalancePool_at_2
-      value: '0'
-    - name: balanceOf
-      type: uint256
       target: ChainlinkTwapOracleV3__0
       value: '0'
     - name: boostCheckpoint.veBalance
@@ -3488,10 +3400,6 @@
       value: '0'
     - name: balanceOf
       type: uint256
-      target: Curve_DAO_Token
-      value: '0'
-    - name: balanceOf
-      type: uint256
       target: EACAggregatorProxy__0
       value: '0'
     - name: balanceOf
@@ -3799,10 +3707,6 @@
       type: uint256
       target: fMinter
       value: '2284.062575333126121269'
-    - name: balanceOf
-      type: uint256
-      target: FractionalToken
-      value: '0'
     - name: balanceOf
       type: uint256
       target: FxETHTwapOracle
@@ -4243,26 +4147,6 @@
     - name: vote_user_power
       type: uint256
       target: FxETHTwapOracle
-      value: '0'
-    - name: gauge_relative_weight
-      type: uint256
-      target: Gauge_Controller
-      value: '0'
-    - name: gauge_types
-      type: int128
-      target: Gauge_Controller
-      error: Transaction reverted without a reason string
-    - name: get_gauge_weight
-      type: uint256
-      target: Gauge_Controller
-      value: '0'
-    - name: time_weight
-      type: uint256
-      target: Gauge_Controller
-      value: '0'
-    - name: vote_user_power
-      type: uint256
-      target: Gauge_Controller
       value: '0'
     - name: gauge_relative_weight
       type: uint256
@@ -4772,10 +4656,6 @@
     - name: balanceOf
       type: uint256
       target: GnosisSafe__1
-      value: '0'
-    - name: balanceOf
-      type: uint256
-      target: LeveragedToken
       value: '0'
     - name: balanceOf
       type: uint256
@@ -5766,42 +5646,6 @@
       value: '0'
     - name: balanceOf
       type: uint256
-      target: RebalancePool
-      value: '0'
-    - name: extraRewardState.rate
-      type: uint128
-      target: RebalancePool
-      value: '0'
-    - name: extraRewardState.periodLength
-      type: uint32
-      target: RebalancePool
-      value: '0'
-    - name: extraRewardState.lastUpdate
-      type: uint48
-      target: RebalancePool
-      value: '0'
-    - name: extraRewardState.finishAt
-      type: uint48
-      target: RebalancePool
-      value: '0'
-    - name: extraRewardState.queued
-      type: uint256
-      target: RebalancePool
-      value: '0'
-    - name: unlockedBalanceOf
-      type: uint256
-      target: RebalancePool
-      value: '0'
-    - name: unlockingBalanceOf._balance
-      type: uint256
-      target: RebalancePool
-      value: '0'
-    - name: unlockingBalanceOf._unlockAt
-      type: uint256
-      target: RebalancePool
-      value: '0'
-    - name: balanceOf
-      type: uint256
       target: RebalancePoolRegistry
       value: '0'
     - name: extraRewardState.rate
@@ -6311,6 +6155,160 @@
     - name: totalSupply
       type: uint256
       value: '5811959.010789095234500199'
+- address: '0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb'
+  name: RebalancePoolSplitter
+  contract: RebalancePoolSplitter
+  measurements:
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: AccessControlledOffchainAggregator__0
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: AccessControlledOffchainAggregator__1
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: admin
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: BoostableRebalancePool_at_1
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: BoostableRebalancePool_at_2
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: ChainlinkTwapOracleV3__0
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: ChainlinkTwapOracleV3__1
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: Curve_DAO_Token
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: EACAggregatorProxy__0
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: EACAggregatorProxy__1
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: fHolderLiquidator
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: fHolderRedeemer
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: fMinter
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: FractionalToken
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: FxETHTwapOracle
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: Gauge_Controller
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: GnosisSafe__0
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: GnosisSafe__1
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: LeveragedToken
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: Lido
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: Market
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: PlatformFeeSpliter
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: RebalancePool
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: RebalancePoolRegistry
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: RebalanceWithBonusToken
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: ReservePool
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: SmartWalletWhitelist
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: StableSwap
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: StETHAndxETHWrapper
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: stETHTreasury
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: Token_Minter
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: Voting_Escrow
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: WstETH
+      value:
+        - '500000000'
+        - '500000000'
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: wstETHWrapper
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: xHolderRedeemer
+      value: []
+    - name: getReceivers._ratios
+      type: uint256[]
+      target: xMinter
+      value: []
 - address: '0x17f21f468d77E6e35702a9Ae7a9da50Db7F6a4f4'
   name: RebalanceWithBonusToken
   contract: RebalanceWithBonusToken
@@ -6429,10 +6427,6 @@
     - name: bonusRatio
       type: uint256
       target: RebalanceWithBonusToken
-      value: '0'
-    - name: bonusRatio
-      type: uint256
-      target: ReservePool
       value: '0'
     - name: bonusRatio
       type: uint256
@@ -6769,14 +6763,6 @@
     - name: nonces
       type: uint256
       target: SmartWalletWhitelist
-      value: '0'
-    - name: balanceOf
-      type: uint256
-      target: StableSwap
-      value: '0'
-    - name: nonces
-      type: uint256
-      target: StableSwap
       value: '0'
     - name: balanceOf
       type: uint256
@@ -7440,22 +7426,6 @@
       value: '0'
     - name: balanceOf
       type: uint256
-      target: Voting_Escrow
-      value: '0'
-    - name: get_last_user_slope
-      type: int128
-      target: Voting_Escrow
-      value: '0'
-    - name: locked__end
-      type: uint256
-      target: Voting_Escrow
-      value: '0'
-    - name: user_point_epoch
-      type: uint256
-      target: Voting_Escrow
-      value: '0'
-    - name: balanceOf
-      type: uint256
       target: WstETH
       value: '0'
     - name: get_last_user_slope
@@ -7805,14 +7775,6 @@
     - name: nonces
       type: uint256
       target: Voting_Escrow
-      value: '0'
-    - name: balanceOf
-      type: uint256
-      target: WstETH
-      value: '0'
-    - name: nonces
-      type: uint256
-      target: WstETH
       value: '0'
     - name: balanceOf
       type: uint256

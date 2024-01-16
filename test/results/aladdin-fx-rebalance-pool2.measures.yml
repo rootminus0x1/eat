@@ -20,6 +20,722 @@
     - name: totalSupply
       type: uint256
       value: '2956321.364769018396295364'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: Curve_DAO_Token
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: FractionalToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: Gauge_Controller
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: GnosisSafe
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: LeveragedToken
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: Lido
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: Market
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: Market
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: PlatformFeeSpliter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: ReservePool
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: SmartWalletWhitelist
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: StETHAndxETHWrapper
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: stETHTreasury
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: Token_Minter
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: pendingRewards.1
+      type: uint256
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.queued
+      type: uint96
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.rate
+      type: uint80
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.finishAt
+      type: uint40
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: Voting_Escrow
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: getBoostRatio
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: pendingRewards.1
+      type: uint256
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.queued
+      type: uint96
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.rate
+      type: uint80
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
+    - name: rewardData.finishAt
+      type: uint40
+      target: WstETH
+      error: (intermediate value)[outputIndex].map is not a function
 - address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
   name: Curve_DAO_Token
   contract: Curve DAO Token
@@ -48,6 +764,70 @@
     - name: totalSupply
       type: uint256
       value: '1020000.0'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '20.0'
+    - name: balanceOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '11724.557898160134110992'
+    - name: balanceOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '115331.908808027700163144'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '0'
 - address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
   name: FractionalToken
   contract: FractionalToken
@@ -61,6 +841,70 @@
     - name: totalSupply
       type: uint256
       value: '6650842.598065295621717671'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '16.490482704733555399'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '2956321.364769018396295364'
+    - name: balanceOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '9802.392603376365221993'
+    - name: balanceOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '0'
 - address: '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37'
   name: Gauge_Controller
   contract: Gauge Controller
@@ -77,6 +921,326 @@
     - name: time_total
       type: uint256
       value: '1694649600'
+    - name: gauge_relative_weight
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: BoostableRebalancePool
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Curve_DAO_Token
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: FractionalToken
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: GnosisSafe
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: LeveragedToken
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Lido
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Market
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Market
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Market
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Market
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Market
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: PlatformFeeSpliter
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: ReservePool
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: SmartWalletWhitelist
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: StETHAndxETHWrapper
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: stETHTreasury
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Token_Minter
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: Voting_Escrow
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: gauge_relative_weight
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: gauge_types
+      type: int128
+      target: WstETH
+      error: Transaction reverted without a reason string
+    - name: get_gauge_weight
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: time_weight
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: vote_user_power
+      type: uint256
+      target: WstETH
+      value: '0'
 - address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2'
   name: LeveragedToken
   contract: LeveragedToken
@@ -90,6 +1254,70 @@
     - name: totalSupply
       type: uint256
       value: '5646434.225742690599105577'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '21.987150410873681687'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '291952.174931281247450058'
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '0'
 - address: '0x0084C2e1B1823564e597Ff4848a88D61ac63D703'
   name: PlatformFeeSpliter
   contract: PlatformFeeSpliter
@@ -97,6 +1325,74 @@
     - name: getRewardCount
       type: uint256
       value: '1'
+- address: '0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752'
+  name: ReservePool
+  contract: ReservePool
+  measurements:
+    - name: bonusRatio
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: Lido
+      value: '0.05'
+    - name: bonusRatio
+      type: uint256
+      target: Market
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: bonusRatio
+      type: uint256
+      target: WstETH
+      value: '0'
 - address: '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469'
   name: Voting_Escrow
   contract: Voting Escrow
@@ -113,6 +1409,262 @@
     - name: totalSupply
       type: uint256
       value: '94540.343792368370153142'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: BoostableRebalancePool
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Curve_DAO_Token
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: FractionalToken
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Gauge_Controller
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: GnosisSafe
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: LeveragedToken
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Lido
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Market
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Market
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: Market
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: ReservePool
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: stETHTreasury
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: Token_Minter
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: get_last_user_slope
+      type: int128
+      target: WstETH
+      value: '0'
+    - name: locked__end
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: user_point_epoch
+      type: uint256
+      target: WstETH
+      value: '0'
 - address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
   name: WstETH
   contract: WstETH
@@ -129,3 +1681,131 @@
     - name: totalSupply
       type: uint256
       value: '3247614.816540003642107369'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '1.930332134442365476'
+    - name: nonces
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '0.002360714784456648'
+    - name: nonces
+      type: uint256
+      target: GnosisSafe
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0.0175'
+    - name: nonces
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Market
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
