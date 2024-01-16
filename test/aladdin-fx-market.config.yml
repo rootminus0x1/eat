@@ -17,7 +17,7 @@ users:
   - name: admin # bao admin
   - name: fMinter #user who mints fTokens
     wallet:
-      - { contract: Lido, amount: 1 }
+      - { contract: Lido, amount: 1 ether }
   - name: fHolderLiquidator # user who mints/liquidates fTokens
   - name: fHolderRedeemer # user who mint/redeems fTokens
   - name: xMinter # user who mint/redeems xTokens

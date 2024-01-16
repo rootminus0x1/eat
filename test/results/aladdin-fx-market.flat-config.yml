@@ -54,7 +54,7 @@ users:
   - name: fMinter
     wallet:
       - contract: Lido
-        amount: 1
+        amount: 1 ether
   - name: fHolderLiquidator
   - name: fHolderRedeemer
   - name: xMinter
