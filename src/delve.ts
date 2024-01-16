@@ -3,6 +3,7 @@ import { ContractTransactionResponse, MaxInt256, formatUnits } from 'ethers';
 import { ConfigFormat, getConfig, parseArg, writeYaml } from './config';
 import lodash from 'lodash';
 import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
+import { error } from 'console';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -143,6 +144,29 @@ export const calculateMeasures = async (): Promise<Measurements> => {
 };
 
 ////////////////////////////////////////////////////////////////////////
+// calculateMeasures
+export const calculateSlimMeasures = async (baseMeasurements: Measurements): Promise<Measurements> => {
+    const result: Measurements = [];
+    let count = 0;
+
+    for (const contract of baseMeasurements.filter((m) => m.measurements)) {
+        const nonZero = (contract as ContractMeasurements).measurements.filter((measure) => {
+            if (measure.value)
+                if (lodash.isArray(measure.value)) return measure.value.length > 0;
+                else return true;
+            else return measure.error ? true : false;
+        });
+        if (nonZero.length > 0) {
+            // copy top level stuff
+            const resultContract = lodash.clone(contract);
+            resultContract.measurements = nonZero; // replace measurements
+            result.push(resultContract);
+        }
+    }
+    return result;
+};
+
+////////////////////////////////////////////////////////////////////////
 // calculateDeltaMeasures
 export const calculateDeltaMeasures = (
     baseMeasurements: Measurements,
@@ -150,7 +174,7 @@ export const calculateDeltaMeasures = (
 ): Measurements => {
     const results: Measurements = [];
 
-    // loop through actioned measurements, just the actual measurements
+    // loop through actioned measurements, just the actual measurements, nothing else
     const actionedContractMeasurements: Measurements = actionedMeasurements.filter((m: any) =>
         m.measurements ? true : false,
     );
@@ -332,6 +356,7 @@ export const delve = async (): Promise<void> => {
 
     const baseMeasurements = await calculateMeasures();
     writeYaml('measures.yml', baseMeasurements, formatFromConfig);
+    writeYaml('slim-measures.yml', await calculateSlimMeasures(baseMeasurements), formatFromConfig);
 
     let i = 0;
     for (const configAction of getConfig().actions ?? []) {
@@ -364,11 +389,19 @@ export const delve = async (): Promise<void> => {
             gas: gas,
         });
         writeYaml(`${actionName}.measures.yml`, actionedMeasurements, formatFromConfig);
+        writeYaml(
+            `${actionName}.slim-measures.yml`,
+            await calculateSlimMeasures(actionedMeasurements),
+            formatFromConfig,
+        );
 
         // difference the measures
-        const deltaMeasurements = calculateDeltaMeasures(baseMeasurements!, actionedMeasurements);
         // write the results
-        writeYaml(`${actionName}.measures.delta.yml`, deltaMeasurements, formatFromConfig);
+        writeYaml(
+            `${actionName}.delta-measures.yml`,
+            calculateDeltaMeasures(baseMeasurements!, actionedMeasurements),
+            formatFromConfig,
+        );
 
         // don't restore for the last in the loop
         if (++i < getConfig().actions.length) snapshot.restore();

@@ -20,12 +20,6 @@ import {
 } from './graph';
 import { getConfig, parseArg } from './config';
 
-export type DigDeepResults = {
-    links: Link[];
-    measures: Measure[];
-    measuresOnAddress: MeasureOnAddress[];
-};
-
 export const dig = async () => {
     const done = new Set<string>(); // ensure addresses are only visited once
     const addresses = getConfig().start;
@@ -45,13 +39,16 @@ export const dig = async () => {
                         blockchainAddress,
                     ),
                 );
-
+                // add the measures to the contract
+                const oneMeasures = await digUpMeasures(blockchainAddress);
+                measures.set(address, oneMeasures.measures);
+                measuresOnAddress.set(address, oneMeasures.measuresOnAddress);
                 if (!stopper) {
-                    const digResults = await digDeep(blockchainAddress);
+                    const oneLinks = await digUpLinks(blockchainAddress);
                     // set the links
-                    links.set(address, digResults.links);
+                    links.set(address, oneLinks);
                     // and consequent backlinks
-                    digResults.links.forEach((link) =>
+                    oneLinks.forEach((link) =>
                         backLinks.set(
                             link.address,
                             (backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
@@ -59,11 +56,7 @@ export const dig = async () => {
                     );
 
                     // add more addresses to be dug up
-                    digResults.links.forEach((link) => addresses.push(link.address));
-
-                    // add the measures to the contract
-                    measures.set(address, digResults.measures);
-                    measuresOnAddress.set(address, digResults.measuresOnAddress);
+                    oneLinks.forEach((link) => addresses.push(link.address));
                 }
             }
         }
@@ -187,10 +180,8 @@ const outputName = (func: FunctionFragment, outputIndex?: number, arrayIndex?: n
     return result;
 };
 
-export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResults> => {
+export const digUpLinks = async (address: BlockchainAddress): Promise<Link[]> => {
     const links: Link[] = [];
-    const measures: Measure[] = [];
-    const measuresOnAddress: MeasureOnAddress[] = [];
     // follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     for (const contract of [await address.getContract(), await address.getProxyContract()]) {
@@ -200,153 +191,173 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
             contract.interface.forEachFunction((func) => functions.push(func));
 
             // Explore each parameterless view (or pure) functions in the contract's interface
-            for (let func of functions.filter((f) => f.stateMutability === 'view' || f.stateMutability === 'pure')) {
+            for (let func of functions.filter(
+                (f) => f.inputs.length == 0 && (f.stateMutability === 'view' || f.stateMutability === 'pure'),
+            )) {
                 // that returns one or more addresses
                 // are added to the links field along with their function name + output name/index
                 // first find the indices of the functions we are interested in
-                if (func.inputs.length == 0) {
-                    const addressIndices = func.outputs.reduce((indices, elem, index) => {
-                        if (elem.type === 'address' || elem.type === 'address[]') indices.push(index);
-                        return indices;
-                    }, [] as number[]);
-                    // if any interesting function
-                    if (addressIndices.length > 0) {
-                        try {
-                            const funcResults = await contract[func.name]();
-                            if (func.outputs.length == 1) {
-                                // single result - containing an address or address[]
-                                if (func.outputs[0].type === 'address') {
+                const addressIndices = func.outputs.reduce((indices, elem, index) => {
+                    if (elem.type === 'address' || elem.type === 'address[]') indices.push(index);
+                    return indices;
+                }, [] as number[]);
+                // if any interesting function
+                if (addressIndices.length > 0) {
+                    try {
+                        const funcResults = await contract[func.name]();
+                        if (func.outputs.length == 1) {
+                            // single result - containing an address or address[]
+                            if (func.outputs[0].type === 'address') {
+                                // single address
+                                links.push({ address: funcResults, name: outputName(func) });
+                            } else {
+                                // address[]
+                                for (let index = 0; index < funcResults.length; index++) {
+                                    const elem = funcResults[index];
+                                    links.push({
+                                        address: elem,
+                                        name: outputName(func, undefined, index),
+                                    });
+                                }
+                            }
+                        } else {
+                            // assume an array of results, some, defined by the indices, containing an address or address[]
+                            for (const outputIndex of addressIndices) {
+                                if (func.outputs[outputIndex].type === 'address') {
                                     // single address
-                                    links.push({ address: funcResults, name: outputName(func) });
+                                    links.push({
+                                        address: funcResults[outputIndex],
+                                        name: outputName(func, outputIndex),
+                                    });
                                 } else {
                                     // address[]
-                                    for (let index = 0; index < funcResults.length; index++) {
-                                        const elem = funcResults[index];
+                                    for (let index = 0; index < funcResults[outputIndex].length; index++) {
+                                        const elem = funcResults[outputIndex][index];
                                         links.push({
                                             address: elem,
-                                            name: outputName(func, undefined, index),
+                                            name: outputName(func, outputIndex, index),
                                         });
-                                    }
-                                }
-                            } else {
-                                // assume an array of results, some, defined by the indices, containing an address or address[]
-                                for (const outputIndex of addressIndices) {
-                                    if (func.outputs[outputIndex].type === 'address') {
-                                        // single address
-                                        links.push({
-                                            address: funcResults[outputIndex],
-                                            name: outputName(func, outputIndex),
-                                        });
-                                    } else {
-                                        // address[]
-                                        for (let index = 0; index < funcResults[outputIndex].length; index++) {
-                                            const elem = funcResults[outputIndex][index];
-                                            links.push({
-                                                address: elem,
-                                                name: outputName(func, outputIndex, index),
-                                            });
-                                        }
                                     }
                                 }
                             }
-                        } catch (err) {
-                            console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
                         }
+                    } catch (err) {
+                        console.error(`error calling ${address} ${func.name} ${func.selector}: ${err}`);
                     }
                 }
-                if (func.inputs.length == 0) {
-                    // same for measures
-                    const numericIndices = func.outputs.reduce((indices, elem, index) => {
-                        // TODO:  add bool?
-                        if (/^u?int\d+(\[\])?$/.test(elem.type)) indices.push(index);
-                        return indices;
-                    }, [] as number[]);
-                    // if any interesting function
-                    if (numericIndices.length > 0) {
-                        if (func.outputs.length == 1) {
-                            // single result - containing a unit256 or uint256[], likewise below
-                            if (func.outputs[0].type.endsWith('[]')) {
-                                measures.push({
-                                    calculation: async () => (await contract[func.name]()).map((elem: bigint) => elem),
-                                    name: outputName(func),
-                                    type: func.outputs[0].type,
-                                });
-                            } else {
-                                // single number
-                                measures.push({
-                                    calculation: async () => await contract[func.name](),
-                                    name: outputName(func),
-                                    type: func.outputs[0].type,
-                                });
-                            }
+            }
+        }
+    }
+    return links;
+};
+
+export const digUpMeasures = async (
+    address: BlockchainAddress,
+): Promise<{ measures: Measure[]; measuresOnAddress: MeasureOnAddress[] }> => {
+    const measures: Measure[] = [];
+    const measuresOnAddress: MeasureOnAddress[] = [];
+    // follow also the proxy contained addresses
+    // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
+    const contract = await address.getContract();
+    if (contract) {
+        let functions: FunctionFragment[] = [];
+        contract.interface.forEachFunction((func) => functions.push(func));
+
+        // Explore each parameterless view (or pure) functions in the contract's interface
+        for (let func of functions.filter((f) => f.stateMutability === 'view' || f.stateMutability === 'pure')) {
+            if (func.inputs.length == 0) {
+                // same for measures
+                const numericIndices = func.outputs.reduce((indices, elem, index) => {
+                    // TODO:  add bool?
+                    if (/^u?int\d+(\[\])?$/.test(elem.type)) indices.push(index);
+                    return indices;
+                }, [] as number[]);
+                // if any interesting function
+                if (numericIndices.length > 0) {
+                    if (func.outputs.length == 1) {
+                        // single result - containing a unit256 or uint256[], likewise below
+                        if (func.outputs[0].type.endsWith('[]')) {
+                            measures.push({
+                                calculation: async () => (await contract[func.name]()).map((elem: bigint) => elem),
+                                name: outputName(func),
+                                type: func.outputs[0].type,
+                            });
                         } else {
-                            // assume an array/struct of results, some, defined by the indices, containing an uint256 or uint256[]
-                            for (const outputIndex of numericIndices) {
-                                if (func.outputs[outputIndex].type.endsWith('[]')) {
-                                    measures.push({
-                                        calculation: async () =>
-                                            (await contract[func.name]())[outputIndex].map((elem: bigint) => elem),
-                                        name: outputName(func, outputIndex),
-                                        type: func.outputs[outputIndex].type,
-                                    });
-                                } else {
-                                    measures.push({
-                                        calculation: async () => (await contract[func.name]())[outputIndex],
-                                        name: outputName(func, outputIndex),
-                                        type: func.outputs[outputIndex].type,
-                                    });
-                                }
+                            // single number
+                            measures.push({
+                                calculation: async () => await contract[func.name](),
+                                name: outputName(func),
+                                type: func.outputs[0].type,
+                            });
+                        }
+                    } else {
+                        // assume an array/struct of results, some, defined by the indices, containing an uint256 or uint256[]
+                        for (const outputIndex of numericIndices) {
+                            if (func.outputs[outputIndex].type.endsWith('[]')) {
+                                measures.push({
+                                    calculation: async () =>
+                                        (await contract[func.name]())[outputIndex].map((elem: bigint) => elem),
+                                    name: outputName(func, outputIndex),
+                                    type: func.outputs[outputIndex].type,
+                                });
+                            } else {
+                                measures.push({
+                                    calculation: async () => (await contract[func.name]())[outputIndex],
+                                    name: outputName(func, outputIndex),
+                                    type: func.outputs[outputIndex].type,
+                                });
                             }
                         }
                     }
                 }
-                if (func.inputs.length == 1 && func.inputs[0].type === 'address') {
-                    // TODO: see if something can be factored out for the two sets of measures
-                    // same for measures on addresses
-                    const numericIndices = func.outputs.reduce((indices, elem, index) => {
-                        // TODO:  add bool?
-                        if (/^u?int\d+(\[\])?$/.test(elem.type)) indices.push(index);
-                        return indices;
-                    }, [] as number[]);
-                    // if any interesting function
-                    if (numericIndices.length > 0) {
-                        if (func.outputs.length == 1) {
-                            // single result - containing a unit256 or uint256[], likewise below
-                            if (func.outputs[0].type.endsWith('[]')) {
+            }
+            // TODO: handle struct returns in a similar way to array returns, gathering all the returned values, not just the numeric ones.
+            // because the non-numeric values may help understand the numeric ones
+            // likewise for array returns, gather all the returns.
+            if (func.inputs.length == 1 && func.inputs[0].type === 'address') {
+                // TODO: see if something can be factored out for the two sets of measures
+                // same for measures on addresses
+                const numericIndices = func.outputs.reduce((indices, elem, index) => {
+                    // TODO:  add bool?
+                    if (/^u?int\d+(\[\])?$/.test(elem.type)) indices.push(index);
+                    return indices;
+                }, [] as number[]);
+                // if any interesting function
+                if (numericIndices.length > 0) {
+                    if (func.outputs.length == 1) {
+                        // single result - containing a unit256 or uint256[], likewise below
+                        if (func.outputs[0].type.endsWith('[]')) {
+                            measuresOnAddress.push({
+                                calculation: async (address: string) =>
+                                    (await contract[func.name](address)).map((elem: bigint) => elem),
+                                name: outputName(func),
+                                type: func.outputs[0].type,
+                            });
+                        } else {
+                            // single number
+                            measuresOnAddress.push({
+                                calculation: async (address: string) => await contract[func.name](address),
+                                name: outputName(func),
+                                type: func.outputs[0].type,
+                            });
+                        }
+                    } else {
+                        // assume an array/struct of results, some, defined by the indices, containing an uint256 or uint256[]
+                        for (const outputIndex of numericIndices) {
+                            if (func.outputs[outputIndex].type.endsWith('[]')) {
                                 measuresOnAddress.push({
                                     calculation: async (address: string) =>
-                                        (await contract[func.name](address)).map((elem: bigint) => elem),
-                                    name: outputName(func),
-                                    type: func.outputs[0].type,
+                                        (await contract[func.name](address))[outputIndex].map((elem: bigint) => elem),
+                                    name: outputName(func, outputIndex),
+                                    type: func.outputs[outputIndex].type,
                                 });
                             } else {
-                                // single number
                                 measuresOnAddress.push({
-                                    calculation: async (address: string) => await contract[func.name](address),
-                                    name: outputName(func),
-                                    type: func.outputs[0].type,
+                                    calculation: async (address: string) =>
+                                        (await contract[func.name](address))[outputIndex],
+                                    name: outputName(func, outputIndex),
+                                    type: func.outputs[outputIndex].type,
                                 });
-                            }
-                        } else {
-                            // assume an array/struct of results, some, defined by the indices, containing an uint256 or uint256[]
-                            for (const outputIndex of numericIndices) {
-                                if (func.outputs[outputIndex].type.endsWith('[]')) {
-                                    measuresOnAddress.push({
-                                        calculation: async (address: string) =>
-                                            (await contract[func.name](address))[outputIndex].map(
-                                                (elem: bigint) => elem,
-                                            ),
-                                        name: outputName(func, outputIndex),
-                                        type: func.outputs[outputIndex].type,
-                                    });
-                                } else {
-                                    measuresOnAddress.push({
-                                        calculation: async (address: string) =>
-                                            (await contract[func.name](address))[outputIndex],
-                                        name: outputName(func, outputIndex),
-                                        type: func.outputs[outputIndex].type,
-                                    });
-                                }
                             }
                         }
                     }
@@ -354,5 +365,5 @@ export const digDeep = async (address: BlockchainAddress): Promise<DigDeepResult
             }
         }
     }
-    return { links: links, measures: measures, measuresOnAddress: measuresOnAddress };
+    return { measures: measures, measuresOnAddress: measuresOnAddress };
 };
