@@ -176,13 +176,15 @@ export const calculateDeltaMeasures = (
     const actionedContractMeasurements: Measurements = actionedMeasurements.filter((m: any) =>
         m.measurements ? true : false,
     );
-    if (baseMeasurements.length !== actionedContractMeasurements.length)
+    const baseContractMeasurements: Measurements = baseMeasurements.filter((m: any) => (m.measurements ? true : false));
+
+    if (baseContractMeasurements.length !== actionedContractMeasurements.length)
         throw Error(
-            `contract measurements differ: baseMeasurements ${baseMeasurements.length} actionedMeasurements ${actionedContractMeasurements.length}`,
+            `contract measurements differ: baseMeasurements ${baseContractMeasurements.length} actionedMeasurements ${actionedContractMeasurements.length}`,
         );
 
     for (let a = 0; a < actionedContractMeasurements.length; a++) {
-        const baseContract = baseMeasurements[a] as ContractMeasurements;
+        const baseContract = baseContractMeasurements[a] as ContractMeasurements;
         const actionedContract = actionedContractMeasurements[a] as ContractMeasurements;
 
         if (
@@ -406,9 +408,6 @@ const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Pro
 
         // do the post action measures
         const actionedMeasurements = await calculateMeasures();
-        if (value) {
-            baseMeasurements.unshift({ name: value.name, value: value.value });
-        }
         actionedMeasurements.unshift({
             name: actionName,
             user: configAction.user,
@@ -418,7 +417,9 @@ const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Pro
             error: error,
             gas: gas,
         });
-
+        if (value) {
+            actionedMeasurements.unshift({ name: value.name, value: value.value });
+        }
         const prefix = `${variablePrefix}${actionName}.`;
 
         writeYaml(`${prefix}measures.yml`, actionedMeasurements, formatFromConfig);

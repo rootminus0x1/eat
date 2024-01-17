@@ -24,9 +24,9 @@ export const ensureDirectory = (dir: string) => {
 };
 
 export const write = (name: string, results: string): void => {
-    const outputFileName = getConfig().outputFileRoot + getConfig().configName + '.' + name;
+    const outputFileName = getConfig().configName + '.' + name;
     console.log(`   writing ${outputFileName}`);
-    fs.writeFileSync(outputFileName, results, { encoding: 'utf-8' });
+    fs.writeFileSync(getConfig().outputFileRoot + outputFileName, results, { encoding: 'utf-8' });
 };
 
 type Formatter = (value: any) => any;
