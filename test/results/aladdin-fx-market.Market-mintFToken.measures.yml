@@ -2251,11 +2251,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      value: '0.003498956823222612'
+      value: '0.003500467599053019'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      value: '0.17331620326429104'
+      value: '0.173314692488460633'
     - name: rewardData.queued
       type: uint96
       target: WstETH
@@ -3913,11 +3913,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      value: '0.000888336188279316'
+      value: '0.000889846964109723'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      value: '0.17331620326429104'
+      value: '0.173314692488460633'
     - name: rewardData.queued
       type: uint96
       target: WstETH
@@ -4098,7 +4098,7 @@
   measurements:
     - name: available_supply
       type: uint256
-      value: '1047280.20928462708865514'
+      value: '1047280.212392186703064069'
     - name: decimals
       type: uint256
       value: '18'
@@ -7822,7 +7822,7 @@
       value: '0'
     - name: price_oracle
       type: uint256
-      value: '0.999585641941070669'
+      value: '0.999585641934944913'
     - name: totalSupply
       type: uint256
       value: '45363.931240034965729028'
@@ -8137,7 +8137,7 @@
       value: '1.839274612744141044'
     - name: emaLeverageRatio.lastTime
       type: uint40
-      value: '1703824439'
+      value: '1703824440'
     - name: emaLeverageRatio.sampleInterval
       type: uint24
       value: '86400'
@@ -8146,7 +8146,7 @@
       value: '1773235678532359425'
     - name: emaLeverageRatio.lastEmaValue
       type: uint96
-      value: '1805401577093272734'
+      value: '1805401135522449179'
     - name: getCurrentNav._baseNav
       type: uint256
       value: '2354.30211112'
@@ -8164,7 +8164,7 @@
       value: '1836.7853'
     - name: leverageRatio
       type: uint256
-      value: '1.805401577093272734'
+      value: '1.805401135522449179'
     - name: rebalancePoolRatio
       type: uint128
       value: '500000000000000000'
@@ -8189,7 +8189,7 @@
       value: '115331.908808027700163144'
     - name: totalSupply
       type: uint256
-      value: '94540.332839951246102094'
+      value: '94540.33192724981909784'
     - name: balanceOf
       type: uint256
       target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938

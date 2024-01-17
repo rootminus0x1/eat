@@ -37,7 +37,7 @@ format:
   - type: uint256
     unit: ether
 root:
-  - "0x840e75261c2934f33C8766F6eA6235330DC1D72d"
+  - '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
 configFilePath: /home/tfras/github/rootminus0x1/eat/test/bao-governance.config.yml
 configName: bao-governance
