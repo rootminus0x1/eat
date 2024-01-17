@@ -137,7 +137,7 @@ export const calculateMeasures = async (): Promise<Measurements> => {
             count += values.length;
         }
     }
-    console.log(`  Nodes: ${sortedNodes.length}, Measurements: ${count}`);
+    console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
     return result;
 };
 
@@ -363,26 +363,26 @@ export const delve = async (variable?: VariableCalculator): Promise<void> => {
     let snapshot = await takeSnapshot(); // the state of the world before
 
     if (!variable) {
-        delveOnce(snapshot);
+        await delveOnce(snapshot);
     } else {
         while (true) {
             const value = await variable.next();
             if (!value) break;
-            delveOnce(snapshot, { name: variable.name, value: value });
+            await delveOnce(snapshot, { name: variable.name, value: value });
         }
     }
 };
 
 const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Promise<void> => {
     const variablePrefix = value ? `${value.name}=${value.value.toString()}.` : '';
-    console.log(variablePrefix);
+    if (value) console.log(`      ${variablePrefix}`);
 
     const baseMeasurements = await calculateMeasures();
     if (value) {
         baseMeasurements.unshift({ name: value.name, value: value.value });
     }
     writeYaml(`${variablePrefix}measures.yml`, baseMeasurements, formatFromConfig);
-    writeYaml(`'${variablePrefix}slim-measures.yml`, await calculateSlimMeasures(baseMeasurements), formatFromConfig);
+    writeYaml(`${variablePrefix}slim-measures.yml`, await calculateSlimMeasures(baseMeasurements), formatFromConfig);
 
     let i = 0;
     for (const configAction of getConfig().actions ?? []) {

@@ -135,7 +135,7 @@ export const dig = async () => {
         for (const [userName, userHoldings] of holdings) {
             // fill the wallet
             for (const [tokenName, amount] of userHoldings) {
-                console.log(`transferring ${tokenName} from whale to ${userName}`);
+                console.log(`   transferring ${tokenName} from whale to ${userName}`);
                 if (!(await contracts[tokenName].connect(whale).transfer(users[userName].address, amount))) {
                     throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
                 }
@@ -145,7 +145,7 @@ export const dig = async () => {
                         .actions.filter((a) => a.user && a.user === userName)
                         .map((a) => a.contract)) {
                         // allow the wallet to be spent
-                        console.log(`approving ${contract} to use ${userName}'s ${tokenName}`);
+                        console.log(`   approving ${contract} to use ${userName}'s ${tokenName}`);
                         if (
                             !(await contracts[tokenName]
                                 .connect(users[userName])

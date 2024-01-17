@@ -25,6 +25,7 @@ export const ensureDirectory = (dir: string) => {
 
 export const write = (name: string, results: string): void => {
     const outputFileName = getConfig().outputFileRoot + getConfig().configName + '.' + name;
+    console.log(`   writing ${outputFileName}`);
     fs.writeFileSync(outputFileName, results, { encoding: 'utf-8' });
 };
 
@@ -163,6 +164,8 @@ export const getConfig = (): Config => {
 
         // load the requested config
         const configFilePath = path.resolve(argv._[0]);
+        console.log(configFilePath);
+
         const configName = getConfigName(configFilePath);
 
         // find matching defaults and merge them
