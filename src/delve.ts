@@ -2,8 +2,7 @@ import { contracts, measures, measuresOnAddress, nodes, users } from './graph';
 import { ContractTransactionResponse, MaxInt256, formatUnits } from 'ethers';
 import { ConfigFormat, getConfig, parseArg, writeYaml } from './config';
 import lodash from 'lodash';
-import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
-import { error } from 'console';
+import { SnapshotRestorer, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -40,7 +39,6 @@ export const addContract = async (
 */
 
 type ActionFunction = () => Promise<ContractTransactionResponse>;
-type Actions = Map<string, ActionFunction>;
 
 export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
     return Array.from(unsorted.entries()).sort((a, b) =>
@@ -62,7 +60,7 @@ export type Measurement = {
 
 export type Variable = {
     name: string;
-    value: bigint;
+    value: string;
 };
 
 export type Action = {
@@ -349,18 +347,45 @@ const formatFromConfig = (address: any): any => {
 
 ////////////////////////////////////////////////////////////////////////
 // delve
-export const delve = async (): Promise<void> => {
+
+export type VariableCalculator = {
+    name: string;
+    next: () => Promise<string | undefined>;
+};
+
+type VariableValue = {
+    name: string;
+    value: any;
+};
+export const delve = async (variable?: VariableCalculator): Promise<void> => {
     // formatting of output
 
     let snapshot = await takeSnapshot(); // the state of the world before
 
+    if (!variable) {
+        delveOnce(snapshot);
+    } else {
+        while (true) {
+            const value = await variable.next();
+            if (!value) break;
+            delveOnce(snapshot, { name: variable.name, value: value });
+        }
+    }
+};
+
+const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Promise<void> => {
+    const variablePrefix = value ? `${value.name}=${value.value.toString()}.` : '';
+    console.log(variablePrefix);
+
     const baseMeasurements = await calculateMeasures();
-    writeYaml('measures.yml', baseMeasurements, formatFromConfig);
-    writeYaml('slim-measures.yml', await calculateSlimMeasures(baseMeasurements), formatFromConfig);
+    if (value) {
+        baseMeasurements.unshift({ name: value.name, value: value.value });
+    }
+    writeYaml(`${variablePrefix}measures.yml`, baseMeasurements, formatFromConfig);
+    writeYaml(`'${variablePrefix}slim-measures.yml`, await calculateSlimMeasures(baseMeasurements), formatFromConfig);
 
     let i = 0;
     for (const configAction of getConfig().actions ?? []) {
-        const actionName = `${configAction.contract}-${configAction.function}`;
         const action: ActionFunction = async () => {
             const args = configAction.args.map((a) => parseArg(a, users, contracts));
             return contracts[configAction.contract].connect(users[configAction.user])[configAction.function](...args);
@@ -377,8 +402,13 @@ export const delve = async (): Promise<void> => {
             error = e.message; // failure
         }
 
+        const actionName = `${configAction.contract}-${configAction.function}`;
+
         // do the post action measures
         const actionedMeasurements = await calculateMeasures();
+        if (value) {
+            baseMeasurements.unshift({ name: value.name, value: value.value });
+        }
         actionedMeasurements.unshift({
             name: actionName,
             user: configAction.user,
@@ -388,22 +418,20 @@ export const delve = async (): Promise<void> => {
             error: error,
             gas: gas,
         });
-        writeYaml(`${actionName}.measures.yml`, actionedMeasurements, formatFromConfig);
-        writeYaml(
-            `${actionName}.slim-measures.yml`,
-            await calculateSlimMeasures(actionedMeasurements),
-            formatFromConfig,
-        );
+
+        const prefix = `${variablePrefix}${actionName}.`;
+
+        writeYaml(`${prefix}measures.yml`, actionedMeasurements, formatFromConfig);
+        writeYaml(`${prefix}slim-measures.yml`, await calculateSlimMeasures(actionedMeasurements), formatFromConfig);
 
         // difference the measures
         // write the results
         writeYaml(
-            `${actionName}.delta-measures.yml`,
+            `${prefix}delta-measures.yml`,
             calculateDeltaMeasures(baseMeasurements!, actionedMeasurements),
             formatFromConfig,
         );
 
-        // don't restore for the last in the loop
-        if (++i < getConfig().actions.length) snapshot.restore();
+        snapshot.restore();
     }
 };

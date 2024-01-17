@@ -32,10 +32,11 @@ export async function deploy<T extends BaseContract>(
 
     // TODO: need to create a BlockchainAddress with contract pre-loaded, with abi, etc
 
-    return Object.assign(contract as unknown as T, {
+    const result: ContractWithAddress<T> = Object.assign(contract as unknown as T, {
         name: factoryName,
         address: address,
     }); //as ContractWithAddress<T>;
+    return result;
 }
 
 /*
