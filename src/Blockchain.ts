@@ -93,7 +93,7 @@ export let whale: SignerWithAddress;
 export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
     //console.log(`stealing ${formatEther(amount)} of ${tokenName}, ${contracts[tokenName].address} ...`);
     // Get historical transactions for the proxy contract
-    /*
+    /* TODO: keep this for when contracts doesn't have the token in it?
     const tokenContract = new ethers.Contract(
         tokenAddress,
         [
