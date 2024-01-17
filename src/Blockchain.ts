@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { Contract, ZeroAddress } from 'ethers';
+import { BaseContract, Contract, ZeroAddress } from 'ethers';
 
 import { ethers, network } from 'hardhat';
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
@@ -14,9 +14,29 @@ import { contracts, nodes } from './graph';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
-export type ContractWithAddress = Contract & {
+export type ContractWithAddress<T extends BaseContract = Contract> = T & {
     address: string;
 };
+
+export async function deploy<T extends BaseContract>(
+    factoryName: string,
+    deployer: SignerWithAddress /*HardhatEthersSigner*/,
+    ...deployArgs: any[]
+): Promise<ContractWithAddress<T>> {
+    const contractFactory = await ethers.getContractFactory(factoryName, deployer);
+    const contract = await contractFactory.deploy(...deployArgs);
+    await contract.waitForDeployment();
+    let address = await contract.getAddress();
+
+    //console.log("%s = %s", address, factoryName);
+
+    // TODO: need to create a BlockchainAddress with contract pre-loaded, with abi, etc
+
+    return Object.assign(contract as unknown as T, {
+        name: factoryName,
+        address: address,
+    }); //as ContractWithAddress<T>;
+}
 
 /*
 export async function deploy<T extends Contract>(

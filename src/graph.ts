@@ -5,7 +5,7 @@ import { BlockchainAddress } from './Blockchain';
 export type GraphNode = {
     name: string;
     signer?: SignerWithAddress;
-    stopper?: boolean;
+    leaf?: boolean;
 } & BlockchainAddress;
 // the links - between a from address (key) and to list of named addresses (value)
 export type Link = { name: string; address: string };

@@ -1,2 +1,2 @@
-start:
+root:
   - "0x840e75261c2934f33C8766F6eA6235330DC1D72d" # gauge controller

@@ -74,8 +74,8 @@ export type Config = {
 
     // from the files
     block: number;
-    start: string[];
-    stopafter: string[];
+    root: string[];
+    leaf: string[];
     diagram: any;
     format: ConfigFormat[];
     actions: ConfigAction[];

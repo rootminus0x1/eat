@@ -22,8 +22,8 @@ import { getConfig, parseArg } from './config';
 
 export const dig = async () => {
     const done = new Set<string>(); // ensure addresses are only visited once
-    const addresses = getConfig().start;
-    const stopafter = getConfig().stopafter;
+    const addresses = getConfig().root || getConfig().leaf;
+    const leafAddresses = getConfig().leaf;
     while (addresses && addresses.length) {
         const address = addresses[0];
         addresses.shift();
@@ -31,19 +31,16 @@ export const dig = async () => {
             done.add(address);
             const blockchainAddress = digOne(address);
             if (blockchainAddress) {
-                const stopper = stopafter?.includes(address);
+                const leaf = leafAddresses?.includes(address);
                 nodes.set(
                     address,
-                    Object.assign(
-                        { name: await blockchainAddress.contractNamish(), stopper: stopper },
-                        blockchainAddress,
-                    ),
+                    Object.assign({ name: await blockchainAddress.contractNamish(), leaf: leaf }, blockchainAddress),
                 );
                 // add the measures to the contract
                 const oneMeasures = await digUpMeasures(blockchainAddress);
                 measures.set(address, oneMeasures.measures);
                 measuresOnAddress.set(address, oneMeasures.measuresOnAddress);
-                if (!stopper) {
+                if (!leaf) {
                     const oneLinks = await digUpLinks(blockchainAddress);
                     // set the links
                     links.set(address, oneLinks);

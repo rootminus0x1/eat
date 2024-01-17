@@ -31,15 +31,15 @@ const makeContractName = (
     return result.join('<br>');
 };
 
-const makeStopper = (name: string, stopper?: boolean): string => {
-    return stopper ? `${name}<br><hr>` : name;
+const makeLeaf = (name: string, leaf?: boolean): string => {
+    return leaf ? `${name}<br><hr>` : name;
 };
 
 const nodeMermaid = (
     address: string,
     type: AddressType,
     name: string,
-    stopper?: boolean,
+    leaf?: boolean,
     contractName?: string,
     logic?: string,
     logicName?: string,
@@ -52,20 +52,20 @@ const nodeMermaid = (
         const post = logicName ? ']]' : ']';
         cl(
             f,
-            `${address}${pre}"${makeStopper(
+            `${address}${pre}"${makeLeaf(
                 makeContractName(name, contractName, logicName, tokenSymbol, tokenName),
                 // TODO: add the measurements (values or deltas here)
-                stopper,
+                leaf,
             )}"${post}:::contract`,
         );
         cl(f, `click ${address} "https://etherscan.io/address/${address}#code"`);
     } else if (type === AddressType.address) {
-        cl(f, `${address}(["${makeStopper(address.slice(0, 5) + '..' + address.slice(-3), stopper)}"]):::address`);
+        cl(f, `${address}(["${makeLeaf(address.slice(0, 5) + '..' + address.slice(-3), leaf)}"]):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     } else if (type === AddressType.signer) {
-        cl(f, `${address}\{{"${makeStopper(name, stopper)}"}\}:::address`);
+        cl(f, `${address}\{{"${makeLeaf(name, leaf)}"}\}:::address`);
     } else {
-        cl(f, `${address}("${makeStopper(address, stopper)}"):::address`);
+        cl(f, `${address}("${makeLeaf(address, leaf)}"):::address`);
         cl(f, `click ${address} "https://etherscan.io/address/${address}"`);
     }
     cl(f, '');
@@ -133,7 +133,7 @@ export const mermaid = async (blockNumber: number, asOf: string, config?: any): 
                         : AddressType.address
                     : AddressType.invalid,
                 node.name,
-                node.stopper,
+                node.leaf,
                 await node.contractName(),
                 await node.implementationAddress(),
                 await node.implementationContractName(),
