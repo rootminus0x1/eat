@@ -1,3 +1,753 @@
+- address: '0xE62B71cf983019BFf55bC83B48601ce8419650CC'
+  name: AccessControlledOffchainAggregator__0
+  contract: AccessControlledOffchainAggregator
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '8'
+    - name: getBilling.maximumGasPrice
+      type: uint32
+      value: '3000'
+    - name: getBilling.reasonableGasPrice
+      type: uint32
+      value: '75'
+    - name: getBilling.microLinkPerEth
+      type: uint32
+      value: '152732341'
+    - name: getBilling.linkGweiPerObservation
+      type: uint32
+      value: '63033173'
+    - name: getBilling.linkGweiPerTransmission
+      type: uint32
+      value: '378197037'
+    - name: latestAnswer
+      type: int256
+      value: '2352.78183'
+    - name: latestConfigDetails.configCount
+      type: uint32
+      value: '3'
+    - name: latestConfigDetails.blockNumber
+      type: uint32
+      value: '17864177'
+    - name: latestRound
+      type: uint256
+      value: '0.000000000000009641'
+    - name: latestRoundData.roundId
+      type: uint80
+      value: '9641'
+    - name: latestRoundData.answer
+      type: int256
+      value: '2352.78183'
+    - name: latestRoundData.startedAt
+      type: uint256
+      value: '1703822135'
+    - name: latestRoundData.updatedAt
+      type: uint256
+      value: '1703822135'
+    - name: latestRoundData.answeredInRound
+      type: uint80
+      value: '9641'
+    - name: latestTimestamp
+      type: uint256
+      value: '1703822135'
+    - name: latestTransmissionDetails.epoch
+      type: uint32
+      value: '68880'
+    - name: latestTransmissionDetails.round
+      type: uint8
+      value: '1'
+    - name: latestTransmissionDetails.latestAnswer
+      type: int192
+      value: '235278183000'
+    - name: latestTransmissionDetails.latestTimestamp
+      type: uint64
+      value: '1703822135'
+    - name: linkAvailableForPayment
+      type: int256
+      value: '2929087254495212824000'
+    - name: maxAnswer
+      type: int192
+      value: '95780971304118053647396689196894323976171195136475135'
+    - name: minAnswer
+      type: int192
+      value: '1'
+    - name: validatorConfig.gasLimit
+      type: uint32
+      value: '450000'
+    - name: version
+      type: uint256
+      value: '4'
+    - name: oracleObservationCount
+      type: uint16
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: AccessControlledOffchainAggregator__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: AccessControlledOffchainAggregator__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: admin
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: admin
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Curve_DAO_Token
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: fHolderLiquidator
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: fHolderLiquidator
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: fHolderRedeemer
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: fHolderRedeemer
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: fMinter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: fMinter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: FractionalToken
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: FxETHTwapOracle
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: FxETHTwapOracle
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Gauge_Controller
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: GnosisSafe__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: GnosisSafe__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: GnosisSafe__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: GnosisSafe__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: LeveragedToken
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Lido
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Market
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Market
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalancePool
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalancePool
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: ReservePool
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: StableSwap
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: StableSwap
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: stETHTreasury
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Token_Minter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Voting_Escrow
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: WstETH
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: wstETHWrapper
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: wstETHWrapper
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: xHolderRedeemer
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: xHolderRedeemer
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: xMinter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: xMinter
+      value: '0'
+- address: '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196'
+  name: AccessControlledOffchainAggregator__1
+  contract: AccessControlledOffchainAggregator
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '8'
+    - name: getBilling.maximumGasPrice
+      type: uint32
+      value: '3000'
+    - name: getBilling.reasonableGasPrice
+      type: uint32
+      value: '75'
+    - name: getBilling.microLinkPerEth
+      type: uint32
+      value: '152732341'
+    - name: getBilling.linkGweiPerObservation
+      type: uint32
+      value: '63033173'
+    - name: getBilling.linkGweiPerTransmission
+      type: uint32
+      value: '378197037'
+    - name: latestAnswer
+      type: int256
+      value: '2354.30211112'
+    - name: latestConfigDetails.configCount
+      type: uint32
+      value: '5'
+    - name: latestConfigDetails.blockNumber
+      type: uint32
+      value: '18219606'
+    - name: latestRound
+      type: uint256
+      value: '0.000000000000022861'
+    - name: latestRoundData.roundId
+      type: uint80
+      value: '22861'
+    - name: latestRoundData.answer
+      type: int256
+      value: '2354.30211112'
+    - name: latestRoundData.startedAt
+      type: uint256
+      value: '1703821343'
+    - name: latestRoundData.updatedAt
+      type: uint256
+      value: '1703821343'
+    - name: latestRoundData.answeredInRound
+      type: uint80
+      value: '22861'
+    - name: latestTimestamp
+      type: uint256
+      value: '1703821343'
+    - name: latestTransmissionDetails.epoch
+      type: uint32
+      value: '44979'
+    - name: latestTransmissionDetails.round
+      type: uint8
+      value: '1'
+    - name: latestTransmissionDetails.latestAnswer
+      type: int192
+      value: '235430211112'
+    - name: latestTransmissionDetails.latestTimestamp
+      type: uint64
+      value: '1703821343'
+    - name: linkAvailableForPayment
+      type: int256
+      value: '1085768059762880300000'
+    - name: maxAnswer
+      type: int192
+      value: '100000000000000'
+    - name: minAnswer
+      type: int192
+      value: '1000000000'
+    - name: validatorConfig.gasLimit
+      type: uint32
+      value: '0'
+    - name: version
+      type: uint256
+      value: '4'
+    - name: oracleObservationCount
+      type: uint16
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: AccessControlledOffchainAggregator__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: AccessControlledOffchainAggregator__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: admin
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: admin
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Curve_DAO_Token
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: fHolderLiquidator
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: fHolderLiquidator
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: fHolderRedeemer
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: fHolderRedeemer
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: fMinter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: fMinter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: FractionalToken
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: FxETHTwapOracle
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: FxETHTwapOracle
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Gauge_Controller
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: GnosisSafe__0
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: GnosisSafe__0
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: GnosisSafe__1
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: GnosisSafe__1
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: LeveragedToken
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Lido
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Lido
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Market
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Market
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalancePool
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalancePool
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: ReservePool
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: StableSwap
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: StableSwap
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: stETHTreasury
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Token_Minter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: Voting_Escrow
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: WstETH
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: wstETHWrapper
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: wstETHWrapper
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: xHolderRedeemer
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: xHolderRedeemer
+      value: '0'
+    - name: oracleObservationCount
+      type: uint16
+      target: xMinter
+      value: '0'
+    - name: owedPayment
+      type: uint256
+      target: xMinter
+      value: '0'
 - address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
   name: BoostableRebalancePool_at_1
   contract: BoostableRebalancePool
@@ -4566,6 +5316,29 @@
       type: uint256
       target: xMinter
       value: '0'
+- address: '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'
+  name: GnosisSafe__0
+  contract: GnosisSafe
+  measurements:
+    - name: getChainId
+      type: uint256
+      value: '31337'
+    - name: getThreshold
+      type: uint256
+      value: '6'
+    - name: nonce
+      type: uint256
+      value: '45'
+- address: '0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA'
+  name: GnosisSafe__1
+  contract: GnosisSafe
+  measurements:
+    - name: getThreshold
+      type: uint256
+      value: '4'
+    - name: nonce
+      type: uint256
+      value: '1277'
 - address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2'
   name: LeveragedToken
   contract: LeveragedToken
@@ -4724,6 +5497,523 @@
       target: xHolderRedeemer
       value: '0'
     - name: balanceOf
+      type: uint256
+      target: xMinter
+      value: '0'
+- address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
+  name: Lido
+  contract: Lido
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: eip712Domain.chainId
+      type: uint256
+      value: '0.000000000000031337'
+    - name: getBeaconStat.depositedValidators
+      type: uint256
+      value: '0.00000000000031188'
+    - name: getBeaconStat.beaconValidators
+      type: uint256
+      value: '0.000000000000311337'
+    - name: getBeaconStat.beaconBalance
+      type: uint256
+      value: '9130689.172355421'
+    - name: getBufferedEther
+      type: uint256
+      value: '6792.032076129984000457'
+    - name: getContractVersion
+      type: uint256
+      value: '0.000000000000000002'
+    - name: getCurrentStakeLimit
+      type: uint256
+      value: '150000.0'
+    - name: getDepositableEther
+      type: uint256
+      value: '0'
+    - name: getFee
+      type: uint16
+      value: '1000'
+    - name: getFeeDistribution.treasuryFeeBasisPoints
+      type: uint16
+      value: '5000'
+    - name: getFeeDistribution.insuranceFeeBasisPoints
+      type: uint16
+      value: '0'
+    - name: getFeeDistribution.operatorsFeeBasisPoints
+      type: uint16
+      value: '5000'
+    - name: getInitializationBlock
+      type: uint256
+      value: '0.000000000011473216'
+    - name: getStakeLimitFullInfo.currentStakeLimit
+      type: uint256
+      value: '150000.0'
+    - name: getStakeLimitFullInfo.maxStakeLimit
+      type: uint256
+      value: '150000.0'
+    - name: getStakeLimitFullInfo.maxStakeLimitGrowthBlocks
+      type: uint256
+      value: '0.0000000000000064'
+    - name: getStakeLimitFullInfo.prevStakeLimit
+      type: uint256
+      value: '149998.99156165'
+    - name: getStakeLimitFullInfo.prevStakeBlockNumber
+      type: uint256
+      value: '0.000000000018888855'
+    - name: getTotalELRewardsCollected
+      type: uint256
+      value: '128949.944192216119088595'
+    - name: getTotalPooledEther
+      type: uint256
+      value: '9154857.204431550984000457'
+    - name: getTotalShares
+      type: uint256
+      value: '7948541.09047436689477704'
+    - name: totalSupply
+      type: uint256
+      value: '9154857.204431550984000457'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0.050032449300522778'
+    - name: nonces
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0.043439779588235981'
+    - name: balanceOf
+      type: uint256
+      target: AccessControlledOffchainAggregator__0
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: AccessControlledOffchainAggregator__0
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: AccessControlledOffchainAggregator__0
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: AccessControlledOffchainAggregator__1
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: AccessControlledOffchainAggregator__1
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: AccessControlledOffchainAggregator__1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: admin
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: admin
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: admin
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: BoostableRebalancePool_at_1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: BoostableRebalancePool_at_2
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: ChainlinkTwapOracleV3__0
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: ChainlinkTwapOracleV3__1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: Curve_DAO_Token
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: EACAggregatorProxy__0
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: EACAggregatorProxy__1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: fHolderLiquidator
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: fHolderLiquidator
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: fHolderLiquidator
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: fHolderRedeemer
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: fHolderRedeemer
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: fHolderRedeemer
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: fMinter
+      value: '9999.999999999999999999'
+    - name: nonces
+      type: uint256
+      target: fMinter
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: fMinter
+      value: '8682.321212641909896145'
+    - name: balanceOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: FractionalToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: FxETHTwapOracle
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: FxETHTwapOracle
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: FxETHTwapOracle
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: Gauge_Controller
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe__0
+      value: '0.119361387678593988'
+    - name: nonces
+      type: uint256
+      target: GnosisSafe__0
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: GnosisSafe__0
+      value: '0.103633390821223128'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe__1
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: GnosisSafe__1
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: GnosisSafe__1
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: LeveragedToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0.000000000000000168'
+    - name: nonces
+      type: uint256
+      target: Market
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: Market
+      value: '0.000000000000000146'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '4.625445077660994817'
+    - name: nonces
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '4.015959991568616162'
+    - name: balanceOf
+      type: uint256
+      target: RebalancePool
+      value: '2.82343246243252071'
+    - name: nonces
+      type: uint256
+      target: RebalancePool
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: RebalancePool
+      value: '2.451394756103965692'
+    - name: balanceOf
+      type: uint256
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: RebalancePoolRegistry
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: RebalancePoolSplitter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: RebalanceWithBonusToken
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '21.693012117065408707'
+    - name: nonces
+      type: uint256
+      target: ReservePool
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: ReservePool
+      value: '18.834569927009498437'
+    - name: balanceOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: SmartWalletWhitelist
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: StableSwap
+      value: '29271.981171892666890469'
+    - name: nonces
+      type: uint256
+      target: StableSwap
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: StableSwap
+      value: '25414.87430647782943244'
+    - name: balanceOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: StETHAndxETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '6180.13244215750235306'
+    - name: nonces
+      type: uint256
+      target: stETHTreasury
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: stETHTreasury
+      value: '5365.789499948053389903'
+    - name: balanceOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: Token_Minter
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: Voting_Escrow
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '3740491.439905765137298479'
+    - name: nonces
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: WstETH
+      value: '3247614.817439930640437981'
+    - name: balanceOf
+      type: uint256
+      target: wstETHWrapper
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: wstETHWrapper
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: wstETHWrapper
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: xHolderRedeemer
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: xHolderRedeemer
+      value: '0'
+    - name: sharesOf
+      type: uint256
+      target: xHolderRedeemer
+      value: '0'
+    - name: balanceOf
+      type: uint256
+      target: xMinter
+      value: '0'
+    - name: nonces
+      type: uint256
+      target: xMinter
+      value: '0'
+    - name: sharesOf
       type: uint256
       target: xMinter
       value: '0'

@@ -1,3 +1,16 @@
+- address: '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'
+  name: GnosisSafe
+  contract: GnosisSafe
+  measurements:
+    - name: getChainId
+      type: uint256
+      value: '31337'
+    - name: getThreshold
+      type: uint256
+      value: '6'
+    - name: nonce
+      type: uint256
+      value: '45'
 - address: '0x79c5f5b0753acE25ecdBdA4c2Bc86Ab074B6c2Bb'
   name: RebalancePoolSplitter
   contract: RebalancePoolSplitter
