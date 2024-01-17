@@ -5,7 +5,7 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      delta: '0.000009064654982442'
+      delta: '+0.000009064654982442'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
@@ -17,7 +17,7 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      delta: '0.000009064654982442'
+      delta: '+0.000009064654982442'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
@@ -28,18 +28,18 @@
   measurements:
     - name: available_supply
       type: uint256
-      delta: '0.018645357686453574'
+      delta: '+0.018645357686453574'
 - address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
   name: FractionalToken
   contract: FractionalToken
   measurements:
     - name: totalSupply
       type: uint256
-      delta: '2284062.575333126121269027'
+      delta: '+2284062.575333126121269027'
     - name: balanceOf
       type: uint256
       target: fMinter
-      delta: '2284062.575333126121269027'
+      delta: '+2284062.575333126121269027'
 - address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2'
   name: LeveragedToken
   contract: LeveragedToken
@@ -47,13 +47,41 @@
     - name: nav
       type: uint256
       delta: '-0.080027362494192616'
+- address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
+  name: Lido
+  contract: Lido
+  measurements:
+    - name: balanceOf
+      type: uint256
+      target: fMinter
+      delta: '-999.999999999999999999'
+    - name: sharesOf
+      type: uint256
+      target: fMinter
+      delta: '-868.232121264190989614'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      delta: '+2.5'
+    - name: sharesOf
+      type: uint256
+      target: PlatformFeeSpliter
+      delta: '+2.170580303160477474'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      delta: '+997.5'
+    - name: sharesOf
+      type: uint256
+      target: stETHTreasury
+      delta: '+866.06154096103051214'
 - address: '0x21E27a5E5513D6e65C4f830167390997aA84843a'
   name: StableSwap
   contract: StableSwap
   measurements:
     - name: price_oracle
       type: uint256
-      delta: '-0.000000000036789941'
+      delta: '-0.00000000003680411'
 - address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
   name: stETHTreasury
   contract: stETHTreasury
@@ -63,19 +91,19 @@
       delta: '-0.288227499768785675'
     - name: emaLeverageRatio.lastTime
       type: uint40
-      delta: '31465'
+      delta: '31464'
     - name: emaLeverageRatio.lastValue
       type: uint96
       delta: '5986041380011295'
     - name: emaLeverageRatio.lastEmaValue
       type: uint96
-      delta: '-16761125960412121'
+      delta: '-16760684389588566'
     - name: leverageRatio
       type: uint256
-      delta: '-0.000002649501604554'
+      delta: '-0.000002649532270259'
     - name: totalBaseToken
       type: uint256
-      delta: '997.5'
+      delta: '+997.5'
 - address: '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469'
   name: Voting_Escrow
   contract: Voting Escrow

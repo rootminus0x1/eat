@@ -1,0 +1,515 @@
+- address: '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9'
+  name: BoostableRebalancePool
+  contract: BoostableRebalancePool
+  measurements:
+    - name: liquidatableCollateralRatio
+      type: uint256
+      value: '1.3055'
+    - name: numTotalSupplyHistory
+      type: uint256
+      value: '69'
+    - name: periodLength
+      type: uint40
+      value: '604800'
+    - name: totalSupply
+      type: uint256
+      value: '2956321.364769018396295364'
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: LeveragedToken
+      value: '1703823851'
+    - name: pendingRewards.0
+      type: uint256
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: pendingRewards.1
+      type: uint256
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.queued
+      type: uint96
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.rate
+      type: uint80
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: rewardData.finishAt
+      type: uint40
+      target: Token_Minter
+      error: >-
+        /home/tfras/github/rootminus0x1/eat/cache/hardhat-network-fork/network-1/request-7e496a96776ddabea64833b2a8ca2f4b.json:
+        Unexpected end of JSON input
+    - name: pendingRewards.0
+      type: uint256
+      target: WstETH
+      value: '0.000870206878314432'
+    - name: pendingRewards.1
+      type: uint256
+      target: WstETH
+      value: '0.173334332574255924'
+    - name: rewardData.queued
+      type: uint96
+      target: WstETH
+      value: '492945732942624529'
+    - name: rewardData.rate
+      type: uint80
+      target: WstETH
+      value: '1510775830407'
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: WstETH
+      value: '1703823851'
+    - name: rewardData.finishAt
+      type: uint40
+      target: WstETH
+      value: '1703939159'
+- address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
+  name: Curve_DAO_Token
+  contract: Curve DAO Token
+  measurements:
+    - name: available_supply
+      type: uint256
+      value: '1047280.171993911715747992'
+    - name: decimals
+      type: uint256
+      value: '18'
+    - name: INITIAL_RATE
+      type: uint256
+      value: '0.003107559614408929'
+    - name: RATE_REDUCTION_COEFFICIENT
+      type: uint256
+      value: '1.111111111111111111'
+    - name: rate
+      type: uint256
+      value: '0.003107559614408929'
+    - name: start_epoch_time
+      type: uint256
+      value: '1695045779'
+    - name: totalSupply
+      type: uint256
+      value: '1020000.0'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '20.0'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '11724.557898160134110992'
+    - name: balanceOf
+      type: uint256
+      target: Voting_Escrow
+      value: '115331.908808027700163144'
+- address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
+  name: FractionalToken
+  contract: FractionalToken
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: nav
+      type: uint256
+      value: '1.0'
+    - name: totalSupply
+      type: uint256
+      value: '6650842.598065295621717671'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '16.490482704733555399'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '2956321.364769018396295364'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '9802.392603376365221993'
+- address: '0xe60eB8098B34eD775ac44B1ddE864e098C6d7f37'
+  name: Gauge_Controller
+  contract: Gauge Controller
+  measurements:
+    - name: time_total
+      type: uint256
+      value: '1694649600'
+    - name: gauge_types
+      type: int128
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: BoostableRebalancePool
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: Curve_DAO_Token
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: FractionalToken
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: GnosisSafe
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: LeveragedToken
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: Lido
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: Market
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: PlatformFeeSpliter
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: ReservePool
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: SmartWalletWhitelist
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: StETHAndxETHWrapper
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: stETHTreasury
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: Token_Minter
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: Voting_Escrow
+      error: Transaction reverted without a reason string
+    - name: gauge_types
+      type: int128
+      target: WstETH
+      error: Transaction reverted without a reason string
+- address: '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'
+  name: GnosisSafe
+  contract: GnosisSafe
+  measurements:
+    - name: getChainId
+      type: uint256
+      value: '31337'
+    - name: getThreshold
+      type: uint256
+      value: '6'
+    - name: nonce
+      type: uint256
+      value: '45'
+- address: '0xe063F04f280c60aECa68b38341C2eEcBeC703ae2'
+  name: LeveragedToken
+  contract: LeveragedToken
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: nav
+      type: uint256
+      value: '0.832299813951458409'
+    - name: totalSupply
+      type: uint256
+      value: '5646434.225742690599105577'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '21.987150410873681687'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '291952.174931281247450058'
+- address: '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
+  name: Lido
+  contract: Lido
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: eip712Domain.chainId
+      type: uint256
+      value: '0.000000000000031337'
+    - name: getBeaconStat.depositedValidators
+      type: uint256
+      value: '0.00000000000031188'
+    - name: getBeaconStat.beaconValidators
+      type: uint256
+      value: '0.000000000000311337'
+    - name: getBeaconStat.beaconBalance
+      type: uint256
+      value: '9130689.172355421'
+    - name: getBufferedEther
+      type: uint256
+      value: '6792.032076129984000457'
+    - name: getContractVersion
+      type: uint256
+      value: '0.000000000000000002'
+    - name: getCurrentStakeLimit
+      type: uint256
+      value: '150000.0'
+    - name: getFee
+      type: uint16
+      value: '1000'
+    - name: getFeeDistribution.treasuryFeeBasisPoints
+      type: uint16
+      value: '5000'
+    - name: getFeeDistribution.operatorsFeeBasisPoints
+      type: uint16
+      value: '5000'
+    - name: getInitializationBlock
+      type: uint256
+      value: '0.000000000011473216'
+    - name: getStakeLimitFullInfo.currentStakeLimit
+      type: uint256
+      value: '150000.0'
+    - name: getStakeLimitFullInfo.maxStakeLimit
+      type: uint256
+      value: '150000.0'
+    - name: getStakeLimitFullInfo.maxStakeLimitGrowthBlocks
+      type: uint256
+      value: '0.0000000000000064'
+    - name: getStakeLimitFullInfo.prevStakeLimit
+      type: uint256
+      value: '149998.99156165'
+    - name: getStakeLimitFullInfo.prevStakeBlockNumber
+      type: uint256
+      value: '0.000000000018888855'
+    - name: getTotalELRewardsCollected
+      type: uint256
+      value: '128949.944192216119088595'
+    - name: getTotalPooledEther
+      type: uint256
+      value: '9154857.204431550984000457'
+    - name: getTotalShares
+      type: uint256
+      value: '7948541.09047436689477704'
+    - name: totalSupply
+      type: uint256
+      value: '9154857.204431550984000457'
+    - name: balanceOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0.050032449300522778'
+    - name: sharesOf
+      type: uint256
+      target: $0x11E91BB6d1334585AA37D8F4fde3932C7960B938
+      value: '0.043439779588235981'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '0.119361387678593988'
+    - name: sharesOf
+      type: uint256
+      target: GnosisSafe
+      value: '0.103633390821223128'
+    - name: balanceOf
+      type: uint256
+      target: Market
+      value: '0.000000000000000168'
+    - name: sharesOf
+      type: uint256
+      target: Market
+      value: '0.000000000000000146'
+    - name: balanceOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '4.625445077660994817'
+    - name: sharesOf
+      type: uint256
+      target: PlatformFeeSpliter
+      value: '4.015959991568616162'
+    - name: balanceOf
+      type: uint256
+      target: ReservePool
+      value: '21.693012117065408707'
+    - name: sharesOf
+      type: uint256
+      target: ReservePool
+      value: '18.834569927009498437'
+    - name: balanceOf
+      type: uint256
+      target: stETHTreasury
+      value: '6180.13244215750235306'
+    - name: sharesOf
+      type: uint256
+      target: stETHTreasury
+      value: '5365.789499948053389903'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '3740491.439905765137298479'
+    - name: sharesOf
+      type: uint256
+      target: WstETH
+      value: '3247614.817439930640437981'
+- address: '0xe7b9c7c9cA85340b8c06fb805f7775e3015108dB'
+  name: Market
+  contract: Market
+  measurements:
+    - name: fTokenMintFeeRatio.defaultFeeRatio
+      type: uint128
+      value: '0.25'
+    - name: fTokenRedeemFeeRatio.defaultFeeRatio
+      type: uint128
+      value: '0.25'
+    - name: fTokenRedeemFeeRatio.extraFeeRatio
+      type: int128
+      value: '-0.25'
+    - name: marketConfig.stabilityRatio
+      type: uint64
+      value: '1.3055'
+    - name: marketConfig.liquidationRatio
+      type: uint64
+      value: '1.2067'
+    - name: marketConfig.selfLiquidationRatio
+      type: uint64
+      value: '1.1439'
+    - name: marketConfig.recapRatio
+      type: uint64
+      value: '1.0'
+    - name: xTokenMintFeeRatio.defaultFeeRatio
+      type: uint128
+      value: '1.0'
+    - name: xTokenMintFeeRatio.extraFeeRatio
+      type: int128
+      value: '-1.0'
+    - name: xTokenRedeemFeeRatio.defaultFeeRatio
+      type: uint128
+      value: '1.0'
+    - name: xTokenRedeemFeeRatio.extraFeeRatio
+      type: int128
+      value: '7.0'
+- address: '0x0084C2e1B1823564e597Ff4848a88D61ac63D703'
+  name: PlatformFeeSpliter
+  contract: PlatformFeeSpliter
+  measurements:
+    - name: getRewardCount
+      type: uint256
+      value: '1'
+- address: '0x5d0Aacf75116d1645Db2B3d1Ca4b303ef0CA3752'
+  name: ReservePool
+  contract: ReservePool
+  measurements:
+    - name: bonusRatio
+      type: uint256
+      target: Lido
+      value: '0.05'
+- address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
+  name: stETHTreasury
+  contract: stETHTreasury
+  measurements:
+    - name: baseTokenCap
+      type: uint256
+      value: '10000.0'
+    - name: beta
+      type: uint256
+      value: '0.1'
+    - name: collateralRatio
+      type: uint256
+      value: '2.127502112512926719'
+    - name: emaLeverageRatio.lastTime
+      type: uint40
+      value: '1703792975'
+    - name: emaLeverageRatio.sampleInterval
+      type: uint24
+      value: '86400'
+    - name: emaLeverageRatio.lastValue
+      type: uint96
+      value: '1767249637152348130'
+    - name: emaLeverageRatio.lastEmaValue
+      type: uint96
+      value: '1822162261482861300'
+    - name: getCurrentNav._baseNav
+      type: uint256
+      value: '2354.30211112'
+    - name: getCurrentNav._fNav
+      type: uint256
+      value: '1.028175138984398448'
+    - name: getCurrentNav._xNav
+      type: uint256
+      value: '1.365484765135404741'
+    - name: harvestBountyRatio
+      type: uint128
+      value: '10000000000000000'
+    - name: lastPermissionedPrice
+      type: uint256
+      value: '1836.7853'
+    - name: leverageRatio
+      type: uint256
+      value: '1.805406876341814937'
+    - name: rebalancePoolRatio
+      type: uint128
+      value: '500000000000000000'
+    - name: totalBaseToken
+      type: uint256
+      value: '6179.474952048061425555'
+- address: '0xEC6B8A3F3605B083F7044C0F31f2cac0caf1d469'
+  name: Voting_Escrow
+  contract: Voting Escrow
+  measurements:
+    - name: decimals
+      type: uint256
+      value: '18'
+    - name: epoch
+      type: uint256
+      value: '194'
+    - name: supply
+      type: uint256
+      value: '115331.908808027700163144'
+    - name: totalSupply
+      type: uint256
+      value: '94540.343792368370153142'
+- address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
+  name: WstETH
+  contract: WstETH
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: stEthPerToken
+      type: uint256
+      value: '1.15176572659388384'
+    - name: tokensPerStEth
+      type: uint256
+      value: '0.868232121264190989'
+    - name: totalSupply
+      type: uint256
+      value: '3247614.816540003642107369'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '1.930332134442365476'
+    - name: balanceOf
+      type: uint256
+      target: GnosisSafe
+      value: '0.002360714784456648'
+    - name: balanceOf
+      type: uint256
+      target: Lido
+      value: '0.0175'
