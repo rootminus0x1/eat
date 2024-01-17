@@ -172,11 +172,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      value: '0.003491402944070577'
+      value: '0.003492913719900984'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      value: '0.173323757143443075'
+      value: '0.173322246367612668'
     - name: rewardData.queued
       type: uint96
       target: WstETH
@@ -252,11 +252,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      value: '0.000880782309127281'
+      value: '0.000882293084957688'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      value: '0.173323757143443075'
+      value: '0.173322246367612668'
     - name: rewardData.queued
       type: uint96
       target: WstETH
@@ -305,7 +305,7 @@
   measurements:
     - name: available_supply
       type: uint256
-      value: '1047280.193746829016610495'
+      value: '1047280.196854388631019424'
     - name: decimals
       type: uint256
       value: '18'
@@ -1016,7 +1016,7 @@
       value: '0.000000001703811923'
     - name: price_oracle
       type: uint256
-      value: '0.999585641971734854'
+      value: '0.999585641965597293'
     - name: totalSupply
       type: uint256
       value: '45363.931240034965729028'
@@ -1062,7 +1062,7 @@
       value: '1836.7853'
     - name: leverageRatio
       type: uint256
-      value: '1.805403785024053733'
+      value: '1.805403343427675572'
     - name: rebalancePoolRatio
       type: uint128
       value: '500000000000000000'
@@ -1084,7 +1084,7 @@
       value: '115331.908808027700163144'
     - name: totalSupply
       type: uint256
-      value: '94540.337403458381123364'
+      value: '94540.33649075695411911'
 - address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
   name: WstETH
   contract: WstETH

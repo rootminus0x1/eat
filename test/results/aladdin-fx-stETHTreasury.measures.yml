@@ -1,0 +1,52 @@
+- address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
+  name: stETHTreasury
+  contract: stETHTreasury
+  measurements:
+    - name: baseTokenCap
+      type: uint256
+      value: '10000.0'
+    - name: beta
+      type: uint256
+      value: '0.1'
+    - name: collateralRatio
+      type: uint256
+      value: '2.127502112512926719'
+    - name: emaLeverageRatio.lastTime
+      type: uint40
+      value: '1703792975'
+    - name: emaLeverageRatio.sampleInterval
+      type: uint24
+      value: '86400'
+    - name: emaLeverageRatio.lastValue
+      type: uint96
+      value: '1767249637152348130'
+    - name: emaLeverageRatio.lastEmaValue
+      type: uint96
+      value: '1822162261482861300'
+    - name: getCurrentNav._baseNav
+      type: uint256
+      value: '2354.30211112'
+    - name: getCurrentNav._fNav
+      type: uint256
+      value: '1.028175138984398448'
+    - name: getCurrentNav._xNav
+      type: uint256
+      value: '1.365484765135404741'
+    - name: harvestBountyRatio
+      type: uint128
+      value: '10000000000000000'
+    - name: lastPermissionedPrice
+      type: uint256
+      value: '1836.7853'
+    - name: leverageRatio
+      type: uint256
+      value: '1.805406876341814937'
+    - name: rebalancePoolRatio
+      type: uint128
+      value: '500000000000000000'
+    - name: strategyUnderlying
+      type: uint256
+      value: '0'
+    - name: totalBaseToken
+      type: uint256
+      value: '6179.474952048061425555'
