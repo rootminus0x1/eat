@@ -5,11 +5,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      delta: '+0.000010575430812849'
+      delta: '+0.000013596982473663'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      delta: '-0.000010575430812849'
+      delta: '-0.000013596982473663'
 - address: '0xB87A8332dFb1C76Bb22477dCfEdDeB69865cA9f9'
   name: BoostableRebalancePool_at_2
   contract: BoostableRebalancePool
@@ -17,18 +17,18 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      delta: '+0.000010575430812849'
+      delta: '+0.000013596982473663'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      delta: '-0.000010575430812849'
+      delta: '-0.000013596982473663'
 - address: '0x365AccFCa291e7D3914637ABf1F7635dB165Bb09'
   name: Curve_DAO_Token
   contract: Curve DAO Token
   measurements:
     - name: available_supply
       type: uint256
-      delta: '+0.021752917300862503'
+      delta: '+0.027968036529680361'
 - address: '0x53805A76E1f5ebbFE7115F16f9c87C2f7e633726'
   name: FractionalToken
   contract: FractionalToken
@@ -81,7 +81,7 @@
   measurements:
     - name: price_oracle
       type: uint256
-      delta: '-0.000000000042913338'
+      delta: '-0.000000000055068178'
 - address: '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
   name: stETHTreasury
   contract: stETHTreasury
@@ -91,16 +91,16 @@
       delta: '-0.288227499768785675'
     - name: emaLeverageRatio.lastTime
       type: uint40
-      delta: '31466'
+      delta: '31472'
     - name: emaLeverageRatio.lastValue
       type: uint96
       delta: '5986041380011295'
     - name: emaLeverageRatio.lastEmaValue
       type: uint96
-      delta: '-16761567526124931'
+      delta: '-16764216813079485'
     - name: leverageRatio
       type: uint256
-      delta: '-0.000003091067317364'
+      delta: '-0.000003973999425276'
     - name: totalBaseToken
       type: uint256
       delta: '+997.5'
@@ -110,4 +110,4 @@
   measurements:
     - name: totalSupply
       type: uint256
-      delta: '-0.006388909989029778'
+      delta: '-0.008214312843038286'

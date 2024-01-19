@@ -46,6 +46,7 @@ export type ConfigFormat = {
     contract: string;
     name: string;
     unit: string | number; // supports "eth", "wei", or precision digits
+    significant: number; // number of significant digits
 };
 
 export type ConfigAction = {

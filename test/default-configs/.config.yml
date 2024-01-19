@@ -19,6 +19,10 @@ format:
   - contract: Market
     type: uint64
     unit: 18
+  - name: PendingRewards.0
+    significant: 4
+  - name: PendingRewards.1
+    significant: 4
   # no formatting
   - contract: BoostableRebalancePool
     name: numTotalSupplyHistory
