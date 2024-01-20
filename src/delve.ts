@@ -75,8 +75,9 @@ export type Action = {
 
 export type ContractMeasurements = {
     address: string;
-    name: string; // node name
-    contract: string; // contract nameish
+    name: string; // node name - this is the contract
+    // TODO: contract is ambiguous - is it the contract or the contract type
+    contractType: string; // contract nameish
     measurements: Measurement[];
 } & Partial<Action>;
 
@@ -131,7 +132,7 @@ export const calculateMeasures = async (): Promise<Measurements> => {
             result.push({
                 address: address,
                 name: node.name,
-                contract: await node.contractNamish(),
+                contractType: await node.contractNamish(),
                 measurements: values,
             });
             count += values.length;
@@ -145,7 +146,6 @@ export const calculateMeasures = async (): Promise<Measurements> => {
 // calculateMeasures
 export const calculateSlimMeasures = async (baseMeasurements: Measurements): Promise<Measurements> => {
     const result: Measurements = [];
-    let count = 0;
 
     for (const contract of baseMeasurements.filter((m) => m.measurements)) {
         const nonZero = (contract as ContractMeasurements).measurements.filter((measure) => {
@@ -290,7 +290,7 @@ export const calculateDeltaMeasures = (
             results.push({
                 address: actionedContract.address,
                 name: actionedContract.name,
-                contract: actionedContract.contract,
+                contractType: actionedContract.contract,
                 measurements: deltas,
             });
     }
