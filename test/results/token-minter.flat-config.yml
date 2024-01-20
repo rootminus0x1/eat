@@ -1,41 +1,6 @@
 block: 18888888
 diagram:
   renderer: default
-format:
-  - contract: BoostableRebalancePool
-    name: numTotalSupplyHistory
-  - name: chainlinkMinMessageCount
-  - name: chainlinkMessageExpiration
-  - name: start_epoch_time
-  - name: getChainId
-  - name: getThreshold
-  - name: nonce
-  - name: decimals
-  - name: epoch
-  - name: time_total
-  - name: numTotalSupplyHistory
-  - name: latestRoundData.startedAt
-  - name: latestRoundData.updatedAt
-  - name: latestTimestamp
-  - name: version
-  - name: getRewardCount
-  - name: latestAnswer
-    type: int256
-    unit: 8
-  - name: latestRoundData.answer
-    type: int256
-    unit: 8
-  - contract: Market
-    type: uint128
-    unit: 16
-  - contract: Market
-    type: int128
-    unit: 16
-  - contract: Market
-    type: uint64
-    unit: 18
-  - type: uint256
-    unit: ether
 root:
   - '0xC8b194925D55d5dE9555AD1db74c149329F71DeF'
 leaf:

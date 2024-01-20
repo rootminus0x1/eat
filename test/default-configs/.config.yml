@@ -1,39 +1,3 @@
 block: 18888888
 diagram:
   renderer: default
-format:
-  - type: uint256
-    unit: ether
-  - name: latestAnswer
-    type: int256
-    unit: 8
-  - name: latestRoundData.answer
-    type: int256
-    unit: 8
-  - contract: Market
-    type: uint128
-    unit: 16
-  - contract: Market
-    type: int128
-    unit: 16
-  - contract: Market
-    type: uint64
-    unit: 18
-  # no formatting
-  - contract: BoostableRebalancePool
-    name: numTotalSupplyHistory
-  - name: chainlinkMinMessageCount
-  - name: chainlinkMessageExpiration
-  - name: start_epoch_time
-  - name: getChainId
-  - name: getThreshold
-  - name: nonce
-  - name: decimals
-  - name: epoch
-  - name: time_total
-  - name: numTotalSupplyHistory
-  - name: latestRoundData.startedAt
-  - name: latestRoundData.updatedAt
-  - name: latestTimestamp
-  - name: version
-  - name: getRewardCount

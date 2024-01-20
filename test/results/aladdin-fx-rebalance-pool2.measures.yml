@@ -715,11 +715,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      value: '0.000870206878314432'
+      value: '870206878314432'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      value: '0.173334332574255924'
+      value: '173334332574255924'
     - name: rewardData.queued
       type: uint96
       target: WstETH

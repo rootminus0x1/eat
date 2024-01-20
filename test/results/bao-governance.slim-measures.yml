@@ -4,7 +4,7 @@
   measurements:
     - name: available_supply
       type: uint256
-      value: '1342272585.171312291062882512'
+      value: '1342272585171312291062882512'
     - name: decimals
       type: uint8
       value: '18'
@@ -13,33 +13,33 @@
       value: '1'
     - name: rate
       type: uint256
-      value: '6.139694197700000572'
+      value: '6.13969419'
     - name: start_epoch_time
       type: uint256
       value: '1700524031'
     - name: totalSupply
       type: uint256
-      value: '1320116065.635125541877393702'
+      value: '1320116065635125541877393702'
     - name: balanceOf
       type: uint256
       target: $0x2f75E925C38f83785A7D0630f65Aed8C65C1454f
-      value: '2100356.054865320503838492'
+      value: '2100356054865320503838492'
     - name: balanceOf
       type: uint256
       target: $0x632e6920B7c443D92052442e0F230355099a9989
-      value: '0.676570906967085549'
+      value: '676570906967085549'
     - name: balanceOf
       type: uint256
       target: BaoDistribution
-      value: '688142740.839666777127967054'
+      value: '688142740839666777127967054'
     - name: balanceOf
       type: uint256
       target: GnosisSafe
-      value: '77581643.192918252812979786'
+      value: '77581643192918252812979786'
     - name: balanceOf
       type: uint256
       target: Voting_Escrow
-      value: '174846060.816462883671490561'
+      value: '174846060816462883671490561'
 - address: '0x885D90A424f87D362C9369C0F3d9A2d28AF495F4'
   name: BaoDistribution
   contract: BaoDistribution
@@ -59,14 +59,14 @@
     - name: distributions.amountOwedTotal
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      value: '99.463761385868672634'
+      value: '99463761385868672634'
 - address: '0x840e75261c2934f33C8766F6eA6235330DC1D72d'
   name: Gauge_Controller
   contract: Gauge Controller
   measurements:
     - name: get_total_weight
       type: uint256
-      value: '33267863535548433440713600.0'
+      value: '33267863535548433440713600000000000000000000'
     - name: n_gauge_types
       type: int128
       value: '1'
@@ -157,14 +157,14 @@
       value: '969'
     - name: supply
       type: uint256
-      value: '174846060.816462883671490561'
+      value: '174846060816462883671490561'
     - name: totalSupply
       type: uint256
-      value: '127481437.679363369597663159'
+      value: '127481437679363369597663159'
     - name: balanceOf
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      value: '74.279375544398904465'
+      value: '74279375544398904465'
     - name: get_last_user_slope
       type: int128
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
@@ -172,7 +172,7 @@
     - name: locked__end
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      value: '0.0000000017980704'
+      value: '1798070400'
     - name: locked.amount
       type: int128
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
@@ -180,8 +180,8 @@
     - name: locked.end
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      value: '0.0000000017980704'
+      value: '1798070400'
     - name: user_point_epoch
       type: uint256
       target: $0x8f4A7b7AeaA5c0E01b7b3c0e966D8E62e7b3cBf6
-      value: '0.000000000000000001'
+      value: '1'

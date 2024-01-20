@@ -22,7 +22,7 @@ import { getConfig, parseArg } from './config';
 
 export const dig = async () => {
     const done = new Set<string>(); // ensure addresses are only visited once
-    const addresses = getConfig().root || getConfig().leaf;
+    const addresses = [...(getConfig().root || getConfig().leaf)]; // make a copy as we are changing it
     const leafAddresses = getConfig().leaf;
     while (addresses && addresses.length) {
         const address = addresses[0];

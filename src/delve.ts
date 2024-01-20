@@ -1,6 +1,6 @@
 import { contracts, measures, measuresOnAddress, nodes, users } from './graph';
 import { ContractTransactionResponse, MaxInt256, formatUnits } from 'ethers';
-import { ConfigFormat, getConfig, parseArg, writeYaml } from './config';
+import { ConfigFormatApply, getConfig, parseArg, writeYaml } from './config';
 import lodash from 'lodash';
 import { SnapshotRestorer, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 
@@ -295,52 +295,95 @@ export const calculateDeltaMeasures = (
     return results;
 };
 
+// only do doDecimals after formatting by unit, else there's no decimals!
+const doFormat = (fieldName: string, value: bigint, unit?: number | string, decimals?: number): string => {
+    let result = unit ? formatUnits(value, unit) : value.toString();
+    if (decimals !== undefined) {
+        // it's been formatted, so round to that many decimals
+        const decimalIndex = result.indexOf('.');
+        // Calculate the number of decimal places
+        const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
+        if (currentDecimals > decimals) {
+            // TODO: round the number
+            result = result.slice(undefined, decimals - currentDecimals);
+        }
+    }
+    return (fieldName === 'delta' && value > 0 ? '+' : '') + result;
+};
+
 const formatFromConfig = (address: any): any => {
     // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
     if (typeof address === 'object' && typeof address.measurements === 'object') {
         // it is something we can handle
-        let newAddress: any = undefined;
-        address.measurements.forEach((measurement: Measurement, index: number) => {
+        // we're about to change it so clone it
+        const newAddress: any = lodash.cloneDeep(address);
+        for (let measurement of newAddress.measurements) {
             if (measurement && (measurement.value || measurement.delta)) {
                 // need to patch up arrays, whether we format them or not
                 const fieldNames = ['value', 'delta'];
-                if (getConfig().format)
-                    for (const anyformat of getConfig().format) {
-                        const format: ConfigFormat = anyformat;
+                if (getConfig().format) {
+                    let mergedFormat: ConfigFormatApply = {};
+                    let donotformat = false;
+                    for (const format of getConfig().format) {
                         // TODO: could some things,
                         // like timestamps be represented as date/times
                         // or numbers
+                        // merge all the formats that apply
+                        // TODO: add regexp matches, rather than === matches
                         if (
                             (!format.type || format.type === measurement.type) &&
                             (!format.name || format.name === measurement.name) &&
-                            (!format.contract || format.contract === address.contract)
+                            (!format.contract || format.contract === newAddress.contract)
                         ) {
-                            // we're about to change it so clone it
-                            if (!newAddress) newAddress = lodash.cloneDeep(address);
-                            // we have a match - so what kind of formatting
-                            if (format.unit) {
-                                for (const fieldName of fieldNames) {
-                                    const field = (measurement as any)[fieldName];
-                                    if (field !== undefined) {
-                                        if (lodash.isArray(field)) {
-                                            newAddress.measurements[index][fieldName] = field.map(
-                                                (elem) =>
-                                                    (fieldName === 'delta' && elem > 0 ? '+' : '') +
-                                                    formatUnits(elem, format.unit),
-                                            );
-                                        } else {
-                                            newAddress.measurements[index][fieldName] =
-                                                (fieldName === 'delta' && (field as bigint) > 0 ? '+' : '') +
-                                                formatUnits(field as bigint, format.unit);
-                                        }
-                                    }
-                                }
+                            if (format.unit === undefined && format.decimals === undefined) {
+                                donotformat = true;
+                                break; // got a no format request
                             }
-                            break; // only do one format, the first
+
+                            if (format.unit !== undefined && mergedFormat.unit === undefined)
+                                mergedFormat.unit = format.unit;
+                            if (format.decimals !== undefined && mergedFormat.decimals === undefined)
+                                mergedFormat.decimals = format.decimals;
+
+                            if (mergedFormat.unit !== undefined && mergedFormat.decimals !== undefined) break; // got enough
                         }
                     }
+                    if (donotformat) {
+                        if (getConfig().show?.includes('format')) {
+                            measurement.format = {};
+                        }
+                    } else if (mergedFormat.unit !== undefined) {
+                        for (const fieldName of fieldNames) {
+                            if (measurement[fieldName] !== undefined) {
+                                let formatters: ((value: bigint) => bigint | string)[] = [];
+                                // always do unit before decimals
+                                formatters.push((value) =>
+                                    doFormat(
+                                        fieldName,
+                                        value,
+                                        mergedFormat.unit as string | number,
+                                        mergedFormat.decimals,
+                                    ),
+                                );
+
+                                formatters.forEach((formatter) => {
+                                    if (lodash.isArray(measurement[fieldName])) {
+                                        measurement[fieldName] = measurement[fieldName].map((elem: any) =>
+                                            formatter(elem),
+                                        );
+                                    } else {
+                                        measurement[fieldName] = formatter(measurement[fieldName]);
+                                    }
+                                });
+                            }
+                        }
+                        if (getConfig().show?.includes('format')) {
+                            measurement.format = mergedFormat;
+                        }
+                    }
+                }
             }
-        });
+        }
         return newAddress; // undefied means it is handled by the callere
     }
 };

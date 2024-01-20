@@ -32,6 +32,7 @@ export const write = (name: string, results: string): void => {
 type Formatter = (value: any) => any;
 const removeInvalidYamlTypes: Formatter = (value: any): any => {
     if (typeof value === 'bigint') {
+        // TODO: write it as a number if it can be contained in a number
         return value.toString();
     }
 };
@@ -41,12 +42,19 @@ export const writeYaml = (name: string, results: any, formatter?: Formatter): vo
     write(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
 };
 
-export type ConfigFormat = {
-    type: string;
-    contract: string;
-    name: string;
-    unit: string | number; // supports "eth", "wei", or precision digits
+export type ConfigFormatMatch = {
+    type?: string;
+    contract?: string;
+    name?: string; // TODO: change this to measurement
+    // TODO: add field, for returned structures, make field have the precedence as contract & name/measurement
 };
+
+export type ConfigFormatApply = {
+    unit?: string | number; // supports "eth", "wei", or precision digits
+    decimals?: number; // number of significant decimals, after the point - use this as it works for differences too
+};
+
+export type ConfigFormat = ConfigFormatMatch & ConfigFormatApply;
 
 export type ConfigAction = {
     name: string;
@@ -81,9 +89,11 @@ export type Config = {
     format: ConfigFormat[];
     actions: ConfigAction[];
     users: ConfigUser[];
+    show: string[]; // for debug purposes - als set via command line
 };
 
 const sortFormats = (formats: ConfigFormat[]): any => {
+    // put any with decimals before any with units
     // those with both contract and name come first
     // second are those with one of contract and name, retaining the same order as given
     // last are those with no contract and name
@@ -95,10 +105,14 @@ const sortFormats = (formats: ConfigFormat[]): any => {
             .sort((a, b) => {
                 const valueof = (x: ConfigFormat): number => {
                     let value = 0;
+                    // must do "no format" before format, then do .unit before .decimals
+                    if (!x.unit && !x.decimals) value += 3000;
+                    if (x.unit) value += 2000; // do .unit befoe .decimals
+                    if (x.decimals) value += 1000; // do .unit befoe .decimals
+                    // then do it in order of matches against .contract/.name and then .type
                     if (x.contract) value += 100;
                     if (x.name) value += 100;
-                    if (!x.unit) value += 10; // no format
-                    if (x.type) value += 1;
+                    if (x.type) value += 10;
                     return value;
                 };
                 const av = valueof(a.format);
@@ -144,6 +158,7 @@ export const getConfig = (): Config => {
                 nodiagram: { type: 'boolean', default: false },
                 nomeasures: { type: 'boolean', default: false },
                 showconfig: { type: 'boolean', default: false },
+                showformat: { type: 'boolean', default: false },
                 quiet: { type: 'boolean', default: false },
                 defaultconfigs: { type: 'string', default: 'test/default-configs' },
             })
@@ -186,7 +201,8 @@ export const getConfig = (): Config => {
         config.configName = configName;
 
         // make sure more specific formats take precedence over less specific
-        config.format = sortFormats(config.format);
+        if (config.format) config.format = sortFormats(config.format);
+        if (argv.showformat) config.show = ['format'];
 
         // output the config actually used for debug purposes
         write('flat-config.yml', yaml.dump(config));

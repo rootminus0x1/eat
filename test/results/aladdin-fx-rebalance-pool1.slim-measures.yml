@@ -17,11 +17,11 @@
     - name: pendingRewards.0
       type: uint256
       target: WstETH
-      value: '0.003480827513257728'
+      value: '3480827513257728'
     - name: pendingRewards.1
       type: uint256
       target: WstETH
-      value: '0.173334332574255924'
+      value: '173334332574255924'
     - name: rewardData.queued
       type: uint96
       target: WstETH

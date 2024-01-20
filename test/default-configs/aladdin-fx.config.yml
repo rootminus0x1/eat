@@ -5,3 +5,45 @@ leaf:
   - "0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA" # "           "
   - "0xE62B71cf983019BFf55bC83B48601ce8419650CC" # AccessControlledOffchainAggregator
   - "0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196" # "           ",
+format:
+  - type: uint256
+    unit: ether
+  - name: latestAnswer
+    type: int256
+    unit: 8
+  - name: latestRoundData.answer
+    type: int256
+    unit: 8
+  - contract: Market
+    type: uint128
+    unit: 16
+  - contract: Market
+    type: int128
+    unit: 16
+  - contract: Market
+    type: uint64
+    unit: 18
+    # TODO: add regexp support for names & contracts
+    # TODO: contract -> contract type, contractName -> contract name
+  - name: pendingRewards.0
+    decimals: 4
+  - name: pendingRewards.1
+    decimals: 4
+  # no formatting
+  - contract: BoostableRebalancePool
+    name: numTotalSupplyHistory
+  - name: chainlinkMinMessageCount
+  - name: chainlinkMessageExpiration
+  - name: start_epoch_time
+  - name: getChainId
+  - name: getThreshold
+  - name: nonce
+  - name: decimals
+  - name: epoch
+  - name: time_total
+  - name: numTotalSupplyHistory
+  - name: latestRoundData.startedAt
+  - name: latestRoundData.updatedAt
+  - name: latestTimestamp
+  - name: version
+  - name: getRewardCount

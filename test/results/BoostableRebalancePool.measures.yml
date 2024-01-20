@@ -1,0 +1,90 @@
+- address: '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
+  name: BoostableRebalancePool
+  contract: BoostableRebalancePool
+  measurements:
+    - name: gauge.claimAt
+      type: uint64
+      value: '0'
+    - name: lastAssetLossError
+      type: uint256
+      value: '0'
+    - name: liquidatableCollateralRatio
+      type: uint256
+      value: '1305500000000000000'
+    - name: numTotalSupplyHistory
+      type: uint256
+      value: '68'
+    - name: periodLength
+      type: uint40
+      value: '604800'
+    - name: totalSupply
+      type: uint256
+      value: '2723055141145695996658868'
+    - name: balanceOf
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: boostCheckpoint.veBalance
+      type: uint112
+      target: WstETH
+      value: '0'
+    - name: boostCheckpoint.veSupply
+      type: uint112
+      target: WstETH
+      value: '0'
+    - name: boostCheckpoint.historyIndex
+      type: uint32
+      target: WstETH
+      value: '0'
+    - name: getBoostRatio
+      type: uint256
+      target: WstETH
+      value: '0'
+    - name: pendingRewards.0
+      type: uint256
+      target: WstETH
+      value: '0.0034'
+    - name: pendingRewards.1
+      type: uint256
+      target: WstETH
+      value: '173334332574255924'
+    - name: rewardData.queued
+      type: uint96
+      target: WstETH
+      value: '492945732942624529'
+    - name: rewardData.rate
+      type: uint80
+      target: WstETH
+      value: '1510775830407'
+    - name: rewardData.lastUpdate
+      type: uint40
+      target: WstETH
+      value: '1703822123'
+    - name: rewardData.finishAt
+      type: uint40
+      target: WstETH
+      value: '1703939159'
+- address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
+  name: WstETH
+  contract: WstETH
+  measurements:
+    - name: decimals
+      type: uint8
+      value: '18'
+    - name: stEthPerToken
+      type: uint256
+      value: '1151765726593883840'
+    - name: tokensPerStEth
+      type: uint256
+      value: '868232121264190989'
+    - name: totalSupply
+      type: uint256
+      value: '3247614816540003642107369'
+    - name: balanceOf
+      type: uint256
+      target: BoostableRebalancePool
+      value: '1893157730172243796'
+    - name: nonces
+      type: uint256
+      target: BoostableRebalancePool
+      value: '0'

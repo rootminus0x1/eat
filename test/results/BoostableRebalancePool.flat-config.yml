@@ -1,0 +1,13 @@
+block: 18888888
+diagram:
+  renderer: default
+leaf:
+  - '0xc6dEe5913e010895F3702bc43a40d661B13a40BD'
+  - '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0'
+format:
+  - name: pendingRewards.0
+    decimals: 4
+    unit: ether
+outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
+configFilePath: /home/tfras/github/rootminus0x1/eat/test/BoostableRebalancePool.config.yml
+configName: BoostableRebalancePool

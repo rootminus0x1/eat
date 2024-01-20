@@ -1,6 +1,13 @@
 block: 18888888
 diagram:
   renderer: default
+leaf:
+  - '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
+  - '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'
+  - '0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA'
+  - '0xE62B71cf983019BFf55bC83B48601ce8419650CC'
+  - '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196'
+  - '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
 format:
   - contract: BoostableRebalancePool
     name: numTotalSupplyHistory
@@ -36,13 +43,10 @@ format:
     unit: 18
   - type: uint256
     unit: ether
-leaf:
-  - '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84'
-  - '0x26B2ec4E02ebe2F54583af25b647b1D619e67BbF'
-  - '0x21f73D42Eb58Ba49dDB685dc29D3bF5c0f0373CA'
-  - '0xE62B71cf983019BFf55bC83B48601ce8419650CC'
-  - '0xdA31bc2B08F22AE24aeD5F6EB1E71E96867BA196'
-  - '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
+  - name: pendingRewards.0
+    decimals: 4
+  - name: pendingRewards.1
+    decimals: 4
 root:
   - '0x0e5CAA5c889Bdf053c9A76395f62267E653AFbb0'
 outputFileRoot: /home/tfras/github/rootminus0x1/eat/test/results/
