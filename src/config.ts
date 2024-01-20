@@ -45,7 +45,7 @@ export const writeYaml = (name: string, results: any, formatter?: Formatter): vo
 export type ConfigFormatMatch = {
     type?: string;
     contract?: string;
-    name?: string; // TODO: change this to measurement
+    measurement?: string;
     // TODO: add field, for returned structures, make field have the precedence as contract & name/measurement
 };
 
@@ -111,7 +111,7 @@ const sortFormats = (formats: ConfigFormat[]): any => {
                     if (x.decimals) value += 1000; // do .unit befoe .decimals
                     // then do it in order of matches against .contract/.name and then .type
                     if (x.contract) value += 100;
-                    if (x.name) value += 100;
+                    if (x.measurement) value += 100;
                     if (x.type) value += 10;
                     return value;
                 };

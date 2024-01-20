@@ -8,10 +8,10 @@ leaf:
 format:
   - type: uint256
     unit: ether
-  - name: latestAnswer
+  - measurement: latestAnswer
     type: int256
     unit: 8
-  - name: latestRoundData.answer
+  - measurement: latestRoundData.answer
     type: int256
     unit: 8
   - contract: Market
@@ -25,25 +25,25 @@ format:
     unit: 18
     # TODO: add regexp support for names & contracts
     # TODO: contract -> contract type, contractName -> contract name
-  - name: pendingRewards.0
+  - measuremen: pendingRewards.0
     decimals: 4
-  - name: pendingRewards.1
+  - measuremen: pendingRewards.1
     decimals: 4
   # no formatting
   - contract: BoostableRebalancePool
-    name: numTotalSupplyHistory
-  - name: chainlinkMinMessageCount
-  - name: chainlinkMessageExpiration
-  - name: start_epoch_time
-  - name: getChainId
-  - name: getThreshold
-  - name: nonce
-  - name: decimals
-  - name: epoch
-  - name: time_total
-  - name: numTotalSupplyHistory
-  - name: latestRoundData.startedAt
-  - name: latestRoundData.updatedAt
-  - name: latestTimestamp
-  - name: version
-  - name: getRewardCount
+    measurement: numTotalSupplyHistory
+  - measurement: chainlinkMinMessageCount
+  - measurement: chainlinkMessageExpiration
+  - measurement: start_epoch_time
+  - measurement: getChainId
+  - measurement: getThreshold
+  - measurement: nonce
+  - measurement: decimals
+  - measurement: epoch
+  - measurement: time_total
+  - measurement: numTotalSupplyHistory
+  - measurement: latestRoundData.startedAt
+  - measurement: latestRoundData.updatedAt
+  - measurement: latestTimestamp
+  - measurement: version
+  - measurement: getRewardCount

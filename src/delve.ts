@@ -334,7 +334,7 @@ const formatFromConfig = (address: any): any => {
                         // TODO: add regexp matches, rather than === matches
                         if (
                             (!format.type || format.type === measurement.type) &&
-                            (!format.name || format.name === measurement.name) &&
+                            (!format.measurement || format.measurement === measurement.name) &&
                             (!format.contract || format.contract === newAddress.contract)
                         ) {
                             if (format.unit === undefined && format.decimals === undefined) {
