@@ -45,6 +45,7 @@ export const writeYaml = (name: string, results: any, formatter?: Formatter): vo
 export type ConfigFormatMatch = {
     type?: string;
     contract?: string;
+    contractType?: string;
     measurement?: string;
     // TODO: add field, for returned structures, make field have the precedence as contract & name/measurement
 };

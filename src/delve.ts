@@ -190,7 +190,8 @@ export const calculateDeltaMeasures = (
         if (
             actionedContract.address !== baseContract.address ||
             actionedContract.name !== baseContract.name ||
-            actionedContract.contract !== baseContract.contract
+            actionedContract.contract !== baseContract.contract ||
+            actionedContract.contractType !== baseContract.contractType
         )
             throw Error(
                 `contract measurements[${a}] mismatch base: ${JSON.stringify(baseContract)}; actioned: ${JSON.stringify(
@@ -290,7 +291,7 @@ export const calculateDeltaMeasures = (
             results.push({
                 address: actionedContract.address,
                 name: actionedContract.name,
-                contractType: actionedContract.contract,
+                contractType: actionedContract.contractType,
                 measurements: deltas,
             });
     }
@@ -335,7 +336,8 @@ const formatFromConfig = (address: any): any => {
                         if (
                             (!format.type || format.type === measurement.type) &&
                             (!format.measurement || format.measurement === measurement.name) &&
-                            (!format.contract || format.contract === newAddress.contract)
+                            (!format.contract || format.contract === newAddress.contract) &&
+                            (!format.contractType || format.contractType === newAddress.contractType)
                         ) {
                             if (format.unit === undefined && format.decimals === undefined) {
                                 donotformat = true;
