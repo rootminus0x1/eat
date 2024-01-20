@@ -206,7 +206,7 @@ export const getConfig = (): Config => {
         if (argv.showformat) config.show = ['format'];
 
         // output the config actually used for debug purposes
-        write('flat-config.yml', yaml.dump(config));
+        if (argv.showconfig) write('flat-config.yml', yaml.dump(config));
     }
     return config;
 };

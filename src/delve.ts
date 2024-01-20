@@ -298,16 +298,29 @@ export const calculateDeltaMeasures = (
     return results;
 };
 
+const getDecimals = (unit: string | number | undefined): number => {
+    if (typeof unit === 'string') {
+        const baseValue = formatUnits(1n, unit);
+        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
+        return decimalPlaces;
+    } else return unit || 0;
+};
+
 // only do doDecimals after formatting by unit, else there's no decimals!
 const doFormat = (fieldName: string, value: bigint, unit?: number | string, decimals?: number): string => {
-    let result = unit ? formatUnits(value, unit) : value.toString();
+    const doUnit = (value: bigint): string => {
+        return unit ? formatUnits(value, unit) : value.toString();
+    };
+    let result = doUnit(value);
     if (decimals !== undefined) {
         // it's been formatted, so round to that many decimals
         const decimalIndex = result.indexOf('.');
         // Calculate the number of decimal places
         const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
         if (currentDecimals > decimals) {
-            // TODO: round the number
+            if (result[decimalIndex + decimals + 1] >= '5') {
+                result = doUnit(value + 5n * 10n ** BigInt(getDecimals(unit) - decimals - 1));
+            }
             // slice off the last digits, including the decimal point if its the last character (i.e. decimals == 0)
             result = result.slice(undefined, decimals - currentDecimals - (decimals == 0 ? 1 : 0));
         }
@@ -358,6 +371,7 @@ const formatFromConfig = (address: any): any => {
                             measurement.format = {};
                         }
                     } else if (mergedFormat.unit !== undefined) {
+                        let unformatted: any = {};
                         for (const fieldName of fieldNames) {
                             if (measurement[fieldName] !== undefined) {
                                 let formatters: ((value: bigint) => bigint | string)[] = [];
@@ -373,10 +387,12 @@ const formatFromConfig = (address: any): any => {
 
                                 formatters.forEach((formatter) => {
                                     if (lodash.isArray(measurement[fieldName])) {
+                                        unformatted[fieldName] = lodash.clone(measurement[fieldName]);
                                         measurement[fieldName] = measurement[fieldName].map((elem: any) =>
                                             formatter(elem),
                                         );
                                     } else {
+                                        unformatted[fieldName] = measurement[fieldName];
                                         measurement[fieldName] = formatter(measurement[fieldName]);
                                     }
                                 });
@@ -384,6 +400,7 @@ const formatFromConfig = (address: any): any => {
                         }
                         if (getConfig().show?.includes('format')) {
                             measurement.format = mergedFormat;
+                            measurement.unformatted = unformatted;
                         }
                     }
                 }
