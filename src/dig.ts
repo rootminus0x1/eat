@@ -18,7 +18,8 @@ import {
     nodes,
     users,
 } from './graph';
-import { getConfig, parseArg } from './config';
+import { getConfig, parseArg, write } from './config';
+import { mermaid } from './mermaid';
 
 export const dig = async () => {
     const done = new Set<string>(); // ensure addresses are only visited once
@@ -160,6 +161,7 @@ export const dig = async () => {
             }
         }
     }
+    if (getConfig().diagram) write('diagram.md', await mermaid());
 };
 
 export const digOne = (address: string): BlockchainAddress | null => {

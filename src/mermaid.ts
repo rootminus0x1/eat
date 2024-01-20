@@ -4,6 +4,7 @@
 import { ZeroAddress } from 'ethers';
 
 import { links, nodes } from './graph';
+import { getConfig } from './config';
 
 export enum AddressType {
     invalid,
@@ -117,9 +118,9 @@ const footerMermaid = (): string => {
     return f.join('\n');
 };
 
-export const mermaid = async (blockNumber: number, asOf: string, config?: any): Promise<string> => {
+export const mermaid = async (): Promise<string> => {
     const f: string[] = [];
-    cl(f, headerMermaid(blockNumber, asOf, config));
+    cl(f, headerMermaid(getConfig().block, getConfig().datetime, getConfig().diagram));
     for (const [address, node] of nodes) {
         cl(
             f,

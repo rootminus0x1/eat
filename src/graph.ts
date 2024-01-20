@@ -29,8 +29,6 @@ export const backLinks = new Map<string, Link[]>(); // reverse of above, to -> f
 export const measures = new Map<string, Measure[]>();
 export const measuresOnAddress = new Map<string, MeasureOnAddress[]>();
 
-// export const namedAddresses = new Map<string, string>();
-
 // for use in actions
 export const contracts: any = {};
 export const users: any = {};

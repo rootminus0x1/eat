@@ -80,16 +80,26 @@ export type Config = {
     configName: string;
     configFilePath: string;
     outputFileRoot: string;
-    nodiagram: boolean;
 
-    // from the files
+    // blockchain setup
+    // TODO: support any of the 3 ways to specify a block number and generate the other two
     block: number;
-    root: string[];
-    leaf: string[];
-    diagram: any;
-    format: ConfigFormat[];
+    timestamp: number;
+    datetime: string;
+
     actions: ConfigAction[];
     users: ConfigUser[];
+
+    // where to look
+    root: string[];
+    leaf: string[];
+
+    // what to output
+    diagram: any;
+    plot: any;
+
+    // output details
+    format: ConfigFormat[];
     show: string[]; // for debug purposes - als set via command line
 };
 
@@ -156,8 +166,6 @@ export const getConfig = (): Config => {
     if (!config) {
         const argv: any = yargs(process.argv.slice(2))
             .options({
-                nodiagram: { type: 'boolean', default: false },
-                nomeasures: { type: 'boolean', default: false },
                 showconfig: { type: 'boolean', default: false },
                 showformat: { type: 'boolean', default: false },
                 quiet: { type: 'boolean', default: false },
@@ -203,6 +211,7 @@ export const getConfig = (): Config => {
 
         // make sure more specific formats take precedence over less specific
         if (config.format) config.format = sortFormats(config.format);
+
         if (argv.showformat) config.show = ['format'];
 
         // output the config actually used for debug purposes

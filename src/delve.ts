@@ -442,12 +442,22 @@ const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Pro
     const variablePrefix = value ? `${value.name}=${value.value.toString()}.` : '';
     if (value) console.log(`      ${variablePrefix}`);
 
+    // TODO: make this a config
+    const storeMeasurements: boolean = !value;
+
     const baseMeasurements = await calculateMeasures();
     if (value) {
         baseMeasurements.unshift({ name: value.name, value: value.value });
     }
-    writeYaml(`${variablePrefix}measures.yml`, baseMeasurements, formatFromConfig);
-    writeYaml(`${variablePrefix}slim-measures.yml`, await calculateSlimMeasures(baseMeasurements), formatFromConfig);
+
+    if (storeMeasurements) {
+        writeYaml(`${variablePrefix}measures.yml`, baseMeasurements, formatFromConfig);
+        writeYaml(
+            `${variablePrefix}slim-measures.yml`,
+            await calculateSlimMeasures(baseMeasurements),
+            formatFromConfig,
+        );
+    }
 
     let i = 0;
     for (const configAction of getConfig().actions ?? []) {
@@ -485,16 +495,21 @@ const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Pro
         }
         const prefix = `${variablePrefix}${actionName}.`;
 
-        writeYaml(`${prefix}measures.yml`, actionedMeasurements, formatFromConfig);
-        writeYaml(`${prefix}slim-measures.yml`, await calculateSlimMeasures(actionedMeasurements), formatFromConfig);
+        if (storeMeasurements) {
+            writeYaml(`${prefix}measures.yml`, actionedMeasurements, formatFromConfig);
+            writeYaml(
+                `${prefix}slim-measures.yml`,
+                await calculateSlimMeasures(actionedMeasurements),
+                formatFromConfig,
+            );
 
-        // difference the measures
-        // write the results
-        writeYaml(
-            `${prefix}delta-measures.yml`,
-            calculateDeltaMeasures(baseMeasurements!, actionedMeasurements),
-            formatFromConfig,
-        );
+            // difference the measures & write the results
+            writeYaml(
+                `${prefix}delta-measures.yml`,
+                calculateDeltaMeasures(baseMeasurements!, actionedMeasurements),
+                formatFromConfig,
+            );
+        }
 
         snapshot.restore();
     }

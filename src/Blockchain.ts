@@ -11,6 +11,7 @@ import { reset } from '@nomicfoundation/hardhat-network-helpers';
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 import { asDateString } from './datetime';
 import { contracts, nodes } from './graph';
+import { getConfig } from './config';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
@@ -67,18 +68,18 @@ export async function deploy<T extends Contract>(
 
 */
 
-export const setupBlockchain = async (blockNumber: number, shout: boolean): Promise<number> => {
+export const setupBlockchain = async (shout: boolean = false): Promise<void> => {
     // go to the block
-    await reset(process.env.MAINNET_RPC_URL, blockNumber);
+    await reset(process.env.MAINNET_RPC_URL, getConfig().block);
     const actualBlockNumber = await ethers.provider.getBlockNumber();
-    const timestamp = (await ethers.provider.getBlock(actualBlockNumber))?.timestamp || 0;
+    getConfig().timestamp = (await ethers.provider.getBlock(actualBlockNumber))?.timestamp || 0;
+    getConfig().datetime = asDateString(getConfig().timestamp);
 
     // get the signers
     allSigners = await ethers.getSigners();
     whale = await getSigner('whale');
 
-    if (shout) console.log(`${network.name} ${actualBlockNumber} ${asDateString(timestamp)} UX:${timestamp}`);
-    return timestamp;
+    if (shout) console.log(`${network.name} ${actualBlockNumber} ${getConfig().datetime} UX:${getConfig().timestamp}`);
 };
 
 let allSigners: SignerWithAddress[] | undefined;

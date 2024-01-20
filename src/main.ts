@@ -10,15 +10,9 @@ import { dig } from './dig';
 import { delve } from './delve';
 
 async function main() {
-    const timestamp = await setupBlockchain(getConfig().block, false);
-
-    // spider across the blockchain, following addresses contained in contracts, until we stop or are told to stop
-    // we build up the graph structure as we go for future processing
+    await setupBlockchain();
 
     await dig();
-
-    // output a diagram
-    write('diagram.md', await mermaid(getConfig().block, asDateString(timestamp), getConfig().diagram));
 
     await delve();
 }
