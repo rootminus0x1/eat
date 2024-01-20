@@ -308,7 +308,8 @@ const doFormat = (fieldName: string, value: bigint, unit?: number | string, deci
         const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
         if (currentDecimals > decimals) {
             // TODO: round the number
-            result = result.slice(undefined, decimals - currentDecimals);
+            // slice off the last digits, including the decimal point if its the last character (i.e. decimals == 0)
+            result = result.slice(undefined, decimals - currentDecimals - (decimals == 0 ? 1 : 0));
         }
     }
     return (fieldName === 'delta' && value > 0 ? '+' : '') + result;
