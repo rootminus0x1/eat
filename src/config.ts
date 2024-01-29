@@ -23,8 +23,12 @@ export const ensureDirectory = (dir: string) => {
     }
 };
 
-export const write = (name: string, results: string): void => {
-    const outputFileName = getConfig().configName + '.' + name;
+export const eatFileName = (name: string): string => {
+    return getConfig().configName + '.' + name;
+};
+
+export const writeEatFile = (name: string, results: string): void => {
+    const outputFileName = eatFileName(name);
     console.log(`   writing ${outputFileName}`);
     fs.writeFileSync(getConfig().outputFileRoot + outputFileName, results, { encoding: 'utf-8' });
 };
@@ -39,7 +43,7 @@ const removeInvalidYamlTypes: Formatter = (value: any): any => {
 
 export const writeYaml = (name: string, results: any, formatter?: Formatter): void => {
     if (formatter) results = lodash.cloneDeepWith(results, formatter);
-    write(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
+    writeEatFile(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
 };
 
 export type ConfigFormatMatch = {
@@ -215,7 +219,7 @@ export const getConfig = (): Config => {
         if (argv.showformat) config.show = ['format'];
 
         // output the config actually used for debug purposes
-        if (argv.showconfig) write('flat-config.yml', yaml.dump(config));
+        if (argv.showconfig) writeEatFile('flat-config.yml', yaml.dump(config));
     }
     return config;
 };

@@ -32,6 +32,7 @@ export async function deploy<T extends BaseContract>(
     //console.log("%s = %s", address, factoryName);
 
     // TODO: need to create a BlockchainAddress with contract pre-loaded, with abi, etc
+    // i.e. add it to the graph, so that a new diagram can be exhibited
 
     const result: ContractWithAddress<T> = Object.assign(contract as unknown as T, {
         name: factoryName,

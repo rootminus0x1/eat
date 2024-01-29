@@ -18,7 +18,7 @@ import {
     nodes,
     users,
 } from './graph';
-import { getConfig, parseArg, write } from './config';
+import { getConfig, parseArg, writeEatFile } from './config';
 import { mermaid } from './mermaid';
 
 export const dig = async () => {
@@ -161,7 +161,7 @@ export const dig = async () => {
             }
         }
     }
-    if (getConfig().diagram) write('diagram.md', await mermaid());
+    if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
 };
 
 export const digOne = (address: string): BlockchainAddress | null => {

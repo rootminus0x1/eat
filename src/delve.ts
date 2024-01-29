@@ -1,8 +1,8 @@
 import { contracts, measures, measuresOnAddress, nodes, users } from './graph';
-import { ContractTransactionResponse, MaxInt256, formatUnits } from 'ethers';
-import { ConfigFormatApply, getConfig, parseArg, writeYaml } from './config';
+import { ContractTransactionResponse, MaxInt256, formatEther, formatUnits } from 'ethers';
+import { ConfigFormatApply, eatFileName, getConfig, parseArg, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
-import { SnapshotRestorer, takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
+import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -85,17 +85,35 @@ export type Measurements = (Partial<Variable> & Partial<Action> & Partial<Contra
 
 ////////////////////////////////////////////////////////////////////////
 // calculateMeasures
-export const calculateMeasures = async (): Promise<Measurements> => {
+
+export type MeasurementsMatch = {
+    contract: string;
+    functions: string[];
+};
+
+export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Promise<Measurements> => {
     const result: Measurements = [];
     let count = 0;
 
     const sortedNodes = sort(nodes, (v) => v.name);
     for (const [address, node] of sortedNodes) {
+        let onlyDoTheseForContract: string[] = [];
+        if (onlyDoThese) {
+            for (const m of onlyDoThese)
+                if (m.contract === node.name) {
+                    onlyDoTheseForContract = m.functions;
+                    break;
+                }
+            if (onlyDoTheseForContract.length === 0) continue; // skip this contract
+        }
         //console.log(`measuring node ${node.name}`);
         let values: Measurement[] = []; // values for this graph node
         const measuresForAddress = measures.get(address);
         if (measuresForAddress && measuresForAddress.length > 0) {
-            for (const measure of measuresForAddress) {
+            // only do measurments for addresses with a name (they're users otherwise)
+            for (const measure of measuresForAddress.filter((m) => m.name)) {
+                // skip if it has not been requested
+                if (onlyDoTheseForContract.length > 0 && !onlyDoTheseForContract.includes(measure.name)) continue;
                 try {
                     const value = await measure.calculation();
                     values.push({ name: measure.name, type: measure.type, value: value });
@@ -104,26 +122,29 @@ export const calculateMeasures = async (): Promise<Measurements> => {
                 }
             }
         }
-        const measuresOnAddressForAddress = measuresOnAddress.get(address);
-        if (measuresOnAddressForAddress && measuresOnAddressForAddress.length > 0) {
-            for (const [targetAddress, targetNode] of sortedNodes) {
-                if (targetAddress === address) continue; // skip self
-                for (const measure of measuresOnAddressForAddress) {
-                    try {
-                        const value = await measure.calculation(targetAddress);
-                        values.push({
-                            name: measure.name,
-                            type: measure.type,
-                            target: targetNode.name,
-                            value: value,
-                        });
-                    } catch (e: any) {
-                        values.push({
-                            name: measure.name,
-                            type: measure.type,
-                            target: targetNode.name,
-                            error: e.message,
-                        });
+        if (!onlyDoThese) {
+            // TODO: add the ability to filter in measures on address - need to pass in the addresses
+            const measuresOnAddressForAddress = measuresOnAddress.get(address);
+            if (measuresOnAddressForAddress && measuresOnAddressForAddress.length > 0) {
+                for (const [targetAddress, targetNode] of sortedNodes) {
+                    if (targetAddress === address) continue; // skip self
+                    for (const measure of measuresOnAddressForAddress) {
+                        try {
+                            const value = await measure.calculation(targetAddress);
+                            values.push({
+                                name: measure.name,
+                                type: measure.type,
+                                target: targetNode.name,
+                                value: value,
+                            });
+                        } catch (e: any) {
+                            values.push({
+                                name: measure.name,
+                                type: measure.type,
+                                target: targetNode.name,
+                                error: e.message,
+                            });
+                        }
                     }
                 }
             }
@@ -138,7 +159,7 @@ export const calculateMeasures = async (): Promise<Measurements> => {
             count += values.length;
         }
     }
-    console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
+    // console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
     return result;
 };
 
@@ -418,32 +439,22 @@ export type VariableCalculator = {
     next: () => Promise<string | undefined>;
 };
 
-type VariableValue = {
+export type VariableValue = {
     name: string;
     value: any;
 };
-export const delve = async (variable?: VariableCalculator): Promise<void> => {
-    // formatting of output
+
+export const delve = async (value?: VariableValue): Promise<void> => {
+    // This executes the configured actions one by one in the original set-up
+    // and saves all the associated files
 
     let snapshot = await takeSnapshot(); // the state of the world before
 
-    if (!variable) {
-        await delveOnce(snapshot);
-    } else {
-        while (true) {
-            const value = await variable.next();
-            if (!value) break;
-            await delveOnce(snapshot, { name: variable.name, value: value });
-        }
-    }
-};
-
-const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Promise<void> => {
     const variablePrefix = value ? `${value.name}=${value.value.toString()}.` : '';
     if (value) console.log(`      ${variablePrefix}`);
 
     // TODO: make this a config
-    const storeMeasurements: boolean = !value;
+    const storeMeasurements: boolean = true;
 
     const baseMeasurements = await calculateMeasures();
     if (value) {
@@ -513,4 +524,45 @@ const delveOnce = async (snapshot: SnapshotRestorer, value?: VariableValue): Pro
 
         snapshot.restore();
     }
+};
+
+export const delvePlot = async (variable: VariableCalculator, dependents: MeasurementsMatch[]): Promise<void> => {
+    let snapshot = await takeSnapshot(); // the state of the world before
+
+    // let prevMeasurements: Measurements = null; // for doing  diff
+    // generate a gnuplot data file and a command
+    let header =
+        '# ' +
+        variable.name +
+        ' ' +
+        dependents.map((m) => m.functions.map((f) => `${m.contract}.${f}`).join(' ')).join(' ');
+    let data: string[] = [];
+
+    while (true) {
+        // independent variable set
+        const value = await variable.next(); // this is similar to the action being executed
+        if (!value) break;
+
+        // get the dependents
+        // TODO: only get the ones needed (passed in as a parameter for this function)
+        const measurements = await calculateMeasures(dependents);
+        data.push(
+            [
+                value,
+                ...measurements.map((c) =>
+                    c.measurements!.map((m) => formatEther(m.value as bigint) || m.error).join(' '),
+                ),
+            ].join(' '),
+        );
+
+        snapshot.restore();
+    }
+    writeEatFile('gnuplot.dat', [header, ...data].join('\n'));
+    writeEatFile(
+        'gnuplot-script.gp',
+        `plot "${eatFileName('gnuplot.dat')}" using 1:2 title "CR v ETH"
+        set xlabel "ETher price in $"
+        set ylabel "Collateral Ratio"
+        `,
+    );
 };

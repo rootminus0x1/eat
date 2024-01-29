@@ -2,9 +2,6 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { getConfig, write } from './config';
-import { mermaid } from './mermaid';
-import { asDateString } from './datetime';
 import { setupBlockchain } from './Blockchain';
 import { dig } from './dig';
 import { delve } from './delve';
