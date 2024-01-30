@@ -531,11 +531,10 @@ export const delvePlot = async (variable: VariableCalculator, dependents: Measur
 
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
-    let header =
-        '# ' +
-        variable.name +
-        ' ' +
-        dependents.map((m) => m.functions.map((f) => `${m.contract}.${f}`).join(' ')).join(' ');
+    let names = [
+        variable.name,
+        ...dependents.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`)),
+    ];
     let data: string[] = [];
 
     while (true) {
@@ -549,20 +548,53 @@ export const delvePlot = async (variable: VariableCalculator, dependents: Measur
         data.push(
             [
                 value,
-                ...measurements.map((c) =>
-                    c.measurements!.map((m) => formatEther(m.value as bigint) || m.error).join(' '),
+                ...measurements.map((cm) =>
+                    formatFromConfig(cm)
+                        .measurements.map((m: any) => m.value || m.error)
+                        .join(' '),
                 ),
             ].join(' '),
         );
 
         snapshot.restore();
     }
-    writeEatFile('gnuplot.dat', [header, ...data].join('\n'));
-    writeEatFile(
-        'gnuplot-script.gp',
-        `plot "${eatFileName('gnuplot.dat')}" using 1:2 title "CR v ETH"
-        set xlabel "ETher price in $"
-        set ylabel "Collateral Ratio"
-        `,
-    );
+    writeEatFile('gnuplot.dat', ['# ' + names.join(' '), ...data].join('\n'));
+    // first data item is a plot, rest are replots.
+    // TODO: need to decide what axis each is plotted against, or work it out automatically, high v low variance
+
+    // generate the script
+    const script = `datafile = "${eatFileName('gnuplot.dat')}"
+# set terminal pngcairo
+# set output "${eatFileName('gnuplot.png')}"
+# set terminal svg
+# set output "${eatFileName('gnuplot.png')}"
+set xlabel "${variable.name}"
+set ylabel "${names[1]}" # TODO: this should be the units, not the name
+set ytics nomirror
+set y2label "${names[2]}"
+set y2tics
+
+stats datafile using 1 nooutput
+min = STATS_min
+max = STATS_max
+range_extension = 0.2 * (max - min)
+set xrange [min - range_extension : max + range_extension]
+
+stats datafile using 2 nooutput
+min = STATS_min
+max = STATS_max
+range_extension = 0.2 * (max - min)
+set yrange [min - range_extension : max + range_extension]
+
+stats datafile using 3 nooutput
+min = STATS_min
+max = STATS_max
+range_extension = 0.2 * (max - min)
+set y2range [min - range_extension : max + range_extension]
+
+plot datafile using 1:2 with lines title "${names[1]}",\
+     datafile using 1:3 with lines title "${names[2]}" axes x1y2
+`;
+
+    writeEatFile('gnuplot-script.gp', script);
 };

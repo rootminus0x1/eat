@@ -2,10 +2,10 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { BaseContract, Contract, ZeroAddress } from 'ethers';
+import { BaseContract, Contract, ZeroAddress, parseEther } from 'ethers';
 
 import { ethers, network } from 'hardhat';
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { reset } from '@nomicfoundation/hardhat-network-helpers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
@@ -91,6 +91,23 @@ export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     return allSigners[allocatedSigners++] as SignerWithAddress;
 };
 
+/*
+export const getOwnerSigner = async (address: BlockchainAddress): Promise<HardhatEthersSigner> => {
+    // call the owner function
+    const contract = await address.getContract();
+    const ownerAddress = await contract?.owner();
+    if (ownerAddress) {
+        const owner = await ethers.getImpersonatedSigner(ownerAddress);
+        // need to give the impersonated signer, owner some eth (aparently need 0.641520744180000000 eth to do this!)
+        await whale.sendTransaction({ to: owner.address, value: parseEther('1.0') });
+        await contracts.stETHTreasury.connect(owner).updatePriceOracle(oracle.address);
+        console.log(contracts.stETHTreasury.address);
+        console.log(await contracts.stETHTreasury.owner());
+
+    }
+
+}
+*/
 export let whale: SignerWithAddress;
 
 export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
@@ -264,13 +281,19 @@ export class BlockchainAddress {
         const info = await this.info;
         // get abi, handling proxies
         const abi = info.implementationContractInfo?.sourceCode?.ABI || info.contractInfo?.sourceCode?.ABI;
-        // if (!abi) throw Error(`unable to locate contract ABI: ${this.address}`);
-        // create the contract from the abi
-        return abi
-            ? Object.assign(new ethers.Contract(this.address, abi, signer || ethers.provider), {
-                  address: this.address,
-              })
-            : null;
+        if (!abi) return null; // throw Error(`unable to locate contract ABI: ${this.address}`);
+
+        const contract = new ethers.Contract(this.address, abi, signer || ethers.provider);
+        // attempt to get the owner contract for this contract - useful for
+        try {
+            const ownerAddress = await contract.owner();
+        } catch (e: any) {
+            /* ignore errors */
+        }
+
+        return Object.assign(contract, {
+            address: this.address,
+        });
     };
 
     public getProxyContract = async (signer?: SignerWithAddress): Promise<Contract | null> => {
