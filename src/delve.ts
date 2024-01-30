@@ -436,6 +436,7 @@ const formatFromConfig = (address: any): any => {
 
 export type VariableCalculator = {
     name: string;
+    value: string;
     next: () => Promise<string | undefined>;
 };
 
@@ -444,14 +445,16 @@ export type VariableValue = {
     value: any;
 };
 
-export const delve = async (value?: VariableValue): Promise<void> => {
+export const delve = async (value?: VariableCalculator): Promise<void> => {
     // This executes the configured actions one by one in the original set-up
     // and saves all the associated files
 
     let snapshot = await takeSnapshot(); // the state of the world before
 
+    if (value) value.next();
+
     const variablePrefix = value ? `${value.name}=${value.value.toString()}.` : '';
-    if (value) console.log(`      ${variablePrefix}`);
+    // if (value) console.log(`      ${variablePrefix}`);
 
     // TODO: make this a config
     const storeMeasurements: boolean = true;
