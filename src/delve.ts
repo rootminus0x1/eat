@@ -328,25 +328,29 @@ const getDecimals = (unit: string | number | undefined): number => {
 };
 
 // only do doDecimals after formatting by unit, else there's no decimals!
-const doFormat = (fieldName: string, value: bigint, unit?: number | string, decimals?: number): string => {
+const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, decimals?: number): string => {
     const doUnit = (value: bigint): string => {
         return unit ? formatUnits(value, unit) : value.toString();
     };
     let result = doUnit(value);
     if (decimals !== undefined) {
         // it's been formatted, so round to that many decimals
-        const decimalIndex = result.indexOf('.');
-        // Calculate the number of decimal places
+        let decimalIndex = result.indexOf('.');
+        // Calculate the number of decimal places 123.45 di=3,l=6,cd=2; 12345 di=-1,l=5,cd=0
         const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
         if (currentDecimals > decimals) {
-            if (result[decimalIndex + decimals + 1] >= '5') {
+            if (result[result.length + decimals - currentDecimals] >= '5') {
                 result = doUnit(value + 5n * 10n ** BigInt(getDecimals(unit) - decimals - 1));
             }
             // slice off the last digits, including the decimal point if its the last character (i.e. decimals == 0)
-            result = result.slice(undefined, decimals - currentDecimals - (decimals == 0 ? 1 : 0));
+            result = result.slice(undefined, decimals - currentDecimals);
+            // strip a trailing "."
+            if (result[result.length - 1] === '.') result = result.slice(undefined, result.length - 1);
+            // add back the zeros
+            if (decimals < 0) result = result + '0'.repeat(-decimals);
         }
     }
-    return (fieldName === 'delta' && value > 0 ? '+' : '') + result;
+    return (addPlus && value > 0 ? '+' : '') + result;
 };
 
 const formatFromConfig = (address: any): any => {
@@ -391,16 +395,15 @@ const formatFromConfig = (address: any): any => {
                         if (getConfig().show?.includes('format')) {
                             measurement.format = {};
                         }
-                    } else if (mergedFormat.unit !== undefined) {
+                    } else if (mergedFormat.unit !== undefined || mergedFormat.decimals !== undefined) {
                         let unformatted: any = {};
                         for (const fieldName of fieldNames) {
                             if (measurement[fieldName] !== undefined) {
                                 let formatters: ((value: bigint) => bigint | string)[] = [];
-                                // always do unit before decimals
                                 formatters.push((value) =>
                                     doFormat(
-                                        fieldName,
                                         value,
+                                        fieldName === 'delta',
                                         mergedFormat.unit as string | number,
                                         mergedFormat.decimals,
                                     ),

@@ -36,7 +36,6 @@ export const writeEatFile = (name: string, results: string): void => {
 type Formatter = (value: any) => any;
 const removeInvalidYamlTypes: Formatter = (value: any): any => {
     if (typeof value === 'bigint') {
-        // TODO: write it as a number if it can be contained in a number
         return value.toString();
     }
 };
