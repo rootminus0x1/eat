@@ -5,7 +5,7 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
-import { BlockchainAddress, addTokenToWhale, getSigner, whale } from './Blockchain';
+import { BlockchainAddress, addTokenToWhale, getOwnerSigner, getSigner, whale } from './Blockchain';
 import {
     Link,
     Measure,
@@ -103,7 +103,7 @@ export const dig = async () => {
     for (const [address, node] of nodes) {
         const contract = await node.getContract();
         if (contract) {
-            contracts[node.name] = contract;
+            contracts[node.name] = Object.assign(contract, { ownerSigner: await getOwnerSigner(node) });
         } else {
             users[node.name] = await ethers.getImpersonatedSigner(address);
         }

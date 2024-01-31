@@ -91,23 +91,22 @@ export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     return allSigners[allocatedSigners++] as SignerWithAddress;
 };
 
-/*
-export const getOwnerSigner = async (address: BlockchainAddress): Promise<HardhatEthersSigner> => {
+export const getOwnerSigner = async (address: BlockchainAddress): Promise<HardhatEthersSigner | null> => {
     // call the owner function
-    const contract = await address.getContract();
-    const ownerAddress = await contract?.owner();
+    const contract = await address.getContract(whale);
+    let ownerAddress = undefined;
+    try {
+        ownerAddress = await contract?.owner();
+    } catch (any) {}
+    let ownerSigner: HardhatEthersSigner | null = null;
     if (ownerAddress) {
-        const owner = await ethers.getImpersonatedSigner(ownerAddress);
+        ownerSigner = await ethers.getImpersonatedSigner(ownerAddress);
         // need to give the impersonated signer, owner some eth (aparently need 0.641520744180000000 eth to do this!)
-        await whale.sendTransaction({ to: owner.address, value: parseEther('1.0') });
-        await contracts.stETHTreasury.connect(owner).updatePriceOracle(oracle.address);
-        console.log(contracts.stETHTreasury.address);
-        console.log(await contracts.stETHTreasury.owner());
-
+        await whale.sendTransaction({ to: ownerSigner.address, value: parseEther('1.0') });
     }
+    return ownerSigner;
+};
 
-}
-*/
 export let whale: SignerWithAddress;
 
 export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
