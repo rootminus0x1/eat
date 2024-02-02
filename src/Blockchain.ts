@@ -15,16 +15,17 @@ import { getConfig } from './config';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
+export let whale: SignerWithAddress;
+
 export type ContractWithAddress<T extends BaseContract = Contract> = T & {
     address: string;
 };
 
 export async function deploy<T extends BaseContract>(
     factoryName: string,
-    deployer: SignerWithAddress /*HardhatEthersSigner*/,
     ...deployArgs: any[]
 ): Promise<ContractWithAddress<T>> {
-    const contractFactory = await ethers.getContractFactory(factoryName, deployer);
+    const contractFactory = await ethers.getContractFactory(factoryName, whale);
     const contract = await contractFactory.deploy(...deployArgs);
     await contract.waitForDeployment();
     let address = await contract.getAddress();
@@ -106,8 +107,6 @@ export const getOwnerSigner = async (address: BlockchainAddress): Promise<Hardha
     }
     return ownerSigner;
 };
-
-export let whale: SignerWithAddress;
 
 export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
     //console.log(`stealing ${formatEther(amount)} of ${tokenName}, ${contracts[tokenName].address} ...`);
@@ -305,7 +304,6 @@ export class BlockchainAddress {
 
     public isContract = async (): Promise<boolean> => {
         const info = await this.info;
-        // TODO: remove isContract - the absence of contract info should be enough?
         return info.isContract ? true : false;
     };
 

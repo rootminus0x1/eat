@@ -437,34 +437,80 @@ const formatFromConfig = (address: any): any => {
 ////////////////////////////////////////////////////////////////////////
 // delve
 
-export type VariableCalculator = {
-    name: string;
-    value: string;
-    next: () => Promise<string | undefined>;
+type UnnamedVariableCalculator = AsyncIterableIterator<string>;
+export type VariableCalculator = UnnamedVariableCalculator & { name: string };
+const next = async (valuec?: VariableCalculator): Promise<Variable | undefined> => {
+    if (valuec) {
+        const nextResult = await valuec.next();
+        if (!nextResult.done) {
+            return { name: valuec.name, value: nextResult.value };
+        }
+    }
+    return undefined;
 };
 
-export type VariableValue = {
-    name: string;
-    value: any;
+export function* valuesStepped(start: number, finish: number, step: number = 1): Generator<string> {
+    for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
+        yield i.toString();
+    }
+}
+
+export function* valuesSingle(value: number): Generator<string> {
+    yield value.toString();
+}
+
+export function* valuesArray(values: number[]): Generator<string> {
+    for (const v of values) yield v.toString();
+}
+
+export const Values = async (
+    name: string,
+    generator: Generator<string>,
+    doFunc: (value: string) => Promise<void>,
+): Promise<VariableCalculator> => {
+    const asyncIterator: UnnamedVariableCalculator = {
+        [Symbol.asyncIterator]: async function* (): AsyncGenerator<string> {
+            while (true) {
+                const value = await doNextValue();
+                if (value.done) break;
+                yield value.value;
+            }
+        },
+        next: async (): Promise<IteratorResult<string>> => {
+            return await doNextValue();
+        },
+    };
+
+    const doNextValue = async (): Promise<IteratorResult<string>> => {
+        const value = generator.next();
+        if (value.done) {
+            return { done: true, value: undefined };
+        }
+        await doFunc(value.value);
+        return { done: false, value: value.value };
+    };
+
+    return Object.assign(asyncIterator, { name: name });
 };
 
-export const delve = async (value?: VariableCalculator): Promise<void> => {
+export const delve = async (valuec?: VariableCalculator): Promise<void> => {
     // This executes the configured actions one by one in the original set-up
     // and saves all the associated files
 
     let snapshot = await takeSnapshot(); // the state of the world before
 
-    if (value) value.next();
+    const value = await next(valuec);
 
-    const variablePrefix = value ? `${value.name}=${value.value.toString()}.` : '';
+    const variablePrefix = value ? `${value.name}=${value.value}.` : '';
     // if (value) console.log(`      ${variablePrefix}`);
 
     // TODO: make this a config
     const storeMeasurements: boolean = true;
 
     const baseMeasurements = await calculateMeasures();
+
     if (value) {
-        baseMeasurements.unshift({ name: value.name, value: value.value });
+        baseMeasurements.unshift(value);
     }
 
     if (storeMeasurements) {
@@ -508,7 +554,7 @@ export const delve = async (value?: VariableCalculator): Promise<void> => {
             gas: gas,
         });
         if (value) {
-            actionedMeasurements.unshift({ name: value.name, value: value.value });
+            actionedMeasurements.unshift(value);
         }
         const prefix = `${variablePrefix}${actionName}.`;
 
@@ -543,11 +589,7 @@ export const delvePlot = async (variable: VariableCalculator, dependents: Measur
     ];
     let data: string[] = [];
 
-    while (true) {
-        // independent variable set
-        const value = await variable.next(); // this is similar to the action being executed
-        if (!value) break;
-
+    for await (const value of variable) {
         // get the dependents
         // TODO: only get the ones needed (passed in as a parameter for this function)
         const measurements = await calculateMeasures(dependents);
@@ -572,7 +614,7 @@ export const delvePlot = async (variable: VariableCalculator, dependents: Measur
     const script = `datafile = "${eatFileName('gnuplot.dat')}"
 # set terminal pngcairo
 # set output "${eatFileName('gnuplot.png')}"
-# set terminal svg
+set terminal svg
 # set output "${eatFileName('gnuplot.png')}"
 set xlabel "${variable.name}"
 set ylabel "${names[1]}" # TODO: this should be the units, not the name
@@ -580,23 +622,23 @@ set ytics nomirror
 set y2label "${names[2]}"
 set y2tics
 
-stats datafile using 1 nooutput
-min = STATS_min
-max = STATS_max
-range_extension = 0.2 * (max - min)
-set xrange [min - range_extension : max + range_extension]
+#stats datafile using 1 nooutput
+#min = STATS_min
+#max = STATS_max
+#range_extension = 0.2 * (max - min)
+#set xrange [min - range_extension : max + range_extension]
 
-stats datafile using 2 nooutput
-min = STATS_min
-max = STATS_max
-range_extension = 0.2 * (max - min)
-set yrange [min - range_extension : max + range_extension]
+#stats datafile using 2 nooutput
+#min = STATS_min
+#max = STATS_max
+#range_extension = 0.2 * (max - min)
+#set yrange [min - range_extension : max + range_extension]
 
-stats datafile using 3 nooutput
-min = STATS_min
-max = STATS_max
-range_extension = 0.2 * (max - min)
-set y2range [min - range_extension : max + range_extension]
+#stats datafile using 3 nooutput
+#min = STATS_min
+#max = STATS_max
+#range_extension = 0.2 * (max - min)
+#set y2range [min - range_extension : max + range_extension]
 
 plot datafile using 1:2 with lines title "${names[1]}",\
      datafile using 1:3 with lines title "${names[2]}" axes x1y2
