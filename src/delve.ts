@@ -327,27 +327,26 @@ const getDecimals = (unit: string | number | undefined): number => {
     } else return unit || 0;
 };
 
-// only do doDecimals after formatting by unit, else there's no decimals!
-const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, decimals?: number): string => {
+const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
     const doUnit = (value: bigint): string => {
         return unit ? formatUnits(value, unit) : value.toString();
     };
     let result = doUnit(value);
-    if (decimals !== undefined) {
-        // it's been formatted, so round to that many decimals
+    if (precision !== undefined) {
+        // it's been formatted, so round to that precision
         let decimalIndex = result.indexOf('.');
         // Calculate the number of decimal places 123.45 di=3,l=6,cd=2; 12345 di=-1,l=5,cd=0
         const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
-        if (currentDecimals > decimals) {
-            if (result[result.length + decimals - currentDecimals] >= '5') {
-                result = doUnit(value + 5n * 10n ** BigInt(getDecimals(unit) - decimals - 1));
+        if (currentDecimals > precision) {
+            if (result[result.length + precision - currentDecimals] >= '5') {
+                result = doUnit(value + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
             }
-            // slice off the last digits, including the decimal point if its the last character (i.e. decimals == 0)
-            result = result.slice(undefined, decimals - currentDecimals);
+            // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
+            result = result.slice(undefined, precision - currentDecimals);
             // strip a trailing "."
             if (result[result.length - 1] === '.') result = result.slice(undefined, result.length - 1);
             // add back the zeros
-            if (decimals < 0) result = result + '0'.repeat(-decimals);
+            if (precision < 0) result = result + '0'.repeat(-precision);
         }
     }
     return (addPlus && value > 0 ? '+' : '') + result;
@@ -378,24 +377,24 @@ const formatFromConfig = (address: any): any => {
                             (!format.contract || format.contract === newAddress.contract) &&
                             (!format.contractType || format.contractType === newAddress.contractType)
                         ) {
-                            if (format.unit === undefined && format.decimals === undefined) {
+                            if (format.unit === undefined && format.precision === undefined) {
                                 donotformat = true;
                                 break; // got a no format request
                             }
 
                             if (format.unit !== undefined && mergedFormat.unit === undefined)
                                 mergedFormat.unit = format.unit;
-                            if (format.decimals !== undefined && mergedFormat.decimals === undefined)
-                                mergedFormat.decimals = format.decimals;
+                            if (format.precision !== undefined && mergedFormat.precision === undefined)
+                                mergedFormat.precision = format.precision;
 
-                            if (mergedFormat.unit !== undefined && mergedFormat.decimals !== undefined) break; // got enough
+                            if (mergedFormat.unit !== undefined && mergedFormat.precision !== undefined) break; // got enough
                         }
                     }
                     if (donotformat) {
                         if (getConfig().show?.includes('format')) {
                             measurement.format = {};
                         }
-                    } else if (mergedFormat.unit !== undefined || mergedFormat.decimals !== undefined) {
+                    } else if (mergedFormat.unit !== undefined || mergedFormat.precision !== undefined) {
                         let unformatted: any = {};
                         for (const fieldName of fieldNames) {
                             if (measurement[fieldName] !== undefined) {
@@ -405,7 +404,7 @@ const formatFromConfig = (address: any): any => {
                                         value,
                                         fieldName === 'delta',
                                         mergedFormat.unit as string | number,
-                                        mergedFormat.decimals,
+                                        mergedFormat.precision,
                                     ),
                                 );
 
@@ -437,52 +436,53 @@ const formatFromConfig = (address: any): any => {
 ////////////////////////////////////////////////////////////////////////
 // delve
 
-type UnnamedVariableCalculator = AsyncIterableIterator<string>;
-export type VariableCalculator = UnnamedVariableCalculator & { name: string };
+type UnnamedVariableCalculator = AsyncIterableIterator<bigint>;
+export type VariableCalculator = UnnamedVariableCalculator & { name: string; precision: number };
 const next = async (valuec?: VariableCalculator): Promise<Variable | undefined> => {
     if (valuec) {
         const nextResult = await valuec.next();
         if (!nextResult.done) {
-            return { name: valuec.name, value: nextResult.value };
+            return { name: valuec.name, value: doFormat(nextResult.value, false, 'ether', valuec.precision) };
         }
     }
     return undefined;
 };
-export type VariableSetter = (value: string) => Promise<void>;
+export type VariableSetter = (value: bigint) => Promise<void>;
 
-export function* valuesStepped(start: number, finish: number, step: number = 1): Generator<string> {
+export function* valuesStepped(start: bigint, finish: bigint, step: bigint = 1n): Generator<bigint> {
     for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
-        yield i.toString();
+        yield i;
     }
 }
 
-export function* valuesSingle(value: number): Generator<string> {
-    yield value.toString();
+export function* valuesSingle(value: bigint): Generator<bigint> {
+    yield value;
 }
 
-export function* valuesArray(values: number[]): Generator<string> {
-    for (const v of values) yield v.toString();
+export function* valuesArray(values: bigint[]): Generator<bigint> {
+    for (const v of values) yield v;
 }
 
 export const Values = async (
     name: string,
-    generator: Generator<string>,
+    precision: number,
+    generator: Generator<bigint>,
     doFunc: VariableSetter,
 ): Promise<VariableCalculator> => {
     const asyncIterator: UnnamedVariableCalculator = {
-        [Symbol.asyncIterator]: async function* (): AsyncGenerator<string> {
+        [Symbol.asyncIterator]: async function* (): AsyncGenerator<bigint> {
             while (true) {
                 const value = await doNextValue();
                 if (value.done) break;
                 yield value.value;
             }
         },
-        next: async (): Promise<IteratorResult<string>> => {
+        next: async (): Promise<IteratorResult<bigint>> => {
             return await doNextValue();
         },
     };
 
-    const doNextValue = async (): Promise<IteratorResult<string>> => {
+    const doNextValue = async (): Promise<IteratorResult<bigint>> => {
         const value = generator.next();
         if (value.done) {
             return { done: true, value: undefined };
@@ -491,40 +491,39 @@ export const Values = async (
         return { done: false, value: value.value };
     };
 
-    return Object.assign(asyncIterator, { name: name });
+    return Object.assign(asyncIterator, { name: name, precision: precision });
 };
 
 export const inverse = async (
-    xSetter: VariableSetter,
-    yGetter: () => Promise<bigint>,
     y: bigint,
-    tolerance: bigint = 1n,
-): Promise<number | undefined> => {
-    let lowerBound = parseEther('1050');
-    let upperBound = parseEther('10000');
-
+    yGetter: () => Promise<bigint>,
+    xSetter: VariableSetter,
+    xLowerBound: bigint,
+    xUpperBound: bigint,
+    xTolerance: bigint = 1n,
+): Promise<bigint | undefined> => {
     const f = async (x: bigint) => {
-        await xSetter(formatEther(x)); // TODO: should be a string before it gets here
+        await xSetter(x);
         return yGetter();
     };
 
     // Ensure that y is within the range of the function
-    if ((await f(lowerBound)) > y || (await f(upperBound)) < y) {
+    if ((await f(xLowerBound)) > y || (await f(xUpperBound)) < y) {
         return undefined;
     }
 
-    while (upperBound - lowerBound > tolerance) {
-        const midPoint = (lowerBound + upperBound) / 2n;
+    while (xUpperBound - xLowerBound > xTolerance) {
+        const midPoint = (xLowerBound + xUpperBound) / 2n;
         const midValue = await f(midPoint);
 
         if (midValue < y) {
-            lowerBound = midPoint;
+            xLowerBound = midPoint;
         } else {
-            upperBound = midPoint;
+            xUpperBound = midPoint;
         }
     }
     // Return the midpoint as an approximation of the inverse
-    return Number(formatEther((lowerBound + upperBound) / 2n));
+    return (xLowerBound + xUpperBound) / 2n;
 };
 
 export const delve = async (valuec?: VariableCalculator): Promise<void> => {
@@ -629,7 +628,7 @@ export const delvePlot = async (variable: VariableCalculator, dependents: Measur
         const measurements = await calculateMeasures(dependents);
         data.push(
             [
-                value,
+                formatEther(value),
                 ...measurements.map((cm) =>
                     formatFromConfig(cm)
                         .measurements.map((m: any) => m.value || m.error)

@@ -55,7 +55,7 @@ export type ConfigFormatMatch = {
 
 export type ConfigFormatApply = {
     unit?: string | number; // supports "eth", "wei", or precision digits
-    decimals?: number; // number of significant decimals, after the point - use this as it works for differences too
+    precision?: number; // number of significant decimals, after the point - negative for before the point
 };
 
 export type ConfigFormat = ConfigFormatMatch & ConfigFormatApply;
@@ -107,7 +107,7 @@ export type Config = {
 };
 
 const sortFormats = (formats: ConfigFormat[]): any => {
-    // put any with decimals before any with units
+    // put any with precision before any with units
     // those with both contract and name come first
     // second are those with one of contract and name, retaining the same order as given
     // last are those with no contract and name
@@ -119,10 +119,10 @@ const sortFormats = (formats: ConfigFormat[]): any => {
             .sort((a, b) => {
                 const valueof = (x: ConfigFormat): number => {
                     let value = 0;
-                    // must do "no format" before format, then do .unit before .decimals
-                    if (!x.unit && !x.decimals) value += 3000;
-                    if (x.unit) value += 2000; // do .unit befoe .decimals
-                    if (x.decimals) value += 1000; // do .unit befoe .decimals
+                    // must do "no format" before format, then do .unit before .precision
+                    if (!x.unit && !x.precision) value += 3000;
+                    if (x.unit) value += 2000; // do .unit befoe .precision
+                    if (x.precision) value += 1000; // do .unit befoe .precision
                     // then do it in order of matches against .contract/.name and then .type
                     if (x.contract) value += 100;
                     if (x.measurement) value += 100;
