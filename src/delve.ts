@@ -1,5 +1,5 @@
 import { contracts, measures, measuresOnAddress, nodes, users } from './graph';
-import { ContractTransactionResponse, MaxInt256, formatEther, formatUnits } from 'ethers';
+import { ContractTransactionResponse, MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
 import { ConfigFormatApply, eatFileName, getConfig, parseArg, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
 import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
@@ -448,6 +448,7 @@ const next = async (valuec?: VariableCalculator): Promise<Variable | undefined> 
     }
     return undefined;
 };
+export type VariableSetter = (value: string) => Promise<void>;
 
 export function* valuesStepped(start: number, finish: number, step: number = 1): Generator<string> {
     for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
@@ -466,7 +467,7 @@ export function* valuesArray(values: number[]): Generator<string> {
 export const Values = async (
     name: string,
     generator: Generator<string>,
-    doFunc: (value: string) => Promise<void>,
+    doFunc: VariableSetter,
 ): Promise<VariableCalculator> => {
     const asyncIterator: UnnamedVariableCalculator = {
         [Symbol.asyncIterator]: async function* (): AsyncGenerator<string> {
@@ -491,6 +492,39 @@ export const Values = async (
     };
 
     return Object.assign(asyncIterator, { name: name });
+};
+
+export const inverse = async (
+    xSetter: VariableSetter,
+    yGetter: () => Promise<bigint>,
+    y: bigint,
+    tolerance: bigint = 1n,
+): Promise<number | undefined> => {
+    let lowerBound = parseEther('1050');
+    let upperBound = parseEther('10000');
+
+    const f = async (x: bigint) => {
+        await xSetter(formatEther(x)); // TODO: should be a string before it gets here
+        return yGetter();
+    };
+
+    // Ensure that y is within the range of the function
+    if ((await f(lowerBound)) > y || (await f(upperBound)) < y) {
+        return undefined;
+    }
+
+    while (upperBound - lowerBound > tolerance) {
+        const midPoint = (lowerBound + upperBound) / 2n;
+        const midValue = await f(midPoint);
+
+        if (midValue < y) {
+            lowerBound = midPoint;
+        } else {
+            upperBound = midPoint;
+        }
+    }
+    // Return the midpoint as an approximation of the inverse
+    return Number(formatEther((lowerBound + upperBound) / 2n));
 };
 
 export const delve = async (valuec?: VariableCalculator): Promise<void> => {
