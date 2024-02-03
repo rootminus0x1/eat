@@ -294,6 +294,12 @@ export class BlockchainAddress {
         });
     };
 
+    public getSourceCode = async (): Promise<string | undefined> => {
+        const info = await this.info;
+        // get source, handling proxies
+        return info.implementationContractInfo?.sourceCode?.SourceCode || info.contractInfo?.sourceCode?.SourceCode;
+    };
+
     public getProxyContract = async (signer?: SignerWithAddress): Promise<Contract | null> => {
         const info = await this.info;
         const abi = info.contractInfo?.sourceCode?.ABI;

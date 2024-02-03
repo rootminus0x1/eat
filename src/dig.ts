@@ -5,6 +5,8 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
+const sourceDir = './eat-source';
+
 import { BlockchainAddress, addTokenToWhale, getOwnerSigner, getSigner, whale } from './Blockchain';
 import {
     Link,
@@ -18,7 +20,7 @@ import {
     nodes,
     users,
 } from './graph';
-import { getConfig, parseArg, writeEatFile } from './config';
+import { getConfig, parseArg, writeEatFile, writeFile } from './config';
 import { mermaid } from './mermaid';
 
 export const dig = async () => {
@@ -104,6 +106,35 @@ export const dig = async () => {
         const contract = await node.getContract();
         if (contract) {
             contracts[node.name] = Object.assign(contract, { ownerSigner: await getOwnerSigner(node) });
+            // write out source file(s)
+            // TODO: one file per contract type?
+            const sourceCodeText = await node.getSourceCode();
+            // TODO: handle vyper code
+            if (sourceCodeText !== undefined) {
+                const dir = `${sourceDir}/${getConfig().configName}/${node.name}`;
+                if (sourceCodeText.length == 0 || sourceCodeText[0] !== '{') {
+                    // it's text (some older contracts are this)
+                    // handle vyper & solidity code
+                    let extension = '.txt';
+                    if (sourceCodeText.match(/(^|\n)\@external\s\n/)) {
+                        extension = '.vy';
+                    } else {
+                        extension = '.sol';
+                    }
+                    writeFile(`${dir}${extension}`, sourceCodeText);
+                } else {
+                    // else it's probably json
+                    let json = undefined;
+                    try {
+                        json = JSON.parse(sourceCodeText.slice(1, -1)); // remove spurious { & }
+                    } catch (e: any) {
+                        console.log(`error in ${node.name} source code: ${e}`);
+                    }
+                    Object.entries(json.sources).forEach(([filePath, file]) => {
+                        writeFile(`${dir}/${filePath}`, (file as any).content);
+                    });
+                }
+            }
         } else {
             users[node.name] = await ethers.getImpersonatedSigner(address);
         }

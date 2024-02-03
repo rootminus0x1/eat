@@ -6,6 +6,7 @@ node_modules/
 # cache files
 cache/
 eat-cache/
+eat-source/
 
 # uninteresting generated files
 test/**/*.png

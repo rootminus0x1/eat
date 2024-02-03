@@ -7,8 +7,11 @@ import path from 'path';
 
 export type ConfigItem = { name: string; config: Config };
 
-export const ensureDirectory = (dir: string) => {
-    // ensure the cache directory exists
+const sourceDir = './eat-source';
+
+export const ensureDirectory = (filePath: string) => {
+    // ensure the directory exists
+    const dir = path.dirname(filePath);
     try {
         // Check if the directory already exists
         fs.accessSync(dir);
@@ -23,14 +26,18 @@ export const ensureDirectory = (dir: string) => {
     }
 };
 
+export const writeFile = (filePath: string, results: string): void => {
+    console.log(`   writing ${filePath}`);
+    ensureDirectory(filePath);
+    fs.writeFileSync(filePath, results, { encoding: 'utf-8' });
+};
+
 export const eatFileName = (name: string): string => {
     return getConfig().configName + '.' + name;
 };
 
 export const writeEatFile = (name: string, results: string): void => {
-    const outputFileName = eatFileName(name);
-    console.log(`   writing ${outputFileName}`);
-    fs.writeFileSync(getConfig().outputFileRoot + outputFileName, results, { encoding: 'utf-8' });
+    writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
 
 type Formatter = (value: any) => any;
@@ -83,6 +90,7 @@ export type Config = {
     configName: string;
     configFilePath: string;
     outputFileRoot: string;
+    sourceCodeRoot: string;
 
     // blockchain setup
     // TODO: support any of the 3 ways to specify a block number and generate the other two
@@ -207,10 +215,10 @@ export const getConfig = (): Config => {
         merge(config, loadYaml(configFilePath));
 
         // finally, finally, add additional fields
-        config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
-        ensureDirectory(config.outputFileRoot);
         config.configFilePath = configFilePath;
         config.configName = configName;
+        config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
+        config.sourceCodeRoot = `contacts/`;
 
         // make sure more specific formats take precedence over less specific
         if (config.format) config.format = sortFormats(config.format);
