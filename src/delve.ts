@@ -435,6 +435,87 @@ const formatFromConfig = (address: any): any => {
 
 ////////////////////////////////////////////////////////////////////////
 // delve
+// user events
+type UserEvent = {
+    name: string;
+    user: string;
+    contract: string;
+    function: string;
+    args: (string | bigint)[];
+};
+type UserEventResult = {
+    name: string;
+} & Partial<{ error: string }> &
+    Partial<{ gas: bigint }>;
+
+// market events
+type MarketEvent = {
+    name: string;
+    precision?: number;
+    value: bigint;
+    setTheMarket: (value: bigint) => Promise<void>;
+};
+type MarketEventResult = {
+    name: string;
+    precision?: number;
+    value: bigint;
+};
+
+type Event = Partial<UserEvent> & Partial<MarketEvent>;
+type EventResult = Partial<UserEventResult> & Partial<MarketEventResult>;
+
+export const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResult>> => {
+    const asyncIterator: AsyncIterableIterator<EventResult> = {
+        [Symbol.asyncIterator]: async function* (): AsyncGenerator<EventResult> {
+            while (true) {
+                const value = await doNextValue();
+                if (value.done) break;
+                yield value.value;
+            }
+        },
+        next: async (): Promise<IteratorResult<EventResult>> => {
+            return await doNextValue();
+        },
+    };
+
+    let nextEvent = 0;
+    const doNextValue = async (): Promise<IteratorResult<EventResult>> => {
+        // get the event from the list
+        if (nextEvent >= events.length) return { value: undefined, done: true };
+        const event = events[nextEvent++];
+        // what type of event
+        if (event.setTheMarket && event.value) {
+            // it's a market event
+            event.setTheMarket(event.value);
+            return { value: { name: event.name, precision: event.precision, value: event.value }, done: false };
+        }
+        if (
+            event.user !== undefined &&
+            event.contract !== undefined &&
+            event.function !== undefined &&
+            event.args !== undefined
+        ) {
+            const userEvent: UserEvent = event as UserEvent;
+            // default user event function
+            const action: ActionFunction = async () => {
+                const args = userEvent.args.map((a) => parseArg(a, users, contracts));
+                return contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
+            };
+            let result: UserEventResult = { name: userEvent.name };
+            // execute action
+            try {
+                const tx = await action();
+                const receipt = await tx.wait();
+                result.gas = receipt ? receipt.gasUsed : MaxInt256;
+            } catch (e: any) {
+                result.error = e.message; // failure
+            }
+            return { value: result, done: false };
+        }
+        return { done: true, value: undefined };
+    };
+    return asyncIterator;
+};
 
 type UnnamedVariableCalculator = AsyncIterableIterator<bigint>;
 export type VariableCalculator = UnnamedVariableCalculator & { name: string; precision: number };
@@ -524,6 +605,32 @@ export const inverse = async (
     }
     // Return the midpoint as an approximation of the inverse
     return (xLowerBound + xUpperBound) / 2n;
+};
+
+export const delveSimulation = async (events: Event[]): Promise<void> => {
+    // This executes the given events one by one in order
+    // and saves all the associated files
+    const width = (events.length - 1).toString().length;
+
+    const baseMeasurements = await calculateMeasures();
+    writeYaml(`${'-'.padStart(width, '-')}.measures.yml`, baseMeasurements, formatFromConfig);
+
+    let i = 0;
+    for await (const event of await Events(events)) {
+        // the event has happened
+
+        // do the post action measures
+        const postMeasurements = await calculateMeasures();
+        // postMeasurements.unshift(event);
+        writeYaml(
+            `${i.toString().padStart(width, '0')}.${event.name}${
+                event.value ? '=' + formatEther(event.value) : ''
+            }.measures.yml`,
+            postMeasurements,
+            formatFromConfig,
+        );
+        i++;
+    }
 };
 
 export const delve = async (valuec?: VariableCalculator): Promise<void> => {
