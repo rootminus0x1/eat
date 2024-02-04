@@ -24,6 +24,7 @@ import { getConfig, parseArg, writeEatFile, writeFile } from './config';
 import { mermaid } from './mermaid';
 
 export const dig = async () => {
+    console.log('digging...');
     const done = new Set<string>(); // ensure addresses are only visited once
     const addresses = [...(getConfig().root || getConfig().leaf)]; // make a copy as we are changing it
     const leafAddresses = getConfig().leaf;
@@ -191,6 +192,7 @@ export const dig = async () => {
         }
     }
     if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
+    console.log('digging...done.');
 };
 
 export const digOne = (address: string): BlockchainAddress | null => {

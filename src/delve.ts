@@ -576,6 +576,7 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
         // get the event from the list
         if (nextEvent >= events.length) return { value: undefined, done: true };
         const event = events[nextEvent++];
+        console.log(`   event ${event.name} ${event.value || ''}`);
         // what type of event
         if (event.setMarket && event.value) {
             // it's a market event
@@ -650,7 +651,7 @@ const delveSimulation = async (stack: string, simulation: Event[] = [], context?
     const baseMeasurements = await calculateMeasures();
     if (context) baseMeasurements.unshift(context);
 
-    const index = width ? [`'-'.padStart(width, '-')`] : [];
+    const index = width ? ['-'.padStart(width, '-')] : [];
     // TODO: roll all file saving into a single place
     const baseFileName = [...fileprefix, ...index, ...(width ? ['base'] : [])];
     writeMeasures(baseFileName, baseMeasurements);
@@ -680,12 +681,11 @@ const delveSimulation = async (stack: string, simulation: Event[] = [], context?
 
 // do each event and after it, do each simulation then reset the blockchain before the next event
 export const delve = async (stack: string, events: Event[] = [], simulation: Event[] = []): Promise<void> => {
-    if (events.length + simulation.length == 0) {
-        await delveSimulation(stack);
+    console.log(`delving(${stack})...`);
+    if (events.length == 0) {
+        await delveSimulation(stack, simulation);
     } else {
-        const snapshot = events.length ? await takeSnapshot() : undefined; // the state of the world before
-
-        // TODO: what if there are no events
+        const snapshot = await takeSnapshot(); // the state of the world before
         // do each event
         for await (const event of await Events(events)) {
             // the event is done
@@ -694,6 +694,7 @@ export const delve = async (stack: string, events: Event[] = [], simulation: Eve
             await snapshot!.restore();
         }
     }
+    console.log(`delving(${stack})...done.`);
 };
 
 export const delvePlot = async (
@@ -703,6 +704,7 @@ export const delvePlot = async (
     dependents2?: MeasurementsMatch[],
     y2label?: string,
 ): Promise<void> => {
+    console.log('delve plotting...');
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
     const eventName = [...events.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
@@ -775,4 +777,5 @@ set y2tics
 
     script += 'plot ' + plots.join(',\\\n     ');
     writeEatFile('gnuplot-script.gp', script);
+    console.log('delve plotting...done.');
 };
