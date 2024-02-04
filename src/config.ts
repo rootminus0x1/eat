@@ -27,7 +27,7 @@ export const ensureDirectory = (filePath: string) => {
 };
 
 export const writeFile = (filePath: string, results: string): void => {
-    console.log(`   writing ${filePath}`);
+    // console.log(`   writing ${filePath}`);
     ensureDirectory(filePath);
     fs.writeFileSync(filePath, results, { encoding: 'utf-8' });
 };
@@ -37,6 +37,7 @@ export const eatFileName = (name: string): string => {
 };
 
 export const writeEatFile = (name: string, results: string): void => {
+    // console.log(`   writing ${eatFileName(name)}`);
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
 
@@ -49,6 +50,7 @@ const removeInvalidYamlTypes: Formatter = (value: any): any => {
 
 export const writeYaml = (name: string, results: any, formatter?: Formatter): void => {
     if (formatter) results = lodash.cloneDeepWith(results, formatter);
+    console.log(`   writing ${getConfig().outputFileRoot + eatFileName(name)}`);
     writeEatFile(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
 };
 

@@ -58,30 +58,57 @@ export type Measurement = {
     error?: string;
 };
 
-export type Variable = {
-    name: string;
-    value: string;
-};
-
-export type Action = {
+// user events
+type UserEvent = {
     name: string;
     user: string;
     contract: string;
     function: string;
-    args: string;
-    gas?: bigint;
-    error?: string;
+    args: (string | bigint)[];
 };
+type UserEventResult = {
+    name: string;
+    user: string;
+    contract: string;
+    function: string;
+    args: (string | bigint)[];
+} & Partial<{ error: string }> &
+    Partial<{ gas: bigint }>;
+
+// market events
+export type MarketEventType = {
+    name: string;
+    precision?: number;
+    setMarket: (value: bigint) => Promise<void>;
+};
+type MarketEvent = MarketEventType & {
+    value: bigint;
+};
+type MarketEventResult = {
+    name: string;
+    precision?: number;
+    value: bigint;
+};
+
+type Event = Partial<UserEvent> & Partial<MarketEvent>;
+type EventResult = Partial<UserEventResult> & Partial<MarketEventResult>;
+
+export function marketEvents(type: MarketEventType, start: bigint, finish: bigint, step: bigint = 1n): MarketEvent[] {
+    const result: MarketEvent[] = [];
+    for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
+        result.push(Object.assign({ value: i }, type));
+    }
+    return result;
+}
 
 export type ContractMeasurements = {
     address: string;
     name: string; // node name - this is the contract
-    // TODO: contract is ambiguous - is it the contract or the contract type
     contractType: string; // contract nameish
     measurements: Measurement[];
-} & Partial<Action>;
+};
 
-export type Measurements = (Partial<Variable> & Partial<Action> & Partial<ContractMeasurements>)[];
+export type Measurements = (Partial<Event> & Partial<ContractMeasurements>)[];
 
 ////////////////////////////////////////////////////////////////////////
 // calculateMeasures
@@ -97,15 +124,13 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
 
     const sortedNodes = sort(nodes, (v) => v.name);
     for (const [address, node] of sortedNodes) {
-        let onlyDoTheseForContract: string[] = [];
-        if (onlyDoThese) {
-            for (const m of onlyDoThese)
-                if (m.contract === node.name) {
-                    onlyDoTheseForContract = m.functions;
-                    break;
-                }
-            if (onlyDoTheseForContract.length === 0) continue; // skip this contract
-        }
+        let onlyDoTheseForContract = onlyDoThese?.reduce((allFns: string[], match: MeasurementsMatch) => {
+            if (match.contract === node.name) {
+                allFns.push(...match.functions);
+            }
+            return allFns;
+        }, [] as string[]);
+        if (onlyDoThese && onlyDoTheseForContract && onlyDoTheseForContract.length == 0) continue; // nothing to do for this contract
         //console.log(`measuring node ${node.name}`);
         let values: Measurement[] = []; // values for this graph node
         const measuresForAddress = measures.get(address);
@@ -113,7 +138,13 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
             // only do measurments for addresses with a name (they're users otherwise)
             for (const measure of measuresForAddress.filter((m) => m.name)) {
                 // skip if it has not been requested
-                if (onlyDoTheseForContract.length > 0 && !onlyDoTheseForContract.includes(measure.name)) continue;
+                if (
+                    onlyDoThese &&
+                    onlyDoTheseForContract &&
+                    onlyDoTheseForContract.length > 0 &&
+                    !onlyDoTheseForContract.includes(measure.name)
+                )
+                    continue;
                 try {
                     const value = await measure.calculation();
                     values.push({ name: measure.name, type: measure.type, value: value });
@@ -164,7 +195,7 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
 };
 
 ////////////////////////////////////////////////////////////////////////
-// calculateMeasures
+// calculateSlimMeasures
 export const calculateSlimMeasures = async (baseMeasurements: Measurements): Promise<Measurements> => {
     const result: Measurements = [];
 
@@ -211,7 +242,6 @@ export const calculateDeltaMeasures = (
         if (
             actionedContract.address !== baseContract.address ||
             actionedContract.name !== baseContract.name ||
-            actionedContract.contract !== baseContract.contract ||
             actionedContract.contractType !== baseContract.contractType
         )
             throw Error(
@@ -435,88 +465,7 @@ const formatFromConfig = (address: any): any => {
 
 ////////////////////////////////////////////////////////////////////////
 // delve
-// user events
-type UserEvent = {
-    name: string;
-    user: string;
-    contract: string;
-    function: string;
-    args: (string | bigint)[];
-};
-type UserEventResult = {
-    name: string;
-} & Partial<{ error: string }> &
-    Partial<{ gas: bigint }>;
-
-// market events
-type MarketEvent = {
-    name: string;
-    precision?: number;
-    value: bigint;
-    setTheMarket: (value: bigint) => Promise<void>;
-};
-type MarketEventResult = {
-    name: string;
-    precision?: number;
-    value: bigint;
-};
-
-type Event = Partial<UserEvent> & Partial<MarketEvent>;
-type EventResult = Partial<UserEventResult> & Partial<MarketEventResult>;
-
-export const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResult>> => {
-    const asyncIterator: AsyncIterableIterator<EventResult> = {
-        [Symbol.asyncIterator]: async function* (): AsyncGenerator<EventResult> {
-            while (true) {
-                const value = await doNextValue();
-                if (value.done) break;
-                yield value.value;
-            }
-        },
-        next: async (): Promise<IteratorResult<EventResult>> => {
-            return await doNextValue();
-        },
-    };
-
-    let nextEvent = 0;
-    const doNextValue = async (): Promise<IteratorResult<EventResult>> => {
-        // get the event from the list
-        if (nextEvent >= events.length) return { value: undefined, done: true };
-        const event = events[nextEvent++];
-        // what type of event
-        if (event.setTheMarket && event.value) {
-            // it's a market event
-            event.setTheMarket(event.value);
-            return { value: { name: event.name, precision: event.precision, value: event.value }, done: false };
-        }
-        if (
-            event.user !== undefined &&
-            event.contract !== undefined &&
-            event.function !== undefined &&
-            event.args !== undefined
-        ) {
-            const userEvent: UserEvent = event as UserEvent;
-            // default user event function
-            const action: ActionFunction = async () => {
-                const args = userEvent.args.map((a) => parseArg(a, users, contracts));
-                return contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
-            };
-            let result: UserEventResult = { name: userEvent.name };
-            // execute action
-            try {
-                const tx = await action();
-                const receipt = await tx.wait();
-                result.gas = receipt ? receipt.gasUsed : MaxInt256;
-            } catch (e: any) {
-                result.error = e.message; // failure
-            }
-            return { value: result, done: false };
-        }
-        return { done: true, value: undefined };
-    };
-    return asyncIterator;
-};
-
+/*
 type UnnamedVariableCalculator = AsyncIterableIterator<bigint>;
 export type VariableCalculator = UnnamedVariableCalculator & { name: string; precision: number };
 const next = async (valuec?: VariableCalculator): Promise<Variable | undefined> => {
@@ -574,11 +523,12 @@ export const Values = async (
 
     return Object.assign(asyncIterator, { name: name, precision: precision });
 };
+*/
 
 export const inverse = async (
     y: bigint,
     yGetter: () => Promise<bigint>,
-    xSetter: VariableSetter,
+    xSetter: (value: bigint) => Promise<void>,
     xLowerBound: bigint,
     xUpperBound: bigint,
     xTolerance: bigint = 1n,
@@ -607,161 +557,178 @@ export const inverse = async (
     return (xLowerBound + xUpperBound) / 2n;
 };
 
-export const delveSimulation = async (events: Event[]): Promise<void> => {
+const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResult>> => {
+    const asyncIterator: AsyncIterableIterator<EventResult> = {
+        [Symbol.asyncIterator]: async function* (): AsyncGenerator<EventResult> {
+            while (true) {
+                const value = await doNextValue();
+                if (value.done) break;
+                yield value.value;
+            }
+        },
+        next: async (): Promise<IteratorResult<EventResult>> => {
+            return await doNextValue();
+        },
+    };
+
+    let nextEvent = 0;
+    const doNextValue = async (): Promise<IteratorResult<EventResult>> => {
+        // get the event from the list
+        if (nextEvent >= events.length) return { value: undefined, done: true };
+        const event = events[nextEvent++];
+        // what type of event
+        if (event.setMarket && event.value) {
+            // it's a market event
+            await event.setMarket(event.value);
+            return {
+                value: {
+                    name: `${event.name}=${formatEther(event.value)}`,
+                    precision: event.precision,
+                    value: event.value,
+                },
+                done: false,
+            };
+        }
+        if (
+            event.user !== undefined &&
+            event.contract !== undefined &&
+            event.function !== undefined &&
+            event.args !== undefined
+        ) {
+            const userEvent: UserEvent = event as UserEvent;
+            // default user event function
+            const action: ActionFunction = async () => {
+                const args = userEvent.args.map((a) => parseArg(a, users, contracts));
+                return contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
+            };
+            let result: UserEventResult = userEvent;
+            // execute action
+            try {
+                const tx = await action();
+                const receipt = await tx.wait();
+                result.gas = receipt ? receipt.gasUsed : MaxInt256;
+            } catch (e: any) {
+                result.error = e.message; // failure
+            }
+            return { value: result, done: false };
+        }
+        return { done: true, value: undefined };
+    };
+    return asyncIterator;
+};
+
+/*  two ways of running a sequence of events:
+    simulation:
+        here the events are run one after the other, with no resetting.
+        files generated are:
+            base
+            after event0 & delta to base
+            after event(0 & 1) & delta to event0
+            :
+    individual
+        here the events are run one after the other but resetting the blockchain after each one
+        files generated are
+            base
+            after event0 & delta to base
+            after event1 & delta to base
+            :
+        this is similar (but not identical because base need only be generated once) to a series of simulations with a single event
+*/
+
+const writeMeasures = (name: string[], measurements: Measurements, type?: string) => {
+    const fullName = [...name, (type && type.length ? type + '-' : '') + 'measures.yml'];
+    writeYaml(fullName.join('.'), measurements, formatFromConfig);
+};
+
+const delveSimulation = async (stack: string, simulation: Event[] = [], context?: Event): Promise<void> => {
     // This executes the given events one by one in order
     // and saves all the associated files
-    const width = (events.length - 1).toString().length;
+    const fileprefix = context && context.name && context.name.length ? [context.name] : [];
+
+    const width = simulation.length > 0 ? (simulation.length - 1).toString().length : 0;
 
     const baseMeasurements = await calculateMeasures();
-    writeYaml(`${'-'.padStart(width, '-')}.measures.yml`, baseMeasurements, formatFromConfig);
+    if (context) baseMeasurements.unshift(context);
+
+    const index = width ? [`'-'.padStart(width, '-')`] : [];
+    // TODO: roll all file saving into a single place
+    const baseFileName = [...fileprefix, ...index, ...(width ? ['base'] : [])];
+    writeMeasures(baseFileName, baseMeasurements);
+    writeMeasures(baseFileName, await calculateSlimMeasures(baseMeasurements), 'slim');
 
     let i = 0;
-    for await (const event of await Events(events)) {
+    for await (const event of await Events(simulation)) {
         // the event has happened
 
         // do the post action measures
         const postMeasurements = await calculateMeasures();
-        // postMeasurements.unshift(event);
-        writeYaml(
-            `${i.toString().padStart(width, '0')}.${event.name}${
-                event.value ? '=' + formatEther(event.value) : ''
-            }.measures.yml`,
-            postMeasurements,
-            formatFromConfig,
-        );
+        const filename = [...fileprefix, i.toString().padStart(width, '0'), event.name!];
+        // TODO: make sure the event info is in the file, slim & delta file
+        postMeasurements.unshift(event);
+        if (context) baseMeasurements.unshift(context);
+
+        writeMeasures(filename, postMeasurements);
+        writeMeasures(filename, await calculateSlimMeasures(postMeasurements), 'slim');
+
+        // do the delta - should deltas have the original value as well as the delta?
+        const deltaMeasurements = calculateDeltaMeasures(baseMeasurements, postMeasurements);
+        writeMeasures(filename, deltaMeasurements, 'delta');
+
         i++;
     }
 };
 
-export const delve = async (valuec?: VariableCalculator): Promise<void> => {
-    // This executes the configured actions one by one in the original set-up
-    // and saves all the associated files
+// do each event and after it, do each simulation then reset the blockchain before the next event
+export const delve = async (stack: string, events: Event[] = [], simulation: Event[] = []): Promise<void> => {
+    if (events.length + simulation.length == 0) {
+        await delveSimulation(stack);
+    } else {
+        const snapshot = events.length ? await takeSnapshot() : undefined; // the state of the world before
 
-    let snapshot = await takeSnapshot(); // the state of the world before
-
-    const value = await next(valuec);
-
-    const variablePrefix = value ? `${value.name}=${value.value}.` : '';
-    // if (value) console.log(`      ${variablePrefix}`);
-
-    // TODO: make this a config
-    const storeMeasurements: boolean = true;
-
-    const baseMeasurements = await calculateMeasures();
-
-    if (value) {
-        baseMeasurements.unshift(value);
-    }
-
-    if (storeMeasurements) {
-        writeYaml(`${variablePrefix}measures.yml`, baseMeasurements, formatFromConfig);
-        writeYaml(
-            `${variablePrefix}slim-measures.yml`,
-            await calculateSlimMeasures(baseMeasurements),
-            formatFromConfig,
-        );
-    }
-
-    let i = 0;
-    for (const configAction of getConfig().actions ?? []) {
-        const action: ActionFunction = async () => {
-            const args = configAction.args.map((a) => parseArg(a, users, contracts));
-            return contracts[configAction.contract].connect(users[configAction.user])[configAction.function](...args);
-        };
-
-        // execute action
-        let error: string | undefined = undefined;
-        let gas: bigint | undefined = undefined;
-        try {
-            let tx = await action();
-            let receipt = await tx.wait();
-            gas = receipt ? receipt.gasUsed : MaxInt256;
-        } catch (e: any) {
-            error = e.message; // failure
+        // TODO: what if there are no events
+        // do each event
+        for await (const event of await Events(events)) {
+            // the event is done
+            // TODO: not just a string, but the value to be unshifted into measures before saving
+            await delveSimulation(stack, simulation, event);
+            await snapshot!.restore();
         }
-
-        const actionName = `${configAction.contract}-${configAction.function}`;
-
-        // do the post action measures
-        const actionedMeasurements = await calculateMeasures();
-        actionedMeasurements.unshift({
-            name: actionName,
-            user: configAction.user,
-            contract: configAction.contract,
-            function: configAction.function,
-            args: JSON.stringify(configAction.args),
-            error: error,
-            gas: gas,
-        });
-        if (value) {
-            actionedMeasurements.unshift(value);
-        }
-        const prefix = `${variablePrefix}${actionName}.`;
-
-        if (storeMeasurements) {
-            writeYaml(`${prefix}measures.yml`, actionedMeasurements, formatFromConfig);
-            writeYaml(
-                `${prefix}slim-measures.yml`,
-                await calculateSlimMeasures(actionedMeasurements),
-                formatFromConfig,
-            );
-
-            // difference the measures & write the results
-            writeYaml(
-                `${prefix}delta-measures.yml`,
-                calculateDeltaMeasures(baseMeasurements!, actionedMeasurements),
-                formatFromConfig,
-            );
-        }
-
-        snapshot.restore();
     }
 };
 
-export const delvePlot = async (variable: VariableCalculator, dependents: MeasurementsMatch[]): Promise<void> => {
-    let snapshot = await takeSnapshot(); // the state of the world before
-
+export const delvePlot = async (
+    events: Event[],
+    dependents: MeasurementsMatch[],
+    ylabel: string,
+    dependents2?: MeasurementsMatch[],
+    y2label?: string,
+): Promise<void> => {
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
-    let names = [
-        variable.name,
-        ...dependents.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`)),
-    ];
+    const eventName = [...events.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
+    const fields = dependents.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`));
+    const fields2 = dependents2
+        ? dependents2.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`))
+        : [];
+    let names = [eventName, ...fields, ...fields2];
     let data: string[] = [];
 
-    for await (const value of variable) {
-        // get the dependents
-        // TODO: only get the ones needed (passed in as a parameter for this function)
-        const measurements = await calculateMeasures(dependents);
-        data.push(
-            [
-                formatEther(value),
-                ...measurements.map((cm) =>
-                    formatFromConfig(cm)
-                        .measurements.map((m: any) => m.value || m.error)
-                        .join(' '),
-                ),
-            ].join(' '),
-        );
-
-        snapshot.restore();
-    }
-    writeEatFile('gnuplot.dat', ['# ' + names.join(' '), ...data].join('\n'));
-    // first data item is a plot, rest are replots.
-    // TODO: need to decide what axis each is plotted against, or work it out automatically, high v low variance
-
-    // generate the script
-    const script = `datafile = "${eatFileName('gnuplot.dat')}"
+    let script = `datafile = "${eatFileName('gnuplot.dat')}"
 # set terminal pngcairo
 # set output "${eatFileName('gnuplot.png')}"
 set terminal svg
 # set output "${eatFileName('gnuplot.png')}"
-set xlabel "${variable.name}"
-set ylabel "${names[1]}" # TODO: this should be the units, not the name
+set xlabel "${eventName}"
+set ylabel "${ylabel}"
 set ytics nomirror
-set y2label "${names[2]}"
+`;
+    if (y2label || dependents2)
+        script += `
+set y2label "${y2label}"
 set y2tics
+`;
 
+    /*
 #stats datafile using 1 nooutput
 #min = STATS_min
 #max = STATS_max
@@ -779,10 +746,33 @@ set y2tics
 #max = STATS_max
 #range_extension = 0.2 * (max - min)
 #set y2range [min - range_extension : max + range_extension]
+*/
+    const snapshot = await takeSnapshot(); // the state of the world before
 
-plot datafile using 1:2 with lines title "${names[1]}",\
-     datafile using 1:3 with lines title "${names[2]}" axes x1y2
-`;
+    for await (const event of await Events(events)) {
+        // get the dependent values
+        const measurements = await calculateMeasures([...dependents, ...(dependents2 || [])]);
+        data.push(
+            [
+                formatEther(event.value || event.gas || 'nothing that looks like a value'),
+                ...measurements.map((cm) =>
+                    formatFromConfig(cm)
+                        .measurements.map((m: any) => m.value || m.error)
+                        .join(' '),
+                ),
+            ].join(' '),
+        );
+        await snapshot.restore();
+    }
+    writeEatFile('gnuplot.dat', ['# ' + names.join(' '), ...data].join('\n'));
 
+    let plots = [
+        ...fields.map((field, index) => `datafile using 1:${index + 2} with lines title "${field}"`),
+        ...fields2.map(
+            (field, index) => `datafile using 1:${index + 2 + fields.length} with lines title "${field}" axes x1y2,`,
+        ),
+    ];
+
+    script += 'plot ' + plots.join(',\\\n     ');
     writeEatFile('gnuplot-script.gp', script);
 };
