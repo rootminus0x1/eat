@@ -37,7 +37,7 @@ export const eatFileName = (name: string): string => {
 };
 
 export const writeEatFile = (name: string, results: string): void => {
-    // console.log(`   writing ${eatFileName(name)}`);
+    console.log(`   writing ${eatFileName(name)}`);
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
 
@@ -50,7 +50,7 @@ const removeInvalidYamlTypes: Formatter = (value: any): any => {
 
 export const writeYaml = (name: string, results: any, formatter?: Formatter): void => {
     if (formatter) results = lodash.cloneDeepWith(results, formatter);
-    console.log(`   writing ${getConfig().outputFileRoot + eatFileName(name)}`);
+    // console.log(`   writing ${getConfig().outputFileRoot + eatFileName(name)}`);
     writeEatFile(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
 };
 
@@ -69,13 +69,23 @@ export type ConfigFormatApply = {
 
 export type ConfigFormat = ConfigFormatMatch & ConfigFormatApply;
 
+type Arg = string | bigint;
 export type ConfigAction = {
     name: string;
     user: string;
     contract: string;
     function: string;
-    args: (string | bigint)[];
+    args: Arg[];
 };
+
+type ArgSubstitution = [number, Arg];
+function substituteArgs(action: ConfigAction, ...substitutions: ArgSubstitution[]): ConfigAction {
+    const newArgs = action.args ? [...action.args] : [];
+    substitutions.forEach(([index, value]) => {
+        newArgs[index] = value;
+    });
+    return { ...action, args: newArgs };
+}
 
 export type ConfigHolding = {
     contract: string;
@@ -146,21 +156,6 @@ const sortFormats = (formats: ConfigFormat[]): any => {
             // remove the indices
             .map((v) => v.format)
     );
-};
-
-export const parseArg = (configArg: any, users?: any, contracts?: any): string | bigint => {
-    let arg: any;
-    if (typeof configArg === 'bigint') {
-        arg = configArg;
-    } else if (typeof configArg === 'string') {
-        // contract or user or address or string or number
-        const match = configArg.match(/^\s*(\d+)\s*(\w+)\s*$/);
-        if (match && match.length === 3) arg = parseUnits(match[1], match[2]);
-        else if (users[configArg]) arg = users[configArg].address;
-        else if (contracts[configArg]) arg = contracts[configArg].address;
-    } else if (typeof configArg === 'number') arg = BigInt(configArg);
-    else arg = 0n;
-    return arg;
 };
 
 const getConfigName = (configFilePath: string) =>

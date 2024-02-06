@@ -1,6 +1,6 @@
-import { contracts, measures, measuresOnAddress, nodes, users } from './graph';
-import { ContractTransactionResponse, MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
-import { ConfigFormatApply, eatFileName, getConfig, parseArg, writeEatFile, writeYaml } from './config';
+import { contracts, measures, measuresOnAddress, nodes, users, parseArg, MeasurementResult } from './graph';
+import { MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
+import { ConfigFormatApply, eatFileName, getConfig, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
 import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 
@@ -38,22 +38,20 @@ export const addContract = async (
 };
 */
 
-type ActionFunction = () => Promise<ContractTransactionResponse>;
-
 export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
     return Array.from(unsorted.entries()).sort((a, b) =>
         field(a[1]).localeCompare(field(b[1]), 'en', { sensitivity: 'base' }),
     );
 };
 
-export type MeasurementValue = bigint | bigint[];
 export type Measurement = {
     name: string;
     type: string;
     target?: string;
     // value can hold a value or a delta value for comparisons
-    delta?: MeasurementValue;
-    value?: MeasurementValue;
+    delta?: MeasurementResult;
+    value?: MeasurementResult;
+    valueName?: string | string[]; // if value is an address
     // error can hold an error, a change in error message or indicate a change from a value to/from an error
     error?: string;
 };
@@ -74,6 +72,21 @@ type UserEventResult = {
     args: (string | bigint)[];
 } & Partial<{ error: string }> &
     Partial<{ gas: bigint }>;
+
+export const doUserEvent = async (userEvent: UserEvent) => {
+    const result: UserEventResult = userEvent;
+    try {
+        const args = userEvent.args.map((a) => parseArg(a));
+        const tx = await contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
+        // TODO: get the returned values out
+        // would be nice to capture any log events emitted too :-) see expect.to.emit
+        const receipt = await tx.wait();
+        result.gas = receipt ? receipt.gasUsed : MaxInt256;
+    } catch (e: any) {
+        result.error = e.message; // failure
+    }
+    return result;
+};
 
 // market events
 export type MarketEventType = {
@@ -143,14 +156,32 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
                     onlyDoTheseForContract &&
                     onlyDoTheseForContract.length > 0 &&
                     !onlyDoTheseForContract.includes(measure.name)
-                )
+                ) {
                     continue;
-                try {
-                    const value = await measure.calculation();
-                    values.push({ name: measure.name, type: measure.type, value: value });
-                } catch (e: any) {
-                    values.push({ name: measure.name, type: measure.type, error: e.message });
                 }
+                const result: Measurement = { name: measure.name, type: measure.type };
+                try {
+                    result.value = await measure.calculation();
+                    if (result.type === 'address') {
+                        result.valueName = nodes.get(result.value.toString())?.name;
+                    }
+                    if (result.type === 'address[]') {
+                        let anyNames = false;
+                        result.valueName = (result.value as MeasurementResult[]).map((v) => {
+                            let lookup: string | undefined = nodes.get(v.toString())?.name;
+                            if (lookup) {
+                                anyNames = true;
+                            } else {
+                                lookup = v.toString();
+                            }
+                            return lookup;
+                        });
+                        if (!anyNames) result.valueName = undefined; // don't just repeat the addresses
+                    }
+                } catch (e: any) {
+                    result.error = e.message;
+                }
+                values.push(result);
             }
         }
         if (!onlyDoThese) {
@@ -165,7 +196,7 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
                             values.push({
                                 name: measure.name,
                                 type: measure.type,
-                                target: targetNode.name,
+                                target: targetNode.name, // use the node name as user addresses may change run-to-run
                                 value: value,
                             });
                         } catch (e: any) {
@@ -396,6 +427,7 @@ const formatFromConfig = (address: any): any => {
                     let mergedFormat: ConfigFormatApply = {};
                     let donotformat = false;
                     for (const format of getConfig().format) {
+                        // TODO: make addresses, map on to contracts or users, not just for target fields
                         // TODO: could some things,
                         // like timestamps be represented as date/times
                         // or numbers
@@ -596,21 +628,7 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
             event.function !== undefined &&
             event.args !== undefined
         ) {
-            const userEvent: UserEvent = event as UserEvent;
-            // default user event function
-            const action: ActionFunction = async () => {
-                const args = userEvent.args.map((a) => parseArg(a, users, contracts));
-                return contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
-            };
-            let result: UserEventResult = userEvent;
-            // execute action
-            try {
-                const tx = await action();
-                const receipt = await tx.wait();
-                result.gas = receipt ? receipt.gasUsed : MaxInt256;
-            } catch (e: any) {
-                result.error = e.message; // failure
-            }
+            const result = await doUserEvent(event as UserEvent);
             return { value: result, done: false };
         }
         return { done: true, value: undefined };
