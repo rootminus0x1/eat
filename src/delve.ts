@@ -237,10 +237,21 @@ export const calculateSlimMeasures = async (baseMeasurements: Measurements): Pro
 
     for (const contract of baseMeasurements.filter((m) => m.measurements)) {
         const nonZero = (contract as ContractMeasurements).measurements.filter((measure) => {
-            if (measure.value)
-                if (lodash.isArray(measure.value)) return measure.value.length > 0;
-                else return true;
-            else return measure.error ? true : false;
+            if (measure.value !== undefined) {
+                if (lodash.isArray(measure.value)) {
+                    // non-empty array is counted as non-zero (who would return an array filled with zeros?)
+                    return measure.value.length > 0;
+                } else {
+                    // non-zero now depends on the type
+                    if (measure.type === 'address') {
+                        return (measure.value as string) !== '0x0000000000000000000000000000000000000000';
+                    } else {
+                        return (measure.value as bigint) !== 0n;
+                    }
+                }
+            } else {
+                return measure.error ? true : false;
+            }
         });
         if (nonZero.length > 0) {
             // copy top level stuff
