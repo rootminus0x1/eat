@@ -82,10 +82,10 @@ type UserEventResult = {
 } & Partial<{ error: string }> &
     Partial<{ gas: bigint }>;
 
-export const doUserEvent = async (userEvent: UserEvent) => {
+export const doUserEvent = async (userEvent: any) => {
     const result: UserEventResult = userEvent;
     try {
-        const args = userEvent.args.map((a) => parseArg(a));
+        const args = userEvent.args.map((a: any) => parseArg(a));
         const tx = await contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
         // TODO: get the returned values out
         // would be nice to capture any log events emitted too :-) see expect.to.emit
@@ -696,7 +696,7 @@ const delveSimulation = async (stack: string, simulation: Event[] = [], context?
     for await (const event of await Events(simulation)) {
         // the event has happened
 
-        // do the post action measures
+        // do the post userEvent measures
         const postMeasurements = await calculateMeasures();
         const filename = [...fileprefix, i.toString().padStart(width, '0'), event.name!];
         // TODO: make sure the event info is in the file, slim & delta file

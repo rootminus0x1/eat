@@ -1,13 +1,10 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml'; // config files are in yaml
 import lodash from 'lodash';
-import { parseUnits } from 'ethers';
 import yargs from 'yargs';
 import path from 'path';
 
 export type ConfigItem = { name: string; config: Config };
-
-const sourceDir = './eat-source';
 
 export const ensureDirectory = (filePath: string) => {
     // ensure the directory exists
@@ -70,7 +67,7 @@ export type ConfigFormatApply = {
 export type ConfigFormat = ConfigFormatMatch & ConfigFormatApply;
 
 type Arg = string | bigint;
-export type ConfigAction = {
+export type ConfigUserEvent = {
     name: string;
     user: string;
     contract: string;
@@ -79,12 +76,12 @@ export type ConfigAction = {
 };
 
 type ArgSubstitution = [number, Arg];
-function substituteArgs(action: ConfigAction, ...substitutions: ArgSubstitution[]): ConfigAction {
-    const newArgs = action.args ? [...action.args] : [];
+function substituteArgs(userEvent: ConfigUserEvent, ...substitutions: ArgSubstitution[]): ConfigUserEvent {
+    const newArgs = userEvent.args ? [...userEvent.args] : [];
     substitutions.forEach(([index, value]) => {
         newArgs[index] = value;
     });
-    return { ...action, args: newArgs };
+    return { ...userEvent, args: newArgs };
 }
 
 export type ConfigHolding = {
@@ -110,7 +107,7 @@ export type Config = {
     timestamp: number;
     datetime: string;
 
-    actions: ConfigAction[];
+    userEvents: ConfigUserEvent[];
     users: ConfigUser[];
 
     // where to look

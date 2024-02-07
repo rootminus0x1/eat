@@ -70,11 +70,29 @@ export async function deploy<T extends Contract>(
 
 */
 
+export const second = 1;
+export const minute = 60 * second;
+export const hour = 60 * minute;
+export const day = 24 * hour;
+export const week = 7 * day;
+
+export const currentTimeStamp = async (): Promise<number> => {
+    const actualBlockNumber = await ethers.provider.getBlockNumber();
+    const timestamp = (await ethers.provider.getBlock(actualBlockNumber))?.timestamp;
+    if (!timestamp) throw `unable to get the current block's timestamp: block ${actualBlockNumber}`;
+    return timestamp;
+};
+
+export const rollForward = async (by: number) => {
+    const current = await currentTimeStamp();
+    await ethers.provider.send('evm_setNextBlockTimestamp', [current + 86400]);
+};
+
 export const setupBlockchain = async (shout: boolean = false): Promise<void> => {
     // go to the block
     await reset(process.env.MAINNET_RPC_URL, getConfig().block);
     const actualBlockNumber = await ethers.provider.getBlockNumber();
-    getConfig().timestamp = (await ethers.provider.getBlock(actualBlockNumber))?.timestamp || 0;
+    getConfig().timestamp = await currentTimeStamp();
     getConfig().datetime = asDateString(getConfig().timestamp);
 
     // get the signers

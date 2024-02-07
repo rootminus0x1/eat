@@ -32,9 +32,10 @@ export const backLinks = new Map<string, Link[]>(); // reverse of above, to -> f
 export const measures = new Map<string, Measure[]>();
 export const measuresOnAddress = new Map<string, MeasureOnAddress[]>();
 
-// for use in actions
+// for use in code
 export const contracts: any = {};
 export const users: any = {};
+export const userEvents: any = {};
 
 export const parseArg = (configArg: any): string | bigint => {
     let arg: any;

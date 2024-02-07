@@ -6,4 +6,4 @@ export * from './datetime';
 export * from './dig';
 export * from './delve';
 export * from './coingecko';
-export { contracts } from './graph';
+export { contracts, users, userEvents } from './graph';

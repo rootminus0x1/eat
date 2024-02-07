@@ -19,6 +19,7 @@ import {
     measuresOnAddress,
     nodes,
     users,
+    userEvents,
     parseArg,
 } from './graph';
 import { getConfig, writeEatFile, writeFile } from './config';
@@ -173,9 +174,9 @@ export const dig = async () => {
                     throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
                 }
                 // find all the contracts this user interacts with and allow them to spend there
-                if (getConfig().actions) {
+                if (getConfig().userEvents) {
                     for (const contract of getConfig()
-                        .actions.filter((a) => a.user && a.user === userName)
+                        .userEvents.filter((a) => a.user && a.user === userName)
                         .map((a) => a.contract)) {
                         // allow the wallet to be spent
                         if (
@@ -192,6 +193,17 @@ export const dig = async () => {
             }
         }
     }
+    // set up the userEvents
+    if (getConfig().userEvents) {
+        getConfig().userEvents.forEach((ue) => {
+            // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
+            const copy = Object.assign({ ...ue });
+            console.log(`userEvent: ${ue.name}`);
+            userEvents[ue.name] = copy; // add do: doUserEvent(copy)
+            // userEvents.set(ue.name, copy);
+        });
+    }
+
     if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
     console.log('digging...done.');
 };

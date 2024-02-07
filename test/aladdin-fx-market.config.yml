@@ -23,7 +23,7 @@ users:
   - name: xMinter # user who mint/redeems xTokens
   - name: xHolderRedeemer # user who mint/redeems xTokens
 
-actions:
+userEvents:
   - user: fMinter
     contract: "Market"
     function: "mintFToken"
