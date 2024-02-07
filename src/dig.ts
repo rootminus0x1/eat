@@ -254,15 +254,15 @@ const digDeep = async (
                 const process: any[] = [];
                 if (!returnsSingle) {
                     // multiple outputs so have to extract the one in question - single outputs are already extracted
-                    process.push(async (result: any[]): Promise<any> => result[outputIndex]);
+                    process.push((result: any[]): any => result[outputIndex]);
                 }
                 if (returnsArray) {
                     if (returnsAddress) {
                         // translate addess to string
-                        process.push((result: any[]) => result.map((a: string) => a));
+                        process.push((result: any[]): string[] => result.map((a: string) => a));
                     } else {
                         // translate numbers to bigint
-                        process.push((result: any[]) => result.map((a: bigint) => a));
+                        process.push((result: any[]): bigint[] => result.map((a: bigint) => a));
                     }
                 }
                 // chain the call and processing

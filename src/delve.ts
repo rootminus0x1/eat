@@ -1,4 +1,13 @@
-import { contracts, measures, measuresOnAddress, nodes, users, parseArg, MeasurementResult } from './graph';
+import {
+    contracts,
+    measures,
+    measuresOnAddress,
+    nodes,
+    users,
+    parseArg,
+    MeasurementResult,
+    MeasurementValue,
+} from './graph';
 import { MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
 import { ConfigFormatApply, eatFileName, getConfig, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
@@ -167,7 +176,7 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
                     }
                     if (result.type === 'address[]') {
                         let anyNames = false;
-                        result.valueName = (result.value as MeasurementResult[]).map((v) => {
+                        result.valueName = (result.value as MeasurementValue[]).map((v) => {
                             let lookup: string | undefined = nodes.get(v.toString())?.name;
                             if (lookup) {
                                 anyNames = true;
@@ -191,26 +200,22 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
                 for (const [targetAddress, targetNode] of sortedNodes) {
                     if (targetAddress === address) continue; // skip self
                     for (const measure of measuresOnAddressForAddress) {
+                        const m: Measurement = {
+                            name: measure.name,
+                            type: measure.type,
+                            target: targetNode.name, // use the node name as user addresses may change run-to-run
+                        };
                         try {
-                            const value = await measure.calculation(targetAddress);
-                            values.push({
-                                name: measure.name,
-                                type: measure.type,
-                                target: targetNode.name, // use the node name as user addresses may change run-to-run
-                                value: value,
-                            });
+                            m.value = await measure.calculation(targetAddress);
                         } catch (e: any) {
-                            values.push({
-                                name: measure.name,
-                                type: measure.type,
-                                target: targetNode.name,
-                                error: e.message,
-                            });
+                            m.error = e.message;
                         }
+                        values.push(m);
                     }
                 }
             }
         }
+        // TODO: only save contract where it has measures?
         if (values.length > 0) {
             result.push({
                 address: address,
@@ -319,6 +324,7 @@ export const calculateDeltaMeasures = (
                 });
             } else {
                 // both values
+                // TODO: handle address comparisons
                 const baseIsArray = lodash.isArray(baseMeasurement.value);
                 const actionedIsArray = lodash.isArray(actionedMeasurement.value);
                 if (!baseIsArray && !actionedIsArray) {
