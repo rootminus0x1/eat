@@ -12,6 +12,7 @@ import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } fro
 import { asDateString } from './datetime';
 import { contracts, nodes } from './graph';
 import { getConfig } from './config';
+import { time } from '@nomicfoundation/hardhat-network-helpers';
 
 let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
@@ -76,30 +77,17 @@ export const hour = 60 * minute;
 export const day = 24 * hour;
 export const week = 7 * day;
 
-export const currentTimeStamp = async (): Promise<number> => {
-    const actualBlockNumber = await ethers.provider.getBlockNumber();
-    const timestamp = (await ethers.provider.getBlock(actualBlockNumber))?.timestamp;
-    if (!timestamp) throw `unable to get the current block's timestamp: block ${actualBlockNumber}`;
-    return timestamp;
-};
-
-export const rollForward = async (by: number) => {
-    const current = await currentTimeStamp();
-    await ethers.provider.send('evm_setNextBlockTimestamp', [current + 86400]);
-};
-
-export const setupBlockchain = async (shout: boolean = false): Promise<void> => {
+export const setupBlockchain = async (): Promise<void> => {
     // go to the block
     await reset(process.env.MAINNET_RPC_URL, getConfig().block);
-    const actualBlockNumber = await ethers.provider.getBlockNumber();
-    getConfig().timestamp = await currentTimeStamp();
+    getConfig().timestamp = await time.latest();
     getConfig().datetime = asDateString(getConfig().timestamp);
 
     // get the signers
     allSigners = await ethers.getSigners();
     whale = await getSigner('whale');
 
-    if (shout) console.log(`${network.name} ${actualBlockNumber} ${getConfig().datetime} UX:${getConfig().timestamp}`);
+    console.log(`${network.name} ${await time.latestBlock()} ${getConfig().datetime} UX:${getConfig().timestamp}`);
 };
 
 let allSigners: SignerWithAddress[] | undefined;

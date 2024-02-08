@@ -19,7 +19,7 @@ import {
     measuresOnAddress,
     nodes,
     users,
-    userEvents,
+    events,
     parseArg,
 } from './graph';
 import { getConfig, writeEatFile, writeFile } from './config';
@@ -169,14 +169,15 @@ export const dig = async () => {
         }
         for (const [userName, userHoldings] of holdings) {
             // fill the wallet
+            // TODO: use setBalance to set ETH holdings
             for (const [tokenName, amount] of userHoldings) {
                 if (!(await contracts[tokenName].connect(whale).transfer(users[userName].address, amount))) {
                     throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
                 }
                 // find all the contracts this user interacts with and allow them to spend there
-                if (getConfig().userEvents) {
+                if (getConfig().events) {
                     for (const contract of getConfig()
-                        .userEvents.filter((a) => a.user && a.user === userName)
+                        .events.filter((a) => a.user && a.user === userName)
                         .map((a) => a.contract)) {
                         // allow the wallet to be spent
                         if (
@@ -193,14 +194,14 @@ export const dig = async () => {
             }
         }
     }
-    // set up the userEvents
-    if (getConfig().userEvents) {
-        getConfig().userEvents.forEach((ue) => {
+    // set up the events
+    if (getConfig().events) {
+        getConfig().events.forEach((ue) => {
             // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
             const copy = Object.assign({ ...ue });
             console.log(`userEvent: ${ue.name}`);
-            userEvents[ue.name] = copy; // add do: doUserEvent(copy)
-            // userEvents.set(ue.name, copy);
+            events[ue.name] = copy; // add do: doUserEvent(copy)
+            // events.set(ue.name, copy);
         });
     }
 

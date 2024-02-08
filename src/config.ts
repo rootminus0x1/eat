@@ -107,7 +107,7 @@ export type Config = {
     timestamp: number;
     datetime: string;
 
-    userEvents: ConfigUserEvent[];
+    events: ConfigUserEvent[];
     users: ConfigUser[];
 
     // where to look
