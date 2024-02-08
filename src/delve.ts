@@ -746,7 +746,14 @@ export const delvePlot = async (
     dependents2?: MeasurementsMatch[],
     y2label?: string,
 ): Promise<void> => {
-    console.log('delve plotting...');
+    const scriptfilename = `${name}.gnuplot.gp`;
+    const datafilename = `${name}.gnuplot.dat`;
+    const datafilepath = `${eatFileName(datafilename)}`;
+    const svgfilename = `${name}.gnuplot.svg`;
+    const svgfilepath = `${eatFileName(svgfilename)}`;
+    const pngfilename = `${name}.gnuplot.png`;
+    const pngfilepath = `${eatFileName(pngfilename)}`;
+    console.log(`delve plotting ${name}...`);
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
     const eventName = [...independent.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
@@ -757,11 +764,11 @@ export const delvePlot = async (
     let names = [eventName, ...fields, ...fields2];
     let data: string[] = [];
 
-    let script = `datafile = "${eatFileName('gnuplot.dat')}"
+    let script = `datafile = "${datafilepath}"
 # set terminal pngcairo
-# set output "${eatFileName('gnuplot.png')}"
+# set output "${pngfilepath}"
 set terminal svg
-# set output "${eatFileName('gnuplot.png')}"
+# set output "${svgfilepath}"
 set xlabel "${eventName}"
 set ylabel "${ylabel}"
 set ytics nomirror
@@ -815,7 +822,7 @@ set y2tics
         );
         //await snapshot.restore();
     }
-    writeEatFile('gnuplot.dat', ['# ' + names.join(' '), ...data].join('\n'));
+    writeEatFile(datafilename, ['# ' + names.join(' '), ...data].join('\n'));
 
     let plots = [
         ...fields.map((field, index) => `datafile using 1:${index + 2} with lines title "${field}"`),
@@ -825,6 +832,6 @@ set y2tics
     ];
 
     script += 'plot ' + plots.join(',\\\n     ');
-    writeEatFile(`${name}-gnuplot.gp`, script);
+    writeEatFile(scriptfilename, script);
     console.log('delve plotting...done.');
 };
