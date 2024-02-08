@@ -11,7 +11,8 @@ import {
 import { MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
 import { ConfigFormatApply, eatFileName, getConfig, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
-import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
+import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
+import { asDateString } from './datetime';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -101,7 +102,7 @@ export const doUserEvent = async (userEvent: any) => {
 export type MarketEventType = {
     name: string;
     precision?: number;
-    setMarket: (value: bigint) => Promise<void>;
+    setMarket: (value: any) => Promise<any>;
 };
 type MarketEvent = MarketEventType & {
     value: bigint;
@@ -625,16 +626,19 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
         // get the event from the list
         if (nextEvent >= events.length) return { value: undefined, done: true };
         const event = events[nextEvent++];
-        console.log(`   event ${event.name} ${event.value || ''}`);
         // what type of event
-        if (event.setMarket && event.value) {
+        if (event.setMarket) {
             // it's a market event
-            await event.setMarket(event.value);
+            const result = await event.setMarket(event.value);
             return {
                 value: {
-                    name: `${event.name}=${formatEther(event.value)}`,
+                    name: `${event.name}${
+                        result === undefined
+                            ? ''
+                            : '=' + (typeof result === 'bigint' ? formatEther(result) : result.toString())
+                    }`,
                     precision: event.precision,
-                    value: event.value,
+                    value: result,
                 },
                 done: false,
             };
@@ -648,6 +652,7 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
             const result = await doUserEvent(event as UserEvent);
             return { value: result, done: false };
         }
+        throw `event ${event.name} not run: unknown type of event`;
         return { done: true, value: undefined };
     };
     return asyncIterator;
@@ -733,7 +738,9 @@ export const delve = async (stack: string, events: Event[] = [], simulation: Eve
 };
 
 export const delvePlot = async (
-    events: Event[],
+    name: string, // TODO: generate this
+    independent: Event[],
+    simulationAtEach: Event[],
     dependents: MeasurementsMatch[],
     ylabel: string,
     dependents2?: MeasurementsMatch[],
@@ -742,7 +749,7 @@ export const delvePlot = async (
     console.log('delve plotting...');
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
-    const eventName = [...events.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
+    const eventName = [...independent.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
     const fields = dependents.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`));
     const fields2 = dependents2
         ? dependents2.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`))
@@ -784,9 +791,16 @@ set y2tics
 #range_extension = 0.2 * (max - min)
 #set y2range [min - range_extension : max + range_extension]
 */
-    const snapshot = await takeSnapshot(); // the state of the world before
+    //const snapshot = await takeSnapshot(); // the state of the world before
+    console.log(`time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
+    for await (const event of await Events(independent)) {
+        console.log(`   time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
+        console.log(`   ${event.name}`);
+        // run the simulation
+        for await (const sim of await Events(simulationAtEach)) {
+            console.log(`         ${sim.name}`);
+        }
 
-    for await (const event of await Events(events)) {
         // get the dependent values
         const measurements = await calculateMeasures([...dependents, ...(dependents2 || [])]);
         data.push(
@@ -794,12 +808,12 @@ set y2tics
                 formatEther(event.value || event.gas || 'nothing that looks like a value'),
                 ...measurements.map((cm) =>
                     formatFromConfig(cm)
-                        .measurements.map((m: any) => m.value || m.error)
+                        .measurements.map((m: any) => m.value || '1' /* m.error */) // TODO: handle errors - error file?
                         .join(' '),
                 ),
             ].join(' '),
         );
-        await snapshot.restore();
+        //await snapshot.restore();
     }
     writeEatFile('gnuplot.dat', ['# ' + names.join(' '), ...data].join('\n'));
 
@@ -811,6 +825,6 @@ set y2tics
     ];
 
     script += 'plot ' + plots.join(',\\\n     ');
-    writeEatFile('gnuplot-script.gp', script);
+    writeEatFile(`${name}-gnuplot.gp`, script);
     console.log('delve plotting...done.');
 };

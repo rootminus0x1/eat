@@ -35,7 +35,7 @@ export const measuresOnAddress = new Map<string, MeasureOnAddress[]>();
 // for use in code
 export const contracts: any = {};
 export const users: any = {};
-export const userEvents: any = {};
+export const events: any = {};
 
 export const parseArg = (configArg: any): string | bigint => {
     let arg: any;
