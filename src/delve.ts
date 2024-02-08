@@ -83,19 +83,40 @@ type UserEventResult = {
 } & Partial<{ error: string }> &
     Partial<{ gas: bigint }>;
 
-export const doUserEvent = async (userEvent: any) => {
-    const result: UserEventResult = userEvent;
-    try {
-        const args = userEvent.args.map((a: any) => parseArg(a));
-        const tx = await contracts[userEvent.contract].connect(users[userEvent.user])[userEvent.function](...args);
-        // TODO: get the returned values out
-        // would be nice to capture any log events emitted too :-) see expect.to.emit
-        const receipt = await tx.wait();
-        result.gas = receipt ? receipt.gasUsed : MaxInt256;
-    } catch (e: any) {
-        result.error = e.message; // failure
+export const doEvent = async (event: any, ...args: any[]) => {
+    // what type of event
+    if (event.setMarket) {
+        // it's a market event
+        const result = await event.setMarket(...(args.length ? args : [event.value])); // default to the given value(s)
+        return {
+            name: `${event.name}${
+                result === undefined ? '' : '=' + (typeof result === 'bigint' ? formatEther(result) : result.toString())
+            }`,
+            precision: event.precision,
+            value: result,
+        };
     }
-    return result;
+    if (
+        event.user !== undefined &&
+        event.contract !== undefined &&
+        event.function !== undefined &&
+        event.args !== undefined
+    ) {
+        const result: UserEventResult = event;
+        try {
+            // TODO: hadle the args input (to substitute values, maybe)
+            const args = event.args.map((a: any) => parseArg(a));
+            const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
+            // TODO: get the returned values out
+            // would be nice to capture any log events emitted too :-) see expect.to.emit
+            const receipt = await tx.wait();
+            result.gas = receipt ? receipt.gasUsed : MaxInt256;
+        } catch (e: any) {
+            result.error = e.message; // failure
+        }
+        return result;
+    }
+    throw `event ${event.name} not run: unknown type of event`;
 };
 
 // market events
@@ -124,6 +145,10 @@ export function marketEvents(type: MarketEventType, start: bigint, finish: bigin
     return result;
 }
 
+export function marketEvent(type: MarketEventType, value: bigint): MarketEvent {
+    return Object.assign({ value: value }, type);
+}
+
 export type ContractMeasurements = {
     address: string;
     name: string; // node name - this is the contract
@@ -147,7 +172,8 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
 
     const sortedNodes = sort(nodes, (v) => v.name);
     for (const [address, node] of sortedNodes) {
-        let onlyDoTheseForContract = onlyDoThese?.reduce((allFns: string[], match: MeasurementsMatch) => {
+        // collapse the duplicate contract matches, into a single
+        let onlyDoTheseForContract = onlyDoThese?.reduce((allFns: string[], match) => {
             if (match.contract === node.name) {
                 allFns.push(...match.functions);
             }
@@ -624,36 +650,16 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
     let nextEvent = 0;
     const doNextValue = async (): Promise<IteratorResult<EventResult>> => {
         // get the event from the list
-        if (nextEvent >= events.length) return { value: undefined, done: true };
-        const event = events[nextEvent++];
-        // what type of event
-        if (event.setMarket) {
-            // it's a market event
-            const result = await event.setMarket(event.value);
+        if (nextEvent >= events.length) {
+            return { value: undefined, done: true };
+        } else {
+            const event = events[nextEvent++];
+            const result = await doEvent(event);
             return {
-                value: {
-                    name: `${event.name}${
-                        result === undefined
-                            ? ''
-                            : '=' + (typeof result === 'bigint' ? formatEther(result) : result.toString())
-                    }`,
-                    precision: event.precision,
-                    value: result,
-                },
+                value: result,
                 done: false,
             };
         }
-        if (
-            event.user !== undefined &&
-            event.contract !== undefined &&
-            event.function !== undefined &&
-            event.args !== undefined
-        ) {
-            const result = await doUserEvent(event as UserEvent);
-            return { value: result, done: false };
-        }
-        throw `event ${event.name} not run: unknown type of event`;
-        return { done: true, value: undefined };
     };
     return asyncIterator;
 };
@@ -737,14 +743,19 @@ export const delve = async (stack: string, events: Event[] = [], simulation: Eve
     console.log(`delving(${stack})...done.`);
 };
 
+type SimulationThenMeasurement = {
+    simulation?: Event[]; // do these
+    match: MeasurementsMatch[]; // then measure these
+};
+
 export const delvePlot = async (
     name: string, // TODO: generate this
+    xlabel: string,
     independent: Event[],
-    simulationAtEach: Event[],
-    dependents: MeasurementsMatch[],
     ylabel: string,
-    dependents2?: MeasurementsMatch[],
+    dependents: SimulationThenMeasurement[],
     y2label?: string,
+    dependents2?: SimulationThenMeasurement[],
 ): Promise<void> => {
     const scriptfilename = `${name}.gnuplot.gp`;
     const datafilename = `${name}.gnuplot.dat`;
@@ -757,9 +768,13 @@ export const delvePlot = async (
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
     const eventName = [...independent.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
-    const fields = dependents.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`));
+    const fields = dependents.map((dep) =>
+        dep.match.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`)),
+    );
     const fields2 = dependents2
-        ? dependents2.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`))
+        ? dependents2.map((dep) =>
+              dep.match.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`)),
+          )
         : [];
     let names = [eventName, ...fields, ...fields2];
     let data: string[] = [];
@@ -769,7 +784,7 @@ export const delvePlot = async (
 # set output "${pngfilepath}"
 set terminal svg
 # set output "${svgfilepath}"
-set xlabel "${eventName}"
+set xlabel "${xlabel}"
 set ylabel "${ylabel}"
 set ytics nomirror
 `;
@@ -803,19 +818,23 @@ set y2tics
     for await (const event of await Events(independent)) {
         console.log(`   time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
         console.log(`   ${event.name}`);
-        // run the simulation
-        for await (const sim of await Events(simulationAtEach)) {
-            console.log(`         ${sim.name}`);
-        }
 
-        // get the dependent values
-        const measurements = await calculateMeasures([...dependents, ...(dependents2 || [])]);
+        const measurements: Measurements = [];
+        for (const dependent of [...dependents, ...(dependents2 ?? [])]) {
+            // for each measurement, run the simulation
+            if (dependent.simulation)
+                for await (const sim of await Events(dependent.simulation)) {
+                    console.log(`         ${sim.name}`);
+                }
+            // get the dependent value
+            measurements.push(...(await calculateMeasures([...dependent.match])));
+        }
         data.push(
             [
                 formatEther(event.value || event.gas || 'nothing that looks like a value'),
                 ...measurements.map((cm) =>
                     formatFromConfig(cm)
-                        .measurements.map((m: any) => m.value || '1' /* m.error */) // TODO: handle errors - error file?
+                        .measurements.map((m: any) => m.value || '*' /* m.error */) // TODO: handle errors - error file?
                         .join(' '),
                 ),
             ].join(' '),
