@@ -10,6 +10,7 @@ export type GraphNode = {
 } & BlockchainAddress;
 // the links - between a from address (key) and to list of named addresses (value)
 export type Link = { name: string; address: string };
+export type Role = { id: string; name: string; addresses: string[] };
 
 export type MeasurementValue = bigint | string;
 export type MeasurementResult = MeasurementValue | MeasurementValue[];

@@ -769,7 +769,11 @@ export const delvePlot = async (
     // generate a gnuplot data file and a command
     const eventName = [...independent.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
     const fields = dependents.map((dep) =>
-        dep.match.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`)),
+        dep.match.flatMap((match) =>
+            match.functions.map(
+                (func) => `${match.contract}.${func}${dep.simulation ? '.' + dep.simulation[0].name : ''}`, // TODO: add the other simulation names
+            ),
+        ),
     );
     const fields2 = dependents2
         ? dependents2.map((dep) =>
@@ -822,12 +826,14 @@ set y2tics
         const measurements: Measurements = [];
         for (const dependent of [...dependents, ...(dependents2 ?? [])]) {
             // for each measurement, run the simulation
+            const snapshot = await takeSnapshot();
             if (dependent.simulation)
                 for await (const sim of await Events(dependent.simulation)) {
                     console.log(`         ${sim.name}`);
                 }
             // get the dependent value
             measurements.push(...(await calculateMeasures([...dependent.match])));
+            await snapshot.restore();
         }
         data.push(
             [
@@ -844,9 +850,17 @@ set y2tics
     writeEatFile(datafilename, ['# ' + names.join(' '), ...data].join('\n'));
 
     let plots = [
-        ...fields.map((field, index) => `datafile using 1:${index + 2} with lines title "${field}"`),
+        ...fields.map(
+            (field, index) =>
+                `datafile using 1:${index + 2} with lines dashtype ${index + 1} linewidth ${
+                    index + 1
+                } title "${field}"`,
+        ),
         ...fields2.map(
-            (field, index) => `datafile using 1:${index + 2 + fields.length} with lines title "${field}" axes x1y2,`,
+            (field, index) =>
+                `datafile using 1:${index + 2 + fields.length} with lines dashtype ${index + 1} linewidth ${
+                    index + 1
+                } title "${field}" axes x1y2,`,
         ),
     ];
 

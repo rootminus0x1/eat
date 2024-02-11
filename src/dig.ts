@@ -7,7 +7,7 @@ import { FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
 const sourceDir = './eat-source';
 
-import { BlockchainAddress, addTokenToWhale, getOwnerSigner, getSigner, whale } from './Blockchain';
+import { BlockchainAddress, addTokenToWhale, getSignerAt, getSigner, whale } from './Blockchain';
 import {
     Link,
     Measure,
@@ -21,44 +21,88 @@ import {
     users,
     events,
     parseArg,
+    Role,
 } from './graph';
 import { getConfig, writeEatFile, writeFile } from './config';
 import { mermaid } from './mermaid';
 
 export const dig = async () => {
     console.log('digging...');
+    type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */ };
     const done = new Set<string>(); // ensure addresses are only visited once
-    const addresses = [...(getConfig().root || getConfig().leaf)]; // make a copy as we are changing it
-    const leafAddresses = getConfig().leaf;
+    const depth = getConfig().depth || 10; // don't go deeper than this, from any of the specified addresses
+    const addresses: Address[] = [
+        ...(getConfig().root
+            ? getConfig().root.map((a) => {
+                  return { address: a, follow: depth };
+              })
+            : []),
+        ...(getConfig().twig
+            ? getConfig().twig.map((a) => {
+                  return { address: a, follow: 1 };
+              })
+            : []),
+        ...(getConfig().leaf
+            ? getConfig().leaf.map((a) => {
+                  return { address: a, follow: 0 };
+              })
+            : []),
+    ];
     while (addresses && addresses.length) {
+        addresses.sort((a, b) => b.follow - a.follow); // biggest follow first
         const address = addresses[0];
         addresses.shift();
-        if (!done.has(address)) {
-            done.add(address);
-            const blockchainAddress = digOne(address);
+        if (!done.has(address.address)) {
+            done.add(address.address);
+            const blockchainAddress = digOne(address.address);
             if (blockchainAddress) {
-                const leaf = leafAddresses?.includes(address);
                 nodes.set(
-                    address,
-                    Object.assign({ name: await blockchainAddress.contractNamish(), leaf: leaf }, blockchainAddress),
+                    address.address,
+                    Object.assign(
+                        { name: await blockchainAddress.contractNamish(), leaf: address.follow == 0 },
+                        blockchainAddress,
+                    ),
                 );
                 // add the measures to the contract
 
                 const dugUp = await digDeep(blockchainAddress);
-                measures.set(address, dugUp.measures);
-                measuresOnAddress.set(address, dugUp.measuresOnAddress);
-                if (!leaf) {
+                measures.set(address.address, dugUp.measures);
+                measuresOnAddress.set(address.address, dugUp.measuresOnAddress);
+                // process the roles - add them as addresses, even if they are on leaf addresses
+                const addAddress = (address: string, follow: number) => {
+                    // need to merge them as the depth shoud take on the larger of the two
+                    const actualFollow = Math.max(follow - 1, 0);
+                    const found = addresses.findIndex((a, i) => a.address === address);
+                    if (found !== -1) {
+                        // update the original
+                        // make it the longest depth this esures that
+                        addresses[found].follow = Math.max(addresses[found].follow, actualFollow);
+                    } else {
+                        addresses.push({ address: address, follow: actualFollow });
+                    }
+                };
+                // follow the roles (even on a leaf)
+                dugUp.roles.forEach((role) => {
+                    role.addresses.forEach((a) => addAddress(a, address.follow));
+                    // need to add the links for the graph
+                    dugUp.links.push(
+                        ...role.addresses.map((a) => {
+                            return { address: a, name: role.name };
+                        }),
+                    );
+                });
+                if (address.follow) {
+                    links.set(address.address, dugUp.links);
                     // process the links
-                    links.set(address, dugUp.links);
-                    // and consequent backlinks
-                    dugUp.links.forEach((link) =>
+                    // and consequent backlinks and nodes
+                    dugUp.links.forEach((link) => {
                         backLinks.set(
                             link.address,
-                            (backLinks.get(link.address) ?? []).concat({ address: address, name: link.name }),
-                        ),
-                    );
-                    // add more addresses to be dug up
-                    dugUp.links.forEach((link) => addresses.push(link.address));
+                            (backLinks.get(link.address) ?? []).concat({ address: address.address, name: link.name }),
+                        );
+                        // add more addresses to be dug up
+                        addAddress(link.address, address.follow);
+                    });
                 }
             }
         }
@@ -106,9 +150,15 @@ export const dig = async () => {
 
     // set up the graph contracts and users for executing the actions
     for (const [address, node] of nodes) {
-        const contract = await node.getContract();
+        const contract = await node.getContract(whale);
         if (contract) {
-            contracts[node.name] = Object.assign(contract, { ownerSigner: await getOwnerSigner(node) });
+            const richContract = Object.assign(contract, {
+                name: node.name,
+                contractType: node.contractName,
+                ownerSigner: await getSignerAt(address, 'owner'),
+            });
+            contracts[node.name] = richContract;
+            contracts[address] = contracts[node.name];
             // write out source file(s)
             // TODO: one file per contract type?
             const sourceCodeText = await node.getSourceCode();
@@ -140,6 +190,7 @@ export const dig = async () => {
             }
         } else {
             users[node.name] = await ethers.getImpersonatedSigner(address);
+            contracts[address] = users[node.name];
         }
     }
 
@@ -226,7 +277,8 @@ const outputName = (func: FunctionFragment, outputIndex?: number, arrayIndex?: n
 
 const digDeep = async (
     address: BlockchainAddress,
-): Promise<{ measures: Measure[]; measuresOnAddress: MeasureOnAddress[]; links: Link[] }> => {
+): Promise<{ measures: Measure[]; measuresOnAddress: MeasureOnAddress[]; links: Link[]; roles: Role[] }> => {
+    const roles: Role[] = [];
     const links: Link[] = [];
     const measures: Measure[] = [];
     const measuresOnAddress: MeasureOnAddress[] = [];
@@ -236,9 +288,52 @@ const digDeep = async (
     if (contract) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
 
-        // so we can call the functions async in a loop later
         let functions: FunctionFragment[] = [];
-        contract.interface.forEachFunction((func) => functions.push(func));
+        let roleFunctions: string[] = [];
+        contract.interface.forEachFunction((func) => {
+            // so we can call the functions async in a loop later
+            functions.push(func);
+            // all uppercase with the word role in it (this is just a convention)
+            if (
+                func.inputs.length == 0 &&
+                func.outputs.length == 1 &&
+                func.outputs[0].type === 'bytes32' &&
+                /^[A-Z_]*_ROLE[A-Z_]*$/.test(func.name)
+            ) {
+                roleFunctions.push(func.name);
+            }
+        });
+        let roleNames = new Map<bigint, string>();
+        for (const rolefn of roleFunctions) {
+            const role = await contract[rolefn]();
+            roleNames.set(role, rolefn);
+        }
+
+        // get roles granted by this contract
+        if (contract.filters.RoleGranted) {
+            const grantedEvents = await contract.queryFilter(contract.filters.RoleGranted()); //, 0xaf2c74, 0xb4d9f4);
+            for (const event of grantedEvents) {
+                const parsedEvent = contract.interface.parseLog({
+                    topics: [...event.topics],
+                    data: event.data,
+                });
+                if (parsedEvent) {
+                    const role = parsedEvent.args.role;
+                    const account = parsedEvent.args.account;
+                    // does this account still have this role?
+                    //this is the openzeppelin access manager
+                    if (await contract.hasRole(role, account)) {
+                        const index = roles.findIndex((r) => r.id === role);
+                        if (index == -1) {
+                            let name = roleNames.get(role) || role;
+                            roles.push({ id: role, name: name, addresses: [account] });
+                        } else {
+                            roles[index].addresses.push(account);
+                        }
+                    }
+                }
+            }
+        }
 
         // Explore each parameterless view (or pure) functions in the contract's interface
         for (const func of functions.filter(
@@ -311,5 +406,5 @@ const digDeep = async (
             }
         }
     }
-    return { measures: measures, measuresOnAddress: measuresOnAddress, links: links };
+    return { measures: measures, measuresOnAddress: measuresOnAddress, links: links, roles: roles };
 };

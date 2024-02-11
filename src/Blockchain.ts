@@ -6,7 +6,7 @@ import { BaseContract, Contract, ZeroAddress, parseEther } from 'ethers';
 
 import { ethers, network } from 'hardhat';
 import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
-import { reset } from '@nomicfoundation/hardhat-network-helpers';
+import { reset, setBalance } from '@nomicfoundation/hardhat-network-helpers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 import { asDateString } from './datetime';
@@ -98,20 +98,27 @@ export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     return allSigners[allocatedSigners++] as SignerWithAddress;
 };
 
-export const getOwnerSigner = async (address: BlockchainAddress): Promise<HardhatEthersSigner | null> => {
-    // call the owner function
-    const contract = await address.getContract(whale);
-    let ownerAddress = undefined;
-    try {
-        ownerAddress = await contract?.owner();
-    } catch (any) {}
-    let ownerSigner: HardhatEthersSigner | null = null;
-    if (ownerAddress) {
-        ownerSigner = await ethers.getImpersonatedSigner(ownerAddress);
-        // need to give the impersonated signer, owner some eth (aparently need 0.641520744180000000 eth to do this!)
-        await whale.sendTransaction({ to: ownerSigner.address, value: parseEther('1.0') });
+export const getSignerAt = async (address: string, field?: string): Promise<HardhatEthersSigner | null> => {
+    let theAddress = undefined;
+    if (field) {
+        // look up the property of address
+        let contract = new ethers.Contract(address, [`function ${field}() view returns (address)`], whale);
+        // call the field function
+        try {
+            theAddress = await contract[field]();
+        } catch (any) {}
+    } else {
+        theAddress = address;
     }
-    return ownerSigner;
+    let signer: HardhatEthersSigner | null = null;
+    if (theAddress) {
+        try {
+            signer = await ethers.getImpersonatedSigner(theAddress);
+            await setBalance(signer.address, parseEther('10')); // 10 ether should be enough
+        } catch (any) {}
+        // need to give the impersonated signer some eth (aparently need 0.641520744180000000 eth to do some actions!)
+    }
+    return signer;
 };
 
 export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
@@ -128,7 +135,7 @@ export const addTokenToWhale = async (tokenName: string, amount: bigint): Promis
         whale,
     );
     */
-    const tokenContract = contracts[tokenName];
+    const tokenContract = contracts[tokenName] as Contract;
 
     // Get the Transfer events
     const transferEvents = await tokenContract.queryFilter(tokenContract.filters.Transfer(), 0xaf2c74, 0xb4d9f4);
@@ -288,12 +295,6 @@ export class BlockchainAddress {
         if (!abi) return null; // throw Error(`unable to locate contract ABI: ${this.address}`);
 
         const contract = new ethers.Contract(this.address, abi, signer || ethers.provider);
-        // attempt to get the owner contract for this contract - useful for
-        try {
-            const ownerAddress = await contract.owner();
-        } catch (e: any) {
-            /* ignore errors */
-        }
 
         return Object.assign(contract, {
             address: this.address,

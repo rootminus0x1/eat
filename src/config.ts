@@ -113,6 +113,8 @@ export type Config = {
     // where to look
     root: string[];
     leaf: string[];
+    twig: string[];
+    depth: number;
 
     // what to output
     diagram: any;
