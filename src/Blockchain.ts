@@ -70,12 +70,28 @@ export async function deploy<T extends Contract>(
 }
 
 */
+import {
+    weeks,
+    days,
+    hours,
+    minutes,
+    seconds,
+} from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration';
 
-export const second = 1;
-export const minute = 60 * second;
-export const hour = 60 * minute;
-export const day = 24 * hour;
-export const week = 7 * day;
+const timeUnits = new Map<string, number>([
+    ['week', weeks(1)],
+    ['day', days(1)],
+    ['hour', hours(1)],
+    ['minute', minutes(1)],
+    ['second', seconds(1)],
+]);
+
+export const parseTime = (amount: number, units: string): number => {
+    //strip trailing "s" and lower case
+    const multiplier = timeUnits.get(units.toLowerCase().replace(/s$/, ''));
+    if (!multiplier) throw Error(`unrecognised units for parseTime: ${units}`);
+    return amount * multiplier;
+};
 
 export const setupBlockchain = async (): Promise<void> => {
     // go to the block

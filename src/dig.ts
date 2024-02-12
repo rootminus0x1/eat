@@ -156,6 +156,8 @@ export const dig = async () => {
             }
         }
     }
+    // all the nodes are set up, so print the diagram
+    if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
 
     // set up the graph contracts and users for executing the actions
     for (const [address, node] of nodes) {
@@ -265,8 +267,6 @@ export const dig = async () => {
             // events.set(ue.name, copy);
         });
     }
-
-    if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
     console.log('digging...done.');
 };
 
