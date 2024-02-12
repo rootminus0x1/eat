@@ -29,6 +29,7 @@ export type MeasureOnAddress = {
 export const nodes = new Map<string, GraphNode>(); // address to object
 export const links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
 export const backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
+export const roles = new Map<string, Role[]>(); // address to array of roles
 
 export const measures = new Map<string, Measure[]>();
 export const measuresOnAddress = new Map<string, MeasureOnAddress[]>();

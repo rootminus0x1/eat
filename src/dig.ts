@@ -22,29 +22,30 @@ import {
     events,
     parseArg,
     Role,
+    roles,
 } from './graph';
 import { getConfig, writeEatFile, writeFile } from './config';
 import { mermaid } from './mermaid';
 
 export const dig = async () => {
     console.log('digging...');
-    type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */ };
+    type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
     const done = new Set<string>(); // ensure addresses are only visited once
     const depth = getConfig().depth || 10; // don't go deeper than this, from any of the specified addresses
     const addresses: Address[] = [
         ...(getConfig().root
             ? getConfig().root.map((a) => {
-                  return { address: a, follow: depth };
+                  return { address: a, follow: depth, config: true };
               })
             : []),
         ...(getConfig().twig
             ? getConfig().twig.map((a) => {
-                  return { address: a, follow: 1 };
+                  return { address: a, follow: 1, config: true };
               })
             : []),
         ...(getConfig().leaf
             ? getConfig().leaf.map((a) => {
-                  return { address: a, follow: 0 };
+                  return { address: a, follow: 0, config: true };
               })
             : []),
     ];
@@ -75,34 +76,42 @@ export const dig = async () => {
                     const found = addresses.findIndex((a, i) => a.address === address);
                     if (found !== -1) {
                         // update the original
-                        // make it the longest depth this esures that
-                        addresses[found].follow = Math.max(addresses[found].follow, actualFollow);
+                        // make it the longest depth, unless it's a config item
+                        if (!addresses[found].config)
+                            addresses[found].follow = Math.max(addresses[found].follow, actualFollow);
                     } else {
                         addresses.push({ address: address, follow: actualFollow });
                     }
                 };
-                // follow the roles (even on a leaf)
-                dugUp.roles.forEach((role) => {
-                    role.addresses.forEach((a) => addAddress(a, address.follow));
-                    // need to add the links for the graph
-                    dugUp.links.push(
-                        ...role.addresses.map((a) => {
-                            return { address: a, name: role.name };
-                        }),
-                    );
-                });
-                if (address.follow) {
-                    links.set(address.address, dugUp.links);
+
+                const addLinks = (nodeAddress: string, toAdd: Link[], follow: number) => {
                     // process the links
+                    links.set(nodeAddress, (links.get(address.address) ?? []).concat(toAdd));
                     // and consequent backlinks and nodes
-                    dugUp.links.forEach((link) => {
+                    toAdd.forEach((link) => {
                         backLinks.set(
                             link.address,
-                            (backLinks.get(link.address) ?? []).concat({ address: address.address, name: link.name }),
+                            (backLinks.get(link.address) ?? []).concat({ address: nodeAddress, name: link.name }),
                         );
-                        // add more addresses to be dug up
-                        addAddress(link.address, address.follow);
+                        addAddress(link.address, follow);
                     });
+                };
+
+                // follow the roles (even on a leaf)
+                if (dugUp.roles.length) {
+                    dugUp.roles.forEach((role) =>
+                        addLinks(
+                            address.address,
+                            role.addresses.map((a) => ({ address: a, name: role.name })),
+                            address.follow,
+                        ),
+                    );
+                    roles.set(address.address, dugUp.roles);
+                }
+
+                // and the links, unless its a leaf
+                if (address.follow) {
+                    addLinks(address.address, dugUp.links, address.follow);
                 }
             }
         }
@@ -156,6 +165,7 @@ export const dig = async () => {
                 name: node.name,
                 contractType: node.contractName,
                 ownerSigner: await getSignerAt(address, 'owner'),
+                roles: roles.get(contract.address),
             });
             contracts[node.name] = richContract;
             contracts[address] = contracts[node.name];

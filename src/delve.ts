@@ -783,6 +783,60 @@ export const delvePlot = async (
     let names = [eventName, ...fields, ...fields2];
     let data: string[] = [];
 
+    console.log(`time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
+    let reverse = false;
+    let prevValue = undefined;
+    for await (const event of await Events(independent)) {
+        console.log(`   time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
+        console.log(`   ${event.name}`);
+
+        const measurements: Measurements = [];
+        for (const dependent of [...dependents, ...(dependents2 ?? [])]) {
+            // for each measurement, run the simulation
+            const snapshot = await takeSnapshot();
+            if (dependent.simulation)
+                for await (const sim of await Events(dependent.simulation)) {
+                    console.log(`         ${sim.name}`);
+                }
+            // get the dependent value
+            measurements.push(...(await calculateMeasures([...dependent.match])));
+            await snapshot.restore();
+        }
+        if (!event.value) throw 'events on the x axis have to return a value';
+        if (prevValue !== undefined) {
+            reverse = event.value < prevValue;
+        } else {
+            prevValue = event.value;
+        }
+        const value = event.value;
+        data.push(
+            [
+                formatEther(event.value),
+                ...measurements.map((cm) =>
+                    formatFromConfig(cm)
+                        .measurements.map((m: any) => m.value || '*' /* m.error */) // TODO: handle errors - error file?
+                        .join(' '),
+                ),
+            ].join(' '),
+        );
+    }
+    writeEatFile(datafilename, ['# ' + names.join(' '), ...data].join('\n'));
+
+    let plots = [
+        ...fields.map(
+            (field, index) =>
+                `datafile using 1:${index + 2} with lines dashtype ${index + 1} linewidth ${
+                    index + 1
+                } title "${field}"`,
+        ),
+        ...fields2.map(
+            (field, index) =>
+                `datafile using 1:${index + 2 + fields.length} with lines dashtype ${index + 1} linewidth ${
+                    index + 1
+                } title "${field}" axes x1y2,`,
+        ),
+    ];
+
     let script = `datafile = "${datafilepath}"
 # set terminal pngcairo
 # set output "${pngfilepath}"
@@ -796,6 +850,11 @@ set ytics nomirror
         script += `
 set y2label "${y2label}"
 set y2tics
+`;
+
+    if (reverse)
+        script += `
+set xrange reverse
 `;
 
     /*
@@ -817,53 +876,6 @@ set y2tics
 #range_extension = 0.2 * (max - min)
 #set y2range [min - range_extension : max + range_extension]
 */
-    //const snapshot = await takeSnapshot(); // the state of the world before
-    console.log(`time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
-    for await (const event of await Events(independent)) {
-        console.log(`   time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
-        console.log(`   ${event.name}`);
-
-        const measurements: Measurements = [];
-        for (const dependent of [...dependents, ...(dependents2 ?? [])]) {
-            // for each measurement, run the simulation
-            const snapshot = await takeSnapshot();
-            if (dependent.simulation)
-                for await (const sim of await Events(dependent.simulation)) {
-                    console.log(`         ${sim.name}`);
-                }
-            // get the dependent value
-            measurements.push(...(await calculateMeasures([...dependent.match])));
-            await snapshot.restore();
-        }
-        data.push(
-            [
-                formatEther(event.value || event.gas || 'nothing that looks like a value'),
-                ...measurements.map((cm) =>
-                    formatFromConfig(cm)
-                        .measurements.map((m: any) => m.value || '*' /* m.error */) // TODO: handle errors - error file?
-                        .join(' '),
-                ),
-            ].join(' '),
-        );
-        //await snapshot.restore();
-    }
-    writeEatFile(datafilename, ['# ' + names.join(' '), ...data].join('\n'));
-
-    let plots = [
-        ...fields.map(
-            (field, index) =>
-                `datafile using 1:${index + 2} with lines dashtype ${index + 1} linewidth ${
-                    index + 1
-                } title "${field}"`,
-        ),
-        ...fields2.map(
-            (field, index) =>
-                `datafile using 1:${index + 2 + fields.length} with lines dashtype ${index + 1} linewidth ${
-                    index + 1
-                } title "${field}" axes x1y2,`,
-        ),
-    ];
-
     script += 'plot ' + plots.join(',\\\n     ');
     writeEatFile(scriptfilename, script);
     console.log('delve plotting...done.');
