@@ -163,36 +163,35 @@ export type Measurements = (Partial<Event> & Partial<ContractMeasurements>)[];
 
 export type MeasurementsMatch = {
     contract: string;
-    functions: string[];
+    function: string;
 };
 
-export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Promise<Measurements> => {
+export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<Measurements> => {
     const result: Measurements = [];
     let count = 0;
 
     const sortedNodes = sort(nodes, (v) => v.name);
+    // TODO: make nodes sorted after dig
     for (const [address, node] of sortedNodes) {
         // collapse the duplicate contract matches, into a single
-        let onlyDoTheseForContract = onlyDoThese?.reduce((allFns: string[], match) => {
-            if (match.contract === node.name) {
-                allFns.push(...match.functions);
-            }
-            return allFns;
-        }, [] as string[]);
-        if (onlyDoThese && onlyDoTheseForContract && onlyDoTheseForContract.length == 0) continue; // nothing to do for this contract
+        let contractFilter = null;
+        if (filter) {
+            contractFilter = filter.reduce((functions, match) => {
+                if (match.contract === node.name) {
+                    functions.add(match.function);
+                }
+                return functions;
+            }, new Set<string>());
+            if (contractFilter.size == 0) continue; // nothing to do for this contract
+        }
         //console.log(`measuring node ${node.name}`);
         let values: Measurement[] = []; // values for this graph node
         const measuresForAddress = measures.get(address);
         if (measuresForAddress && measuresForAddress.length > 0) {
             // only do measurments for addresses with a name (they're users otherwise)
             for (const measure of measuresForAddress.filter((m) => m.name)) {
-                // skip if it has not been requested
-                if (
-                    onlyDoThese &&
-                    onlyDoTheseForContract &&
-                    onlyDoTheseForContract.length > 0 &&
-                    !onlyDoTheseForContract.includes(measure.name)
-                ) {
+                // skip if there is a filter and it is not in the filter
+                if (contractFilter && !contractFilter.has(measure.name)) {
                     continue;
                 }
                 const result: Measurement = { name: measure.name, type: measure.type };
@@ -220,7 +219,8 @@ export const calculateMeasures = async (onlyDoThese?: MeasurementsMatch[]): Prom
                 values.push(result);
             }
         }
-        if (!onlyDoThese) {
+        if (!filter) {
+            // can's currently filter on specific addresses (and maybe we will never need that)
             // TODO: add the ability to filter in measures on address - need to pass in the addresses
             const measuresOnAddressForAddress = measuresOnAddress.get(address);
             if (measuresOnAddressForAddress && measuresOnAddressForAddress.length > 0) {
@@ -745,17 +745,20 @@ export const delve = async (stack: string, events: Event[] = [], simulation: Eve
 
 type SimulationThenMeasurement = {
     simulation?: Event[]; // do these
-    match: MeasurementsMatch[]; // then measure these
+    calculations: {
+        // then measure these
+        match: MeasurementsMatch;
+        lineStyle?: string; // drawing them this way
+        y2axis?: boolean;
+    }[];
 };
 
 export const delvePlot = async (
     name: string, // TODO: generate this
     xlabel: string,
     independent: Event[],
-    ylabel: string,
+    ylabel: string | string[],
     dependents: SimulationThenMeasurement[],
-    y2label?: string,
-    dependents2?: SimulationThenMeasurement[],
 ): Promise<void> => {
     const scriptfilename = `${name}.gnuplot.gp`;
     const datafilename = `${name}.gnuplot.dat`;
@@ -768,30 +771,38 @@ export const delvePlot = async (
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
     const eventName = [...independent.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
-    const fields = dependents.map((dep) =>
-        dep.match.flatMap((match) =>
-            match.functions.map(
-                (func) => `${match.contract}.${func}${dep.simulation ? '.' + dep.simulation[0].name : ''}`, // TODO: add the other simulation names
-            ),
-        ),
-    );
-    const fields2 = dependents2
-        ? dependents2.map((dep) =>
-              dep.match.flatMap((match) => match.functions.map((func) => `${match.contract}.${func}`)),
-          )
-        : [];
-    let names = [eventName, ...fields, ...fields2];
+    const fields: string[] = [];
+    const plots: string[] = [];
+    let index = 0;
+    for (const dependent of dependents) {
+        for (const calculation of dependent.calculations) {
+            const field = `${calculation.match.contract}.${calculation.match.function}${
+                dependent.simulation ? '.' + dependent.simulation.map((event) => event.name).join('+') : ''
+            }`;
+            fields.push(field);
+            plots.push(
+                `datafile using 1:${index + 2} with lines ${
+                    calculation.lineStyle ? calculation.lineStyle : ''
+                } title "${field}" ${calculation.y2axis ? 'axes x1y2' : ''}`,
+            );
+        }
+        index++;
+    }
+
+    // headers and data container
+    let names = [eventName, ...fields];
     let data: string[] = [];
 
-    console.log(`time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
+    // automatically plot the x-axis in the right order (gnuplot always does it ascending)
     let reverse = false;
     let prevValue = undefined;
+    // for each x axis value
     for await (const event of await Events(independent)) {
-        console.log(`   time=${asDateString(await time.latest())} UX: ${await time.latest()}`);
         console.log(`   ${event.name}`);
 
+        // calculate each measure under each simulation
         const measurements: Measurements = [];
-        for (const dependent of [...dependents, ...(dependents2 ?? [])]) {
+        for (const dependent of dependents) {
             // for each measurement, run the simulation
             const snapshot = await takeSnapshot();
             if (dependent.simulation)
@@ -799,7 +810,9 @@ export const delvePlot = async (
                     console.log(`         ${sim.name}`);
                 }
             // get the dependent value
-            measurements.push(...(await calculateMeasures([...dependent.match])));
+            measurements.push(
+                ...(await calculateMeasures([...dependent.calculations.map((calculation) => calculation.match)])),
+            );
             await snapshot.restore();
         }
         if (!event.value) throw 'events on the x axis have to return a value';
@@ -814,7 +827,7 @@ export const delvePlot = async (
                 formatEther(event.value),
                 ...measurements.map((cm) =>
                     formatFromConfig(cm)
-                        .measurements.map((m: any) => m.value || '*' /* m.error */) // TODO: handle errors - error file?
+                        .measurements.map((m: any) => m.value || '*') // TODO: handle errors - error file?
                         .join(' '),
                 ),
             ].join(' '),
@@ -822,41 +835,28 @@ export const delvePlot = async (
     }
     writeEatFile(datafilename, ['# ' + names.join(' '), ...data].join('\n'));
 
-    let plots = [
-        ...fields.map(
-            (field, index) =>
-                `datafile using 1:${index + 2} with lines dashtype ${index + 1} linewidth ${
-                    index + 1
-                } title "${field}"`,
-        ),
-        ...fields2.map(
-            (field, index) =>
-                `datafile using 1:${index + 2 + fields.length} with lines dashtype ${index + 1} linewidth ${
-                    index + 1
-                } title "${field}" axes x1y2,`,
-        ),
+    let script = [
+        `datafile = "${datafilepath}"`,
+        `# set terminal pngcairo`,
+        `# set output "${pngfilepath}`,
+        `set terminal svg`,
+        `# set output "${svgfilepath}`,
+        `set xlabel "${xlabel}`,
+        `set colorsequence podo`,
     ];
 
-    let script = `datafile = "${datafilepath}"
-# set terminal pngcairo
-# set output "${pngfilepath}"
-set terminal svg
-# set output "${svgfilepath}"
-set xlabel "${xlabel}"
-set ylabel "${ylabel}"
-set ytics nomirror
-`;
-    if (y2label || dependents2)
-        script += `
-set y2label "${y2label}"
-set y2tics
-`;
-
-    if (reverse)
-        script += `
-set xrange reverse
-`;
-
+    if (Array.isArray(ylabel)) {
+        if (ylabel.length > 0) {
+            script.push(`set ylabel "${ylabel[0]}"`, `set y2label "${ylabel[1]}"`, `set y2tics`, `set ytics nomirror`);
+        } else {
+            script.push(`set ylabel "${ylabel[0]}"`);
+        }
+    } else {
+        script.push(`set ylabel "${ylabel}"`);
+    }
+    if (reverse) {
+        script.push(`set xrange reverse`);
+    }
     /*
 #stats datafile using 1 nooutput
 #min = STATS_min
@@ -876,7 +876,7 @@ set xrange reverse
 #range_extension = 0.2 * (max - min)
 #set y2range [min - range_extension : max + range_extension]
 */
-    script += 'plot ' + plots.join(',\\\n     ');
-    writeEatFile(scriptfilename, script);
+    script.push(`plot ${plots.join(',\\\n     ')}`);
+    writeEatFile(scriptfilename, script.join('\n'));
     console.log('delve plotting...done.');
 };
