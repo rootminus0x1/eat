@@ -777,7 +777,7 @@ export const delvePlot = async (
     for (const dependent of dependents) {
         for (const calculation of dependent.calculations) {
             const field = `${calculation.match.contract}.${calculation.match.function}${
-                dependent.simulation ? '.' + dependent.simulation.map((event) => event.name).join('+') : ''
+                dependent.simulation ? '>' + dependent.simulation.map((event) => event.name).join('+') : ''
             }`;
             fields.push(field);
             plots.push(
