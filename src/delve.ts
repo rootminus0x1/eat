@@ -48,12 +48,6 @@ export const addContract = async (
 };
 */
 
-export const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
-    return Array.from(unsorted.entries()).sort((a, b) =>
-        field(a[1]).localeCompare(field(b[1]), 'en', { sensitivity: 'base' }),
-    );
-};
-
 export type Measurement = {
     name: string;
     type: string;
@@ -170,9 +164,7 @@ export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<M
     const result: Measurements = [];
     let count = 0;
 
-    const sortedNodes = sort(nodes, (v) => v.name);
-    // TODO: make nodes sorted after dig
-    for (const [address, node] of sortedNodes) {
+    for (const [address, node] of nodes) {
         // collapse the duplicate contract matches, into a single
         let contractFilter = null;
         if (filter) {
@@ -224,7 +216,7 @@ export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<M
             // TODO: add the ability to filter in measures on address - need to pass in the addresses
             const measuresOnAddressForAddress = measuresOnAddress.get(address);
             if (measuresOnAddressForAddress && measuresOnAddressForAddress.length > 0) {
-                for (const [targetAddress, targetNode] of sortedNodes) {
+                for (const [targetAddress, targetNode] of nodes) {
                     if (targetAddress === address) continue; // skip self
                     for (const measure of measuresOnAddressForAddress) {
                         const m: Measurement = {

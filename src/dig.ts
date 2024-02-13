@@ -23,6 +23,7 @@ import {
     parseArg,
     Role,
     roles,
+    GraphNode,
 } from './graph';
 import { getConfig, writeEatFile, writeFile } from './config';
 import { mermaid } from './mermaid';
@@ -49,6 +50,8 @@ export const dig = async () => {
               })
             : []),
     ];
+
+    const localNodes = new Map<string, GraphNode>();
     while (addresses && addresses.length) {
         addresses.sort((a, b) => b.follow - a.follow); // biggest follow first
         const address = addresses[0];
@@ -57,7 +60,7 @@ export const dig = async () => {
             done.add(address.address);
             const blockchainAddress = digOne(address.address);
             if (blockchainAddress) {
-                nodes.set(
+                localNodes.set(
                     address.address,
                     Object.assign(
                         { name: await blockchainAddress.contractNamish(), leaf: address.follow == 0 },
@@ -119,7 +122,7 @@ export const dig = async () => {
 
     // make node names unique and also javascript identifiers
     const nodeNames = new Map<string, string[]>();
-    for (const [address, node] of nodes) {
+    for (const [address, node] of localNodes) {
         // make it javascript id
         // replace multiple whitespaces with underscores
         node.name = node.name.replace(/\s+/g, '_');
@@ -137,7 +140,7 @@ export const dig = async () => {
             // find the links to get some name for them
             let unique = 0;
             for (const address of addresses) {
-                const node = nodes.get(address);
+                const node = localNodes.get(address);
                 if (node) {
                     const backLinksForAddress = backLinks.get(address);
                     let done = false;
@@ -156,6 +159,17 @@ export const dig = async () => {
             }
         }
     }
+
+    const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
+        return Array.from(unsorted.entries()).sort((a, b) =>
+            field(a[1]).localeCompare(field(b[1]), 'en', { sensitivity: 'base' }),
+        );
+    };
+
+    sort(localNodes, (v) => v.name).forEach(([k, v]) => nodes.set(k, v));
+
+    // TODO: make nodes sorted after dig
+
     // all the nodes are set up, so print the diagram
     if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
 
