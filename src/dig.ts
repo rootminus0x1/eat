@@ -321,6 +321,19 @@ const digDeep = async (address: BlockchainAddress): Promise<{ measures: Measure[
                 roleFunctions.push(func.name);
             }
         });
+        // sort the functions, by parameter count then function name, then parameter name
+        functions.sort((a, b) => {
+            let cmp = a.inputs.length - b.inputs.length;
+            if (!cmp) {
+                // same number of arguments, so compare names - we
+                cmp = a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+                if (!cmp && a.inputs.length == 1)
+                    cmp = a.inputs[0].name.localeCompare(b.inputs[0].name, 'en', { sensitivity: 'base' });
+            }
+            return cmp;
+        });
+
+        // get the role names
         let roleNames = new Map<bigint, string>();
         for (const rolefn of roleFunctions) {
             const role = await contract[rolefn]();
@@ -353,7 +366,7 @@ const digDeep = async (address: BlockchainAddress): Promise<{ measures: Measure[
             }
         }
 
-        // Explore each parameterless view (or pure) functions in the contract's interface
+        // Explore each parameterless, or single address parameter, view (or pure) functions in the contract's interface
         for (const func of functions.filter(
             (f) =>
                 (f.stateMutability === 'view' || f.stateMutability === 'pure') &&

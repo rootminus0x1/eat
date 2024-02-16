@@ -11,11 +11,10 @@ import {
     GraphNode,
     Measure,
 } from './graph';
-import { MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
+import { MaxInt256, formatEther, formatUnits } from 'ethers';
 import { ConfigFormatApply, eatFileName, getConfig, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
-import { asDateString } from './datetime';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -171,7 +170,7 @@ export type MeasurementsMatch = {
 
 // note that the order in the filter is important
 export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<Measurements> => {
-    const result: Measurements = [];
+    const result: ContractMeasurements[] = [];
     let count = 0;
 
     type MeasurementSpec = {
@@ -182,7 +181,6 @@ export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<M
     let measurementsToDo: MeasurementSpec[] = [];
     if (!filter) {
         // TODO: put this into dig
-        filter = [];
         for (const [address, node] of nodes) {
             for (const measure of measures.get(address) ?? []) {
                 // only do measurments for addresses with a name (they're users otherwise)
@@ -267,7 +265,26 @@ export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<M
         });
     }
     // console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
-    return result;
+    if (filter) {
+        return result; // return it as asked
+    } else {
+        // collapse contracts into the same result
+        const mergedEntries: Record<string, ContractMeasurements> = {};
+
+        // Iterate through the array and group by 'contract'
+        result.forEach((contractMeasurements) => {
+            if (!mergedEntries[contractMeasurements.name]) {
+                // If the contract doesn't exist, add it to the mergedEntries
+                mergedEntries[contractMeasurements.name] = { ...contractMeasurements };
+            } else {
+                // If the contract exists, merge the measures
+                mergedEntries[contractMeasurements.name].measurements.push(...contractMeasurements.measurements);
+            }
+        });
+
+        // Convert the mergedEntries object back into an array
+        return Object.values(mergedEntries);
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////
