@@ -16,14 +16,9 @@ export type MeasurementValue = bigint | string;
 export type MeasurementResult = MeasurementValue | MeasurementValue[];
 export type Measure = {
     name: string;
-    calculation: () => Promise<MeasurementResult>;
+    calculation: (...args: any[]) => Promise<MeasurementResult>;
+    argTypes?: string[]; // types or the args
     type: string; // solidity type of result, you know how to extract the resulta
-};
-
-export type MeasureOnAddress = {
-    name: string;
-    calculation: (address: string) => Promise<MeasurementResult>;
-    type: string; // solidity type
 };
 
 export const nodes = new Map<string, GraphNode>(); // address to object
@@ -32,7 +27,6 @@ export const backLinks = new Map<string, Link[]>(); // reverse of above, to -> f
 export const roles = new Map<string, Role[]>(); // address to array of roles
 
 export const measures = new Map<string, Measure[]>();
-export const measuresOnAddress = new Map<string, MeasureOnAddress[]>();
 
 // for use in code
 export const contracts: any = {};

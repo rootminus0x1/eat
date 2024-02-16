@@ -1,12 +1,15 @@
+import * as crypto from 'crypto-js';
+
 import {
     contracts,
     measures,
-    measuresOnAddress,
     nodes,
     users,
     parseArg,
     MeasurementResult,
     MeasurementValue,
+    GraphNode,
+    Measure,
 } from './graph';
 import { MaxInt256, formatEther, formatUnits, parseEther } from 'ethers';
 import { ConfigFormatApply, eatFileName, getConfig, writeEatFile, writeYaml } from './config';
@@ -77,18 +80,37 @@ type UserEventResult = {
 } & Partial<{ error: string }> &
     Partial<{ gas: bigint }>;
 
+// market events
+export type MarketEventType = {
+    name: string;
+    precision?: number;
+    setMarket: (value: any) => Promise<any>;
+};
+type MarketEvent = MarketEventType & {
+    value: bigint;
+};
+type MarketEventResult = {
+    name: string;
+    precision?: number;
+    value: bigint;
+} & Partial<{ error: string }> &
+    Partial<{ callResult: any }>;
+
 export const doEvent = async (event: any, ...args: any[]) => {
     // what type of event
     if (event.setMarket) {
         // it's a market event
-        const result = await event.setMarket(...(args.length ? args : [event.value])); // default to the given value(s)
-        return {
-            name: `${event.name}${
-                result === undefined ? '' : '=' + (typeof result === 'bigint' ? formatEther(result) : result.toString())
-            }`,
+        const result: MarketEventResult = {
+            name: event.name,
+            value: event.value,
             precision: event.precision,
-            value: result,
         };
+        try {
+            result.callResult = await event.setMarket(...(args.length ? args : [event.value])); // default to the given value(s)
+        } catch (e: any) {
+            result.error = e.message;
+        }
+        return result;
     }
     if (
         event.user !== undefined &&
@@ -111,21 +133,6 @@ export const doEvent = async (event: any, ...args: any[]) => {
         return result;
     }
     throw `event ${event.name} not run: unknown type of event`;
-};
-
-// market events
-export type MarketEventType = {
-    name: string;
-    precision?: number;
-    setMarket: (value: any) => Promise<any>;
-};
-type MarketEvent = MarketEventType & {
-    value: bigint;
-};
-type MarketEventResult = {
-    name: string;
-    precision?: number;
-    value: bigint;
 };
 
 type Event = Partial<UserEvent> & Partial<MarketEvent>;
@@ -157,93 +164,107 @@ export type Measurements = (Partial<Event> & Partial<ContractMeasurements>)[];
 
 export type MeasurementsMatch = {
     contract: string;
-    function: string;
+    measurement: string;
+    // TODO: rename, everywhere target -> args
+    target?: string;
 };
 
+// note that the order in the filter is important
 export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<Measurements> => {
     const result: Measurements = [];
     let count = 0;
 
-    for (const [address, node] of nodes) {
-        // collapse the duplicate contract matches, into a single
-        let contractFilter = null;
-        if (filter) {
-            contractFilter = filter.reduce((functions, match) => {
-                if (match.contract === node.name) {
-                    functions.add(match.function);
-                }
-                return functions;
-            }, new Set<string>());
-            if (contractFilter.size == 0) continue; // nothing to do for this contract
-        }
-        //console.log(`measuring node ${node.name}`);
-        let values: Measurement[] = []; // values for this graph node
-        const measuresForAddress = measures.get(address);
-        if (measuresForAddress && measuresForAddress.length > 0) {
-            // only do measurments for addresses with a name (they're users otherwise)
-            for (const measure of measuresForAddress.filter((m) => m.name)) {
-                // skip if there is a filter and it is not in the filter
-                if (contractFilter && !contractFilter.has(measure.name)) {
-                    continue;
-                }
-                const result: Measurement = { name: measure.name, type: measure.type };
-                try {
-                    result.value = await measure.calculation();
-                    if (result.type === 'address') {
-                        result.valueName = nodes.get(result.value.toString())?.name;
+    type MeasurementSpec = {
+        node: GraphNode;
+        measure: Measure;
+        targetAddress?: string;
+    };
+    let measurementsToDo: MeasurementSpec[] = [];
+    if (!filter) {
+        // TODO: put this into dig
+        filter = [];
+        for (const [address, node] of nodes) {
+            for (const measure of measures.get(address) ?? []) {
+                // only do measurments for addresses with a name (they're users otherwise)
+                if (!measure.name) continue;
+                if (measure.argTypes) {
+                    for (const [targetAddress, targetNode] of nodes) {
+                        if (targetAddress === address) continue; // skip self
+                        measurementsToDo.push({ node: node, measure: measure, targetAddress: targetNode.address });
                     }
-                    if (result.type === 'address[]') {
-                        let anyNames = false;
-                        result.valueName = (result.value as MeasurementValue[]).map((v) => {
-                            let lookup: string | undefined = nodes.get(v.toString())?.name;
-                            if (lookup) {
-                                anyNames = true;
-                            } else {
-                                lookup = v.toString();
-                            }
-                            return lookup;
-                        });
-                        if (!anyNames) result.valueName = undefined; // don't just repeat the addresses
-                    }
-                } catch (e: any) {
-                    result.error = e.message;
+                } else {
+                    measurementsToDo.push({ node: node, measure: measure });
                 }
-                values.push(result);
             }
         }
-        if (!filter) {
-            // can's currently filter on specific addresses (and maybe we will never need that)
-            // TODO: add the ability to filter in measures on address - need to pass in the addresses
-            const measuresOnAddressForAddress = measuresOnAddress.get(address);
-            if (measuresOnAddressForAddress && measuresOnAddressForAddress.length > 0) {
-                for (const [targetAddress, targetNode] of nodes) {
-                    if (targetAddress === address) continue; // skip self
-                    for (const measure of measuresOnAddressForAddress) {
-                        const m: Measurement = {
-                            name: measure.name,
-                            type: measure.type,
-                            target: targetNode.name, // use the node name as user addresses may change run-to-run
-                        };
-                        try {
-                            m.value = await measure.calculation(targetAddress);
-                        } catch (e: any) {
-                            m.error = e.message;
+    } else {
+        // maybe do this somewhere too and change the input to this function
+        for (const match of filter) {
+            const nodeAddress = contracts[match.contract]?.address;
+            if (!nodeAddress) {
+                throw Error(`unable to find node for ${match.contract}`);
+            }
+            const node = nodes.get(nodeAddress);
+            if (!node) {
+                throw Error(`unable to find node ${match.contract} at ${nodeAddress}`);
+            }
+            const nodeMeasures = measures.get(nodeAddress);
+            if (!nodeMeasures) {
+                throw Error(`unable to find node measure for ${match.contract} at ${nodeAddress}`);
+            }
+            const measure = nodeMeasures.find((measure) => measure.name === match.measurement);
+            if (!measure) {
+                throw Error(`unable to find node measure called ${match.measurement} on ${match.contract}`);
+            }
+
+            const targetAddress = match.target
+                ? contracts[match.target]?.address || users[match.target]?.address
+                : undefined;
+            measurementsToDo.push({ node: node, measure: measure, targetAddress: targetAddress });
+        }
+    }
+
+    for (const spec of measurementsToDo) {
+        const measurement: Measurement = {
+            name: spec.measure.name,
+            type: spec.measure.type,
+        };
+        if (spec.targetAddress) {
+            measurement.target = nodes.get(spec.targetAddress)?.name || spec.targetAddress; // use the node name as user addresses may change run-to-run
+            try {
+                measurement.value = await spec.measure.calculation(spec.targetAddress);
+            } catch (e: any) {
+                measurement.error = e.message;
+            }
+        } else {
+            try {
+                measurement.value = await spec.measure.calculation();
+                if (measurement.type === 'address') {
+                    measurement.valueName = nodes.get(measurement.value.toString())?.name;
+                }
+                if (measurement.type === 'address[]') {
+                    let anyNames = false;
+                    measurement.valueName = (measurement.value as MeasurementValue[]).map((v) => {
+                        let lookup: string | undefined = nodes.get(v.toString())?.name;
+                        if (lookup) {
+                            anyNames = true;
+                        } else {
+                            lookup = v.toString();
                         }
-                        values.push(m);
-                    }
+                        return lookup;
+                    });
+                    if (!anyNames) measurement.valueName = undefined; // don't just repeat the addresses
                 }
+            } catch (e: any) {
+                measurement.error = e.message;
             }
         }
-        // TODO: only save contract where it has measures?
-        if (values.length > 0) {
-            result.push({
-                address: address,
-                name: node.name,
-                contractType: await node.contractNamish(),
-                measurements: values,
-            });
-            count += values.length;
-        }
+        result.push({
+            address: spec.node.address,
+            name: spec.node.name,
+            contractType: await spec.node.contractNamish(),
+            measurements: [measurement],
+        });
     }
     // console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
     return result;
@@ -735,8 +756,10 @@ export const delve = async (stack: string, events: Event[] = [], simulation: Eve
     console.log(`delving(${stack})...done.`);
 };
 
+type Simulation = Event[];
+
 type SimulationThenMeasurement = {
-    simulation?: Event[]; // do these
+    simulation?: Simulation; // do these
     calculations: {
         // then measure these
         match: MeasurementsMatch;
@@ -745,16 +768,81 @@ type SimulationThenMeasurement = {
     }[];
 };
 
+const formatForCSV = (value: string): string =>
+    // If the value contains a comma, newline, or double quote, enclose it in double quotes
+    /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+
+class ErrorFormatter {
+    private runErrorsMap = new Map<string, string>(); // map of error message to error hash string, stored in file .errors.csv
+
+    public errorMap = (): string[] => {
+        return Array.from(this.runErrorsMap, ([key, value]) => `${value},${key}`);
+    };
+
+    public formatError = (e: any): string => {
+        let message = e || 'undefined error';
+        let code = this.runErrorsMap.get(message); // have we encountered this error text before?
+        if (code === undefined) {
+            // first time this message has occurred - generate the code
+            const patterns: [RegExp, (match: string) => string][] = [
+                // specific messages
+                [/^(contract runner does not support sending transactions)/, (match) => match[1]],
+                // specific messages with extra info
+                [/^(.+)\s\(.+"method":\s"([^"]+)"/, (match) => match[1] + ': ' + match[2]], // method in quotes
+                // more generic messages
+                [/'([^']+)'$/, (match) => match[1]], // message in quotes
+                [/\s*([^:(]*)(?:\s*\([^)]*\))?:?([^:(]*)$/, (match) => match[1] + match[2]], // message after last ':' unless its within ()
+                // [/:\s*([^:]+)$/, (match) => match[1]], // message after last ':'
+            ];
+            for (const [pattern, processor] of patterns) {
+                const matches = message.match(pattern);
+                if (matches) {
+                    code = processor(matches);
+                    break;
+                }
+            }
+            if (code === undefined) {
+                //const hash = createHash("sha256").update(message).digest("base64");
+                code = crypto.SHA3(message, { outputLength: 32 }).toString(crypto.enc.Base64);
+            }
+            // TODO: ensure the code/message combination is unique
+            this.runErrorsMap.set(message, code);
+        }
+        return code;
+    };
+}
+
+const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
+    // there is
+    // 1. the requested value,
+    // 2. whether the event happened: error, or callResult
+    // eventDisplay is, on success:
+    //      even.name=event.value (the requested value)
+    // on failure
+    //      event.name!=event.value!format(event.error)
+    let eventDisplay = event.name || 'no event name!';
+    if (event.error !== undefined) {
+        if (event.value !== undefined) eventDisplay += `!=${formatEther(event.value)}`;
+        eventDisplay += `!!${ef.formatError(event.error)}`;
+    } else {
+        eventDisplay +=
+            '=' + (typeof event.callResult === 'bigint' ? formatEther(event.callResult) : event.callResult.toString());
+    }
+    return eventDisplay;
+};
+
 export const delvePlot = async (
     name: string, // TODO: generate this
     xlabel: string,
     independent: Event[],
-    ylabel: string | string[],
+    ylabel: string | [string, string],
     dependents: SimulationThenMeasurement[],
 ): Promise<void> => {
     const scriptfilename = `${name}.gnuplot.gp`;
-    const datafilename = `${name}.gnuplot.dat`;
+    const datafilename = `${name}.gnuplot.csv`;
     const datafilepath = `${eatFileName(datafilename)}`;
+    const errorfilename = `${name}.error.csv`;
+    const errorfilepath = `${eatFileName(errorfilename)}`;
     const svgfilename = `${name}.gnuplot.svg`;
     const svgfilepath = `${eatFileName(svgfilename)}`;
     const pngfilename = `${name}.gnuplot.png`;
@@ -762,90 +850,148 @@ export const delvePlot = async (
     console.log(`delve plotting ${name}...`);
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
-    const eventName = [...independent.reduce((names, event) => names.add(event.name!), new Set<string>())].join('-');
-    const fields: string[] = [];
-    const plots: string[] = [];
-    let index = 0;
-    for (const dependent of dependents) {
-        for (const calculation of dependent.calculations) {
-            const field = `${calculation.match.contract}.${calculation.match.function}${
-                dependent.simulation ? '>' + dependent.simulation.map((event) => event.name).join('+') : ''
-            }`;
-            fields.push(field);
-            plots.push(
-                `datafile using 1:${index + 2} with lines ${
-                    calculation.lineStyle ? calculation.lineStyle : ''
-                } title "${field}" ${calculation.y2axis ? 'axes x1y2' : ''}`,
-            );
-        }
-        index++;
-    }
 
-    // headers and data container
-    let names = [eventName, ...fields];
-    let data: string[] = [];
+    // headers, plots, data container, error report
+    const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
+    const plots: string[] = []; // plots of the data fields
+    let data: string[] = []; // the data (errors are inserted in-place)
 
     // automatically plot the x-axis in the right order (gnuplot always does it ascending)
     let reverse = false;
     let prevValue = undefined;
+    const ef = new ErrorFormatter();
     // for each x axis value
+    let first = true; // first time through, also set up
+    // TODO: make independent a series of simulations, not just a series of events
+    // for (const i of independent) {
     for await (const event of await Events(independent)) {
-        console.log(`   ${event.name}`);
+        if (!event.value) throw 'events on the x axis have to have a value';
+        // handle the event - field data, then field header
+        if (first) headers.push(event.name + '(simulation)' || 'no event name!');
+        const plotRow: string[] = [];
+        {
+            const eventDisplay = formatEventResult(ef, event);
+            console.log(`   ${eventDisplay}`);
+            plotRow.push(eventDisplay);
+        }
+
+        // the X value
+        if (first) headers.push(event.name || 'no event name');
+        plotRow.push(formatEther(event.value));
 
         // calculate each measure under each simulation
-        const measurements: Measurements = [];
         for (const dependent of dependents) {
-            // for each measurement, run the simulation
+            // for each measurement, run the simulation adding headers and plot for this dependent
+            // before running any simulation, snapshot the current state
             const snapshot = await takeSnapshot();
-            if (dependent.simulation)
+            // run the simulation adding a headeer and results to data
+            let simulationName = ''; // this is needed below
+            if (dependent.simulation) {
+                let simEventDisplays: string[] = [];
+                let simEventNames: string[] = [];
                 for await (const sim of await Events(dependent.simulation)) {
-                    console.log(`         ${sim.name}`);
+                    simEventDisplays.push(formatEventResult(ef, sim));
+                    if (first) simEventNames.push(sim.name || 'no dependent simulation event name');
                 }
-            // get the dependent value
-            measurements.push(
-                ...(await calculateMeasures([...dependent.calculations.map((calculation) => calculation.match)])),
-            );
+                if (first) {
+                    simulationName = simEventNames.join('+');
+                    headers.push(simulationName);
+                }
+                const simulationDisplay = simEventDisplays.join('+');
+                plotRow.push(simulationDisplay);
+                console.log(`         ${simulationDisplay}`);
+            }
+            // now do the calculations, do the headers and plots first
+            if (first) {
+                // the header for a dependent has part of the simulation in it's name
+                for (const calculation of dependent.calculations) {
+                    headers.push(
+                        `${calculation.match.contract}.${calculation.match.measurement}${
+                            calculation.match.target
+                                ? '(' +
+                                  (contracts[calculation.match.target].name ||
+                                      users[calculation.match.target].name ||
+                                      calculation.match.target) +
+                                  ')'
+                                : ''
+                        }${dependent.simulation ? '>' + simulationName : ''}`,
+                    );
+                    // what are the y-scales
+                    let ycolumn = `(\$${headers.length.toString()})`;
+                    plots.push(
+                        `datafile using 2:${ycolumn} with lines ${calculation.lineStyle ? calculation.lineStyle : ''} ${
+                            calculation.y2axis ? 'axes x1y2' : ''
+                        }`,
+                    );
+                }
+            }
+            // get the dependent values, as a flattened, formatted row
+            const results = (
+                await calculateMeasures([...dependent.calculations.map((calculation) => calculation.match)])
+            )
+                // flatten and format per config
+                .map((cm) => formatFromConfig(cm))
+                .flatMap((cm) => cm.measurements)
+                // convert them to CSV values or errors
+                .map((m) =>
+                    m.value !== undefined
+                        ? /* m.value.toString() === '0'
+                            ? '0.000000000000000001'
+                            :*/ m.value
+                        : m.error !== undefined
+                        ? ef.formatError(m.error)
+                        : 'undefined error',
+                );
+            // add the results for this dependent to the row
+            plotRow.push(...results);
             await snapshot.restore();
-        }
-        if (!event.value) throw 'events on the x axis have to return a value';
+        } // dependents
+        // work out if the x-axis needs to be reversed
         if (prevValue !== undefined) {
             reverse = event.value < prevValue;
         } else {
             prevValue = event.value;
         }
-        const value = event.value;
-        data.push(
-            [
-                formatEther(event.value),
-                ...measurements.map((cm) =>
-                    formatFromConfig(cm)
-                        .measurements.map((m: any) => m.value || '*') // TODO: handle errors - error file?
-                        .join(' '),
-                ),
-            ].join(' '),
-        );
-    }
-    writeEatFile(datafilename, ['# ' + names.join(' '), ...data].join('\n'));
+        data.push(plotRow.map((m) => formatForCSV(m)).join(','));
+        first = false;
+    } // independents
+
+    writeEatFile(datafilename, [headers.map((h) => formatForCSV(h)).join(','), ...data].join('\n'));
+    writeEatFile(
+        errorfilename,
+        ef
+            .errorMap()
+            .map((e) => formatForCSV(e))
+            .join('\n'),
+    );
 
     let script = [
         `datafile = "${datafilepath}"`,
+        `# additional imformation and error in ${errorfilepath}`,
+        `set key autotitle columnheader`,
+        `set datafile separator comma`,
+        `set key bmargin`, // at the bottome
         `# set terminal pngcairo`,
         `# set output "${pngfilepath}`,
-        `set terminal svg`,
+        `set terminal svg enhanced size 800 500 background rgb "gray90"`,
+        `set autoscale`,
         `# set output "${svgfilepath}`,
-        `set xlabel "${xlabel}`,
-        `set colorsequence podo`,
+        `set xlabel "${xlabel}"`,
+        `set colorsequence default`,
     ];
-
-    if (Array.isArray(ylabel)) {
-        if (ylabel.length > 0) {
-            script.push(`set ylabel "${ylabel[0]}"`, `set y2label "${ylabel[1]}"`, `set y2tics`, `set ytics nomirror`);
-        } else {
-            script.push(`set ylabel "${ylabel[0]}"`);
+    // normalise the ylabels
+    let ylabels: [string, string] = Array.isArray(ylabel) ? ylabel : [ylabel, ''];
+    ylabels.forEach((l, i) => {
+        if (l) {
+            const axis = i == 1 ? 'y2' : 'y';
+            script.push(`set ${axis}label "${l}"`);
+            if (l.endsWith('(sqrt)')) {
+                script.push(`set nonlinear ${axis} via sqrt(y) inverse y*y`);
+            }
+            script.push(`set ${axis}tics`);
         }
-    } else {
-        script.push(`set ylabel "${ylabel}"`);
-    }
+    });
+
     if (reverse) {
         script.push(`set xrange reverse`);
     }

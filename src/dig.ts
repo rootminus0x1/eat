@@ -11,12 +11,10 @@ import { BlockchainAddress, addTokenToWhale, getSignerAt, getSigner, whale } fro
 import {
     Link,
     Measure,
-    MeasureOnAddress,
     backLinks,
     contracts,
     links,
     measures,
-    measuresOnAddress,
     nodes,
     users,
     events,
@@ -71,7 +69,6 @@ export const dig = async () => {
 
                 const dugUp = await digDeep(blockchainAddress);
                 measures.set(address.address, dugUp.measures);
-                measuresOnAddress.set(address.address, dugUp.measuresOnAddress);
                 // process the roles - add them as addresses, even if they are on leaf addresses
                 const addAddress = (address: string, follow: number) => {
                     // need to merge them as the depth shoud take on the larger of the two
@@ -184,7 +181,7 @@ export const dig = async () => {
                 roles: roles.get(contract.address),
             });
             contracts[node.name] = richContract;
-            contracts[address] = contracts[node.name];
+            contracts[address] = richContract;
             // write out source file(s)
             // TODO: one file per contract type?
             const sourceCodeText = await node.getSourceCode();
@@ -299,13 +296,10 @@ const outputName = (func: FunctionFragment, outputIndex?: number, arrayIndex?: n
     return result;
 };
 
-const digDeep = async (
-    address: BlockchainAddress,
-): Promise<{ measures: Measure[]; measuresOnAddress: MeasureOnAddress[]; links: Link[]; roles: Role[] }> => {
+const digDeep = async (address: BlockchainAddress): Promise<{ measures: Measure[]; links: Link[]; roles: Role[] }> => {
     const roles: Role[] = [];
     const links: Link[] = [];
     const measures: Measure[] = [];
-    const measuresOnAddress: MeasureOnAddress[] = [];
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
@@ -365,7 +359,8 @@ const digDeep = async (
                 (f.stateMutability === 'view' || f.stateMutability === 'pure') &&
                 (f.inputs.length == 0 || (f.inputs.length == 1 && f.inputs[0].type === 'address')),
         )) {
-            const onAddress = func.inputs.length == 1;
+            // TODO: expand this to work with all arg types and all arg numbers
+            const argTypes = func.inputs.length == 1 ? [func.inputs[0].type] : undefined;
             // get all the functions that return a numeric or address or arrays of them
             for (const outputIndex of func.outputs.reduce((indices, elem, index) => {
                 // TODO:  add bool?
@@ -379,8 +374,8 @@ const digDeep = async (
                 const returnsAddress = func.outputs[outputIndex].type.startsWith('address');
                 const name = outputName(func, returnsSingle ? undefined : outputIndex);
                 const type = func.outputs[outputIndex].type;
-                // TODO: merge these two
-                const call: (arg?: any) => any = onAddress
+                // TODO: merge these two using ...arg: any[]
+                const call: (arg?: any) => any = argTypes
                     ? async (address: string) => await contract[func.name](address)
                     : async () => await contract[func.name]();
                 const process: any[] = [];
@@ -407,7 +402,7 @@ const digDeep = async (
                 };
 
                 // now add the data into measures, measuresOnAddress & links
-                if (returnsAddress && !onAddress) {
+                if (returnsAddress && !argTypes) {
                     // need to execute the function
                     try {
                         const result = await calculation(); // the same calc as a measure will use
@@ -422,13 +417,9 @@ const digDeep = async (
                         console.error(`linking - error calling ${address} ${func.name} ${func.selector}: ${err}`);
                     }
                 }
-                if (onAddress) {
-                    measuresOnAddress.push({ name: name, type: type, calculation: calculation });
-                } else {
-                    measures.push({ name: name, type: type, calculation: calculation });
-                }
+                measures.push({ name: name, type: type, calculation: calculation, argTypes: argTypes });
             }
         }
     }
-    return { measures: measures, measuresOnAddress: measuresOnAddress, links: links, roles: roles };
+    return { measures: measures, links: links, roles: roles };
 };
