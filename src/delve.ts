@@ -842,8 +842,13 @@ const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
         if (event.value !== undefined) eventDisplay += `!=${formatEther(event.value)}`;
         eventDisplay += `!!${ef.formatError(event.error)}`;
     } else {
-        eventDisplay +=
-            '=' + (typeof event.callResult === 'bigint' ? formatEther(event.callResult) : event.callResult.toString());
+        const parsedResult =
+            typeof event.callResult === 'bigint'
+                ? formatEther(event.callResult)
+                : typeof event.callResult === 'object'
+                ? JSON.stringify(event.callResult)
+                : event.callResult.toString();
+        eventDisplay += '=' + parsedResult;
     }
     return eventDisplay;
 };
@@ -888,7 +893,7 @@ export const delvePlot = async (
         const plotRow: string[] = [];
         {
             const eventDisplay = formatEventResult(ef, event);
-            console.log(`   ${eventDisplay}`);
+            //console.log(`   ${eventDisplay}`);
             plotRow.push(eventDisplay);
         }
 
@@ -916,7 +921,7 @@ export const delvePlot = async (
                 }
                 const simulationDisplay = simEventDisplays.join('+');
                 plotRow.push(simulationDisplay);
-                console.log(`         ${simulationDisplay}`);
+                //console.log(`         ${simulationDisplay}`);
             }
             // now do the calculations, do the headers and plots first
             if (first) {
@@ -952,9 +957,7 @@ export const delvePlot = async (
                 // convert them to CSV values or errors
                 .map((m) =>
                     m.value !== undefined
-                        ? /* m.value.toString() === '0'
-                            ? '0.000000000000000001'
-                            :*/ m.value
+                        ? m.value
                         : m.error !== undefined
                         ? ef.formatError(m.error)
                         : 'undefined error',
@@ -985,8 +988,8 @@ export const delvePlot = async (
     let script = [
         `datafile = "${datafilepath}"`,
         `# additional imformation and error in ${errorfilepath}`,
-        `set key autotitle columnheader`,
         `set datafile separator comma`,
+        `set key autotitle columnheader`,
         `set key bmargin`, // at the bottome
         `# set terminal pngcairo`,
         `# set output "${pngfilepath}`,
