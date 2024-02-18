@@ -236,7 +236,7 @@ const yamlIt = (it: any): string => yaml.dump(it, { replacer: replacer });
 export const writeReadings = (name: string, results: Reading[], simulation?: TriggerOutcome[]): void => {
     let data = simulation ? yamlIt({ simulation: simulation }) : '';
     data += yamlIt(transformReadings(results));
-    writeEatFile(name + '.yml', data);
+    writeEatFile(name + '.readings.yml', data);
 };
 
 export type ConfigFormatMatch = {
