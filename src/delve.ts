@@ -1,18 +1,8 @@
 import * as crypto from 'crypto-js';
 
-import {
-    contracts,
-    measures,
-    nodes,
-    users,
-    parseArg,
-    MeasurementResult,
-    MeasurementValue,
-    GraphNode,
-    Measure,
-} from './graph';
+import { contracts, readers, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import { ConfigFormatApply, eatFileName, getConfig, writeEatFile, writeYaml } from './config';
+import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, writeEatFile, writeYaml } from './config';
 import lodash from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 
@@ -50,148 +40,200 @@ export const addContract = async (
 };
 */
 
-export type Measurement = {
-    name: string;
-    type: string;
-    target?: string;
-    // value can hold a value or a delta value for comparisons
-    delta?: MeasurementResult;
-    value?: MeasurementResult;
-    valueName?: string | string[]; // if value is an address
+export type ContractInfo = {
+    identifier: string;
+    contract: string;
+    address: string; // this is the only place an address should be, everywhere else it's the contract identifier, which might be an address
+};
+
+export type ReadingType = bigint | string | boolean;
+export type ReadingValue = ReadingType | ReadingType[];
+
+export type Reader = {
+    address: string; // the address of the contract
+    contract: string;
+    function: string;
+    field?: {
+        name: string; // for multiple outputs, arrays are not multiple outputs, name is for user extraction
+        index: number;
+    }; // the output index of the field (for generic extraction)
+    argTypes?: string[]; // types or the args
+    type: string; // solidity type of result, you know how to extract the resulta
+    read: (...args: any[]) => Promise<any>;
+};
+
+export type ReadingBasic = {
+    value?: ReadingValue; // if it's an address or array of addresses they are translated into contract names
     // error can hold an error, a change in error message or indicate a change from a value to/from an error
     error?: string;
 };
 
+export type Reading = ReadingBasic & {
+    reading: string; //name of the reading
+    contract: string; // type of the contract
+    type: string;
+    id: string;
+    address: string; // address of the contract
+    // value can hold a value or a delta value for comparisons
+    delta?: ReadingValue;
+};
+
+export const doReaderBasic = async (reader: Reader, ...args: any[]): Promise<ReadingBasic> => {
+    let value: ReadingValue | undefined;
+    let error: string | undefined;
+    try {
+        let result = await reader.read(...args);
+        if (reader.field) {
+            value = result[reader.field.index];
+        } else {
+            value = result;
+        }
+        // TODO: maybe do the below
+        /*
+        if (reader.type.endsWith('[]')) {
+            if (reader.type.startsWith('address')) {
+                result = result.map((a: string) => a);
+            } else {
+                // translate numbers to bigint
+                result = result.map((n: bigint) => n);
+            }
+        }
+        */
+    } catch (e: any) {
+        error = e.message;
+    }
+    return {
+        value: value,
+        error: error,
+    };
+};
+
+export const doReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
+    const addressToName = (address: string): string => nodes.get(address)?.name || address;
+    const callToName = (fn: string, args: any[], field?: string) => {
+        let result = fn;
+        if (args.length) result += `(${args})`;
+        if (field) result += `.${field}`;
+        return result;
+    };
+    const basic = await doReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
+    if (basic.value !== undefined) {
+        if (reader.type.endsWith('[]')) {
+            basic.value = (basic.value as ReadingType[]).map((v) => formatArg(v));
+        } else {
+            basic.value = formatArg(basic.value as ReadingType);
+        }
+    }
+    // TODO: call this function on address, or address[] results
+    return Object.assign(
+        {
+            reading: `${addressToName(reader.address)}.${callToName(
+                reader.function,
+                friendlyArgs.map((a: any) => formatArg(a)),
+                reader.field?.name,
+            )}`,
+            id: addressToName(reader.address),
+            contract: reader.contract,
+            address: reader.address,
+            type: reader.type,
+        },
+        basic,
+    );
+};
+
 // user events
-type UserEvent = {
-    name: string;
-    user: string;
-    contract: string;
-    function: string;
-    args: (string | bigint)[];
+export type Trigger = {
+    name: string; // useful name given that summarises the below (TODO: could make this a function?)
+    //user: string;
+    //contract: string;
+    //function: string;
+    args?: (string | bigint)[]; // this replaces args below
+    pull: (...args: any[]) => Promise<any>; // async fuction that executes (pulls) the trigger to make the effect
+    // TODO: add list of events that can be parsed for results, for this contract
 };
-type UserEventResult = {
-    name: string;
-    user: string;
-    contract: string;
-    function: string;
-    args: (string | bigint)[];
+export type TriggerOutcome = {
+    trigger: Trigger;
 } & Partial<{ error: string }> &
-    Partial<{ gas: bigint }>;
+    Partial<{ gas?: bigint; events: any }>;
 
-// market events
-export type MarketEventType = {
-    name: string;
-    precision?: number;
-    setMarket: (value: any) => Promise<any>;
-};
-type MarketEvent = MarketEventType & {
-    value: bigint;
-};
-type MarketEventResult = {
-    name: string;
-    precision?: number;
-    value: bigint;
-} & Partial<{ error: string }> &
-    Partial<{ callResult: any }>;
-
-export const doEvent = async (event: any, ...args: any[]) => {
-    // what type of event
-    if (event.setMarket) {
-        // it's a market event
-        const result: MarketEventResult = {
-            name: event.name,
-            value: event.value,
-            precision: event.precision,
-        };
-        try {
-            result.callResult = await event.setMarket(...(args.length ? args : [event.value])); // default to the given value(s)
-        } catch (e: any) {
-            result.error = e.message;
-        }
-        return result;
+export const doTrigger = async (trigger: Trigger, ...overrideArgs: any[]): Promise<TriggerOutcome> => {
+    let gas: bigint | undefined;
+    // let events;
+    let error: string | undefined;
+    try {
+        const args = (overrideArgs || trigger.args)?.map((a: any) => parseArg(a));
+        const tx = await trigger.pull(...args);
+        // TODO: generate user functions elsewhere
+        // const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
+        // TODO: get the returned values out
+        // would be nice to capture any log events emitted too :-) see expect.to.emit
+        const receipt = await tx.wait();
+        gas = receipt?.gasUsed;
+        // TODO: parse the results into events, etc
+    } catch (e: any) {
+        error = e.message;
     }
-    if (
-        event.user !== undefined &&
-        event.contract !== undefined &&
-        event.function !== undefined &&
-        event.args !== undefined
-    ) {
-        const result: UserEventResult = event;
-        try {
-            // TODO: hadle the args input (to substitute values, maybe)
-            const args = event.args.map((a: any) => parseArg(a));
-            const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
-            // TODO: get the returned values out
-            // would be nice to capture any log events emitted too :-) see expect.to.emit
-            const receipt = await tx.wait();
-            result.gas = receipt ? receipt.gasUsed : MaxInt256;
-        } catch (e: any) {
-            result.error = e.message; // failure
-        }
-        return result;
-    }
-    throw `event ${event.name} not run: unknown type of event`;
+    return {
+        trigger: trigger,
+        error: error,
+        gas: gas,
+    };
 };
 
-type Event = Partial<UserEvent> & Partial<MarketEvent>;
-type EventResult = Partial<UserEventResult> & Partial<MarketEventResult>;
+// generate multiple events based on some sequance generator
 
-export function marketEvents(type: MarketEventType, start: bigint, finish: bigint, step: bigint = 1n): MarketEvent[] {
-    const result: MarketEvent[] = [];
+export function makeTrigger(base: Trigger, ...args: any[]): Trigger {
+    return Object.assign({}, base, { args: args }); // override the args
+}
+
+export function makeTriggers(base: Trigger, start: bigint, finish: bigint, step: bigint = 1n): Trigger[] {
+    const result: Trigger[] = [];
     for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
-        result.push(Object.assign({ value: i }, type));
+        result.push(makeTrigger(base, i));
     }
     return result;
 }
 
-export function marketEvent(type: MarketEventType, value: bigint): MarketEvent {
-    return Object.assign({ value: value }, type);
-}
-
-export type ContractMeasurements = {
-    address: string;
-    name: string; // node name - this is the contract
-    contractType: string; // contract nameish
-    measurements: Measurement[];
+export type Experiment = {
+    simulation: TriggerOutcome[];
+    readings: Reading[];
 };
-
-export type Measurements = (Partial<Event> & Partial<ContractMeasurements>)[];
 
 ////////////////////////////////////////////////////////////////////////
 // calculateMeasures
-
+/*
 export type MeasurementsMatch = {
     contract: string;
-    measurement: string;
+    reading: string;
     // TODO: rename, everywhere target -> args
     target?: string;
 };
+*/
 
 // note that the order in the filter is important
-export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<Measurements> => {
-    const result: ContractMeasurements[] = [];
+export const doReadings = async (/*filter?: MeasurementsMatch[]*/): Promise<Reading[]> => {
+    const result: Reading[] = [];
     let count = 0;
-
+    /*
     type MeasurementSpec = {
         node: GraphNode;
-        measure: Measure;
+        reading: Reader;
         targetAddress?: string;
     };
     let measurementsToDo: MeasurementSpec[] = [];
     if (!filter) {
         // TODO: put this into dig
         for (const [address, node] of nodes) {
-            for (const measure of measures.get(address) ?? []) {
+            for (const reading of readers.get(address) ?? []) {
                 // only do measurments for addresses with a name (they're users otherwise)
-                if (!measure.name) continue;
-                if (measure.argTypes) {
+                if (!reading.name) continue;
+                if (reading.argTypes) {
                     for (const [targetAddress, targetNode] of nodes) {
                         if (targetAddress === address) continue; // skip self
-                        measurementsToDo.push({ node: node, measure: measure, targetAddress: targetNode.address });
+                        measurementsToDo.push({ node: node, reading: reading, targetAddress: targetNode.address });
                     }
                 } else {
-                    measurementsToDo.push({ node: node, measure: measure });
+                    measurementsToDo.push({ node: node, reading: reading });
                 }
             }
         }
@@ -206,64 +248,34 @@ export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<M
             if (!node) {
                 throw Error(`unable to find node ${match.contract} at ${nodeAddress}`);
             }
-            const nodeMeasures = measures.get(nodeAddress);
+            const nodeMeasures = readers.get(nodeAddress);
             if (!nodeMeasures) {
-                throw Error(`unable to find node measure for ${match.contract} at ${nodeAddress}`);
+                throw Error(`unable to find node reading for ${match.contract} at ${nodeAddress}`);
             }
-            const measure = nodeMeasures.find((measure) => measure.name === match.measurement);
-            if (!measure) {
-                throw Error(`unable to find node measure called ${match.measurement} on ${match.contract}`);
+            const reading = nodeMeasures.find((reading) => reading.name === match.reading);
+            if (!reading) {
+                throw Error(`unable to find node reading called ${match.reading} on ${match.contract}`);
             }
 
             const targetAddress = match.target
                 ? contracts[match.target]?.address || users[match.target]?.address
                 : undefined;
-            measurementsToDo.push({ node: node, measure: measure, targetAddress: targetAddress });
+            measurementsToDo.push({ node: node, reading: reading, targetAddress: targetAddress });
         }
     }
-
-    for (const spec of measurementsToDo) {
-        const measurement: Measurement = {
-            name: spec.measure.name,
-            type: spec.measure.type,
-        };
-        if (spec.targetAddress) {
-            measurement.target = nodes.get(spec.targetAddress)?.name || spec.targetAddress; // use the node name as user addresses may change run-to-run
-            try {
-                measurement.value = await spec.measure.calculation(spec.targetAddress);
-            } catch (e: any) {
-                measurement.error = e.message;
-            }
-        } else {
-            try {
-                measurement.value = await spec.measure.calculation();
-                if (measurement.type === 'address') {
-                    measurement.valueName = nodes.get(measurement.value.toString())?.name;
+*/
+    for (const [address, readerList] of readers) {
+        for (const reader of readerList) {
+            if (reader.argTypes && reader.argTypes.length == 1 && reader.argTypes[0] === 'address') {
+                for (const [target, node] of nodes) {
+                    if (target !== address) result.push(await doReader(reader, target));
                 }
-                if (measurement.type === 'address[]') {
-                    let anyNames = false;
-                    measurement.valueName = (measurement.value as MeasurementValue[]).map((v) => {
-                        let lookup: string | undefined = nodes.get(v.toString())?.name;
-                        if (lookup) {
-                            anyNames = true;
-                        } else {
-                            lookup = v.toString();
-                        }
-                        return lookup;
-                    });
-                    if (!anyNames) measurement.valueName = undefined; // don't just repeat the addresses
-                }
-            } catch (e: any) {
-                measurement.error = e.message;
+            } else {
+                result.push(await doReader(reader));
             }
         }
-        result.push({
-            address: spec.node.address,
-            name: spec.node.name,
-            contractType: await spec.node.contractNamish(),
-            measurements: [measurement],
-        });
     }
+    /*
     // console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
     if (filter) {
         return result; // return it as asked
@@ -277,43 +289,45 @@ export const calculateMeasures = async (filter?: MeasurementsMatch[]): Promise<M
                 // If the contract doesn't exist, add it to the mergedEntries
                 mergedEntries[contractMeasurements.name] = { ...contractMeasurements };
             } else {
-                // If the contract exists, merge the measures
-                mergedEntries[contractMeasurements.name].measurements.push(...contractMeasurements.measurements);
+                // If the contract exists, merge the readers
+                mergedEntries[contractMeasurements.name].readings.push(...contractMeasurements.readings);
             }
         });
 
         // Convert the mergedEntries object back into an array
         return Object.values(mergedEntries);
     }
+    */
+    return result;
 };
-
+/*
 ////////////////////////////////////////////////////////////////////////
 // calculateSlimMeasures
 export const calculateSlimMeasures = async (baseMeasurements: Measurements): Promise<Measurements> => {
     const result: Measurements = [];
 
-    for (const contract of baseMeasurements.filter((m) => m.measurements)) {
-        const nonZero = (contract as ContractMeasurements).measurements.filter((measure) => {
-            if (measure.value !== undefined) {
-                if (lodash.isArray(measure.value)) {
+    for (const contract of baseMeasurements.filter((m) => m.readings)) {
+        const nonZero = (contract as ContractMeasurements).readings.filter((reading) => {
+            if (reading.value !== undefined) {
+                if (lodash.isArray(reading.value)) {
                     // non-empty array is counted as non-zero (who would return an array filled with zeros?)
-                    return measure.value.length > 0;
+                    return reading.value.length > 0;
                 } else {
                     // non-zero now depends on the type
-                    if (measure.type === 'address') {
-                        return (measure.value as string) !== '0x0000000000000000000000000000000000000000';
+                    if (reading.type === 'address') {
+                        return (reading.value as string) !== '0x0000000000000000000000000000000000000000';
                     } else {
-                        return (measure.value as bigint) !== 0n;
+                        return (reading.value as bigint) !== 0n;
                     }
                 }
             } else {
-                return measure.error ? true : false;
+                return reading.error ? true : false;
             }
         });
         if (nonZero.length > 0) {
             // copy top level stuff
             const resultContract = lodash.clone(contract);
-            resultContract.measurements = nonZero; // replace measurements
+            resultContract.readings = nonZero; // replace readings
             result.push(resultContract);
         }
     }
@@ -328,15 +342,15 @@ export const calculateDeltaMeasures = (
 ): Measurements => {
     const results: Measurements = [];
 
-    // loop through actioned measurements, just the actual measurements, nothing else
+    // loop through actioned readings, just the actual readings, nothing else
     const actionedContractMeasurements: Measurements = actionedMeasurements.filter((m: any) =>
-        m.measurements ? true : false,
+        m.readings ? true : false,
     );
-    const baseContractMeasurements: Measurements = baseMeasurements.filter((m: any) => (m.measurements ? true : false));
+    const baseContractMeasurements: Measurements = baseMeasurements.filter((m: any) => (m.readings ? true : false));
 
     if (baseContractMeasurements.length !== actionedContractMeasurements.length)
         throw Error(
-            `contract measurements differ: baseMeasurements ${baseContractMeasurements.length} actionedMeasurements ${actionedContractMeasurements.length}`,
+            `contract readings differ: baseMeasurements ${baseContractMeasurements.length} actionedMeasurements ${actionedContractMeasurements.length}`,
         );
 
     for (let a = 0; a < actionedContractMeasurements.length; a++) {
@@ -349,21 +363,21 @@ export const calculateDeltaMeasures = (
             actionedContract.contractType !== baseContract.contractType
         )
             throw Error(
-                `contract measurements[${a}] mismatch base: ${JSON.stringify(baseContract)}; actioned: ${JSON.stringify(
+                `contract readings[${a}] mismatch base: ${JSON.stringify(baseContract)}; actioned: ${JSON.stringify(
                     actionedContract,
                 )}`,
             );
 
-        if (actionedContract.measurements.length !== baseContract.measurements.length)
-            throw Error(`contract measurements[${a}] mismatch on number of measurements`);
+        if (actionedContract.readings.length !== baseContract.readings.length)
+            throw Error(`contract readings[${a}] mismatch on number of readings`);
 
-        const deltas: Measurement[] = [];
-        for (let m = 0; m < actionedContract.measurements.length; m++) {
-            const baseMeasurement = baseContract.measurements[m];
-            const actionedMeasurement = actionedContract.measurements[m];
+        const deltas: Reading[] = [];
+        for (let m = 0; m < actionedContract.readings.length; m++) {
+            const baseMeasurement = baseContract.readings[m];
+            const actionedMeasurement = actionedContract.readings[m];
 
             if (actionedMeasurement.name !== baseMeasurement.name || actionedMeasurement.type !== baseMeasurement.type)
-                throw Error('attempt to diff measurements of different structures');
+                throw Error('attempt to diff readings of different structures');
 
             // TODO: handle arrays of values wherever a "value:" or "delta:" is written below
             if (baseMeasurement.error && actionedMeasurement.error) {
@@ -448,126 +462,14 @@ export const calculateDeltaMeasures = (
                 address: actionedContract.address,
                 name: actionedContract.name,
                 contractType: actionedContract.contractType,
-                measurements: deltas,
+                readings: deltas,
             });
     }
     return results;
 };
 
-const getDecimals = (unit: string | number | undefined): number => {
-    if (typeof unit === 'string') {
-        const baseValue = formatUnits(1n, unit);
-        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
-        return decimalPlaces;
-    } else return unit || 0;
-};
 
-const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
-    const doUnit = (value: bigint): string => {
-        return unit ? formatUnits(value, unit) : value.toString();
-    };
-    let result = doUnit(value);
-    if (precision !== undefined) {
-        // it's been formatted, so round to that precision
-        let decimalIndex = result.indexOf('.');
-        // Calculate the number of decimal places 123.45 di=3,l=6,cd=2; 12345 di=-1,l=5,cd=0
-        const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
-        if (currentDecimals > precision) {
-            if (result[result.length + precision - currentDecimals] >= '5') {
-                result = doUnit(value + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
-            }
-            // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
-            result = result.slice(undefined, precision - currentDecimals);
-            // strip a trailing "."
-            if (result[result.length - 1] === '.') result = result.slice(undefined, result.length - 1);
-            // add back the zeros
-            if (precision < 0) result = result + '0'.repeat(-precision);
-        }
-    }
-    return (addPlus && value > 0 ? '+' : '') + result;
-};
 
-const formatFromConfig = (address: any): any => {
-    // "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-    if (typeof address === 'object' && typeof address.measurements === 'object') {
-        // it is something we can handle
-        // we're about to change it so clone it
-        const newAddress: any = lodash.cloneDeep(address);
-        for (let measurement of newAddress.measurements) {
-            if (measurement && (measurement.value || measurement.delta)) {
-                // need to patch up arrays, whether we format them or not
-                const fieldNames = ['value', 'delta'];
-                if (getConfig().format) {
-                    let mergedFormat: ConfigFormatApply = {};
-                    let donotformat = false;
-                    for (const format of getConfig().format) {
-                        // TODO: make addresses, map on to contracts or users, not just for target fields
-                        // TODO: could some things,
-                        // like timestamps be represented as date/times
-                        // or numbers
-                        // merge all the formats that apply
-                        // TODO: add regexp matches, rather than === matches
-                        if (
-                            (!format.type || format.type === measurement.type) &&
-                            (!format.measurement || format.measurement === measurement.name) &&
-                            (!format.contract || format.contract === newAddress.contract) &&
-                            (!format.contractType || format.contractType === newAddress.contractType)
-                        ) {
-                            if (format.unit === undefined && format.precision === undefined) {
-                                donotformat = true;
-                                break; // got a no format request
-                            }
-
-                            if (format.unit !== undefined && mergedFormat.unit === undefined)
-                                mergedFormat.unit = format.unit;
-                            if (format.precision !== undefined && mergedFormat.precision === undefined)
-                                mergedFormat.precision = format.precision;
-
-                            if (mergedFormat.unit !== undefined && mergedFormat.precision !== undefined) break; // got enough
-                        }
-                    }
-                    if (donotformat) {
-                        if (getConfig().show?.includes('format')) {
-                            measurement.format = {};
-                        }
-                    } else if (mergedFormat.unit !== undefined || mergedFormat.precision !== undefined) {
-                        let unformatted: any = {};
-                        for (const fieldName of fieldNames) {
-                            if (measurement[fieldName] !== undefined) {
-                                let formatters: ((value: bigint) => bigint | string)[] = [];
-                                formatters.push((value) =>
-                                    doFormat(
-                                        value,
-                                        fieldName === 'delta',
-                                        mergedFormat.unit as string | number,
-                                        mergedFormat.precision,
-                                    ),
-                                );
-
-                                formatters.forEach((formatter) => {
-                                    if (lodash.isArray(measurement[fieldName])) {
-                                        unformatted[fieldName] = lodash.clone(measurement[fieldName]);
-                                        measurement[fieldName] = measurement[fieldName].map((elem: any) =>
-                                            formatter(elem),
-                                        );
-                                    } else {
-                                        unformatted[fieldName] = measurement[fieldName];
-                                        measurement[fieldName] = formatter(measurement[fieldName]);
-                                    }
-                                });
-                            }
-                        }
-                        if (getConfig().show?.includes('format')) {
-                            measurement.format = mergedFormat;
-                            measurement.unformatted = unformatted;
-                        }
-                    }
-                }
-            }
-        }
-        return newAddress; // undefied means it is handled by the callere
-    }
-};
 
 ////////////////////////////////////////////////////////////////////////
 // delve
@@ -630,7 +532,7 @@ export const Values = async (
     return Object.assign(asyncIterator, { name: name, precision: precision });
 };
 */
-
+/*
 export const inverse = async (
     y: bigint,
     yGetter: () => Promise<bigint>,
@@ -693,6 +595,7 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
     };
     return asyncIterator;
 };
+*/
 
 /*  two ways of running a sequence of events:
     simulation:
@@ -712,12 +615,14 @@ const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResul
         this is similar (but not identical because base need only be generated once) to a series of simulations with a single event
 */
 
-const writeMeasures = (name: string[], measurements: Measurements, type?: string) => {
-    const fullName = [...name, (type && type.length ? type + '-' : '') + 'measures.yml'];
-    writeYaml(fullName.join('.'), measurements, formatFromConfig);
+/*
+export const writeReadings = (name: string[], simulation: TriggerOutcome[], readings: Reading[], type?: string) => {
+    const fullName = [...name, (type && type.length ? type + '-' : '') + 'readers.yml'];
+    //writeYaml(fullName.join('.'), readings, formatFromConfig);
 };
-
-const delveSimulation = async (stack: string, simulation: Event[] = [], context?: Event): Promise<void> => {
+*/
+/*
+const delveSimulation = async (stack: string, simulation: Trigger[] = [], context?: Trigger): Promise<void> => {
     // This executes the given events one by one in order
     // and saves all the associated files
     const fileprefix = context && context.name && context.name.length ? [context.name] : [];
@@ -737,7 +642,7 @@ const delveSimulation = async (stack: string, simulation: Event[] = [], context?
     for await (const event of await Events(simulation)) {
         // the event has happened
 
-        // do the post userEvent measures
+        // do the post userEvent readers
         const postMeasurements = await calculateMeasures();
         const filename = [...fileprefix, i.toString().padStart(width, '0'), event.name!];
         // TODO: make sure the event info is in the file, slim & delta file
@@ -754,31 +659,30 @@ const delveSimulation = async (stack: string, simulation: Event[] = [], context?
         i++;
     }
 };
-
+*/
 // do each event and after it, do each simulation then reset the blockchain before the next event
-export const delve = async (stack: string, events: Event[] = [], simulation: Event[] = []): Promise<void> => {
+export const delve = async (stack: string, simulation: Trigger[] = []): Promise<[Reading[], TriggerOutcome[]]> => {
     console.log(`delving(${stack})...`);
-    if (events.length == 0) {
-        await delveSimulation(stack, simulation);
-    } else {
-        const snapshot = await takeSnapshot(); // the state of the world before
-        // do each event
-        for await (const event of await Events(events)) {
-            // the event is done
-            // TODO: not just a string, but the value to be unshifted into measures before saving
-            await delveSimulation(stack, simulation, event);
-            await snapshot!.restore();
-        }
+    const outcomes: TriggerOutcome[] = [];
+    // do each event
+    /*    for (const trigger of simulation) {
+        outcomes.push(await doTrigger(trigger));
+        // TODO: not just a string, but the value to be unshifted into readers before saving
+        await delveSimulation(stack, simulation, event);
     }
+*/
+    const readings = await doReadings();
     console.log(`delving(${stack})...done.`);
+    return [readings, outcomes];
 };
 
+/*
 type Simulation = Event[];
 
 type SimulationThenMeasurement = {
     simulation?: Simulation; // do these
     calculations: {
-        // then measure these
+        // then reading these
         match: MeasurementsMatch;
         lineStyle?: string; // drawing them this way
         y2axis?: boolean;
@@ -901,9 +805,9 @@ export const delvePlot = async (
         if (first) headers.push(event.name || 'no event name');
         plotRow.push(formatEther(event.value));
 
-        // calculate each measure under each simulation
+        // calculate each reading under each simulation
         for (const dependent of dependents) {
-            // for each measurement, run the simulation adding headers and plot for this dependent
+            // for each reading, run the simulation adding headers and plot for this dependent
             // before running any simulation, snapshot the current state
             const snapshot = await takeSnapshot();
             // run the simulation adding a headeer and results to data
@@ -928,7 +832,7 @@ export const delvePlot = async (
                 // the header for a dependent has part of the simulation in it's name
                 for (const calculation of dependent.calculations) {
                     headers.push(
-                        `${calculation.match.contract}.${calculation.match.measurement}${
+                        `${calculation.match.contract}.${calculation.match.reading}${
                             calculation.match.target
                                 ? '(' +
                                   (contracts[calculation.match.target].name ||
@@ -953,7 +857,7 @@ export const delvePlot = async (
             )
                 // flatten and format per config
                 .map((cm) => formatFromConfig(cm))
-                .flatMap((cm) => cm.measurements)
+                .flatMap((cm) => cm.readings)
                 // convert them to CSV values or errors
                 .map((m) =>
                     m.value !== undefined
@@ -1015,26 +919,26 @@ export const delvePlot = async (
     if (reverse) {
         script.push(`set xrange reverse`);
     }
-    /*
-#stats datafile using 1 nooutput
-#min = STATS_min
-#max = STATS_max
-#range_extension = 0.2 * (max - min)
-#set xrange [min - range_extension : max + range_extension]
 
-#stats datafile using 2 nooutput
-#min = STATS_min
-#max = STATS_max
-#range_extension = 0.2 * (max - min)
-#set yrange [min - range_extension : max + range_extension]
+// #stats datafile using 1 nooutput
+// #min = STATS_min
+// #max = STATS_max
+// #range_extension = 0.2 * (max - min)
+// #set xrange [min - range_extension : max + range_extension]
 
-#stats datafile using 3 nooutput
-#min = STATS_min
-#max = STATS_max
-#range_extension = 0.2 * (max - min)
-#set y2range [min - range_extension : max + range_extension]
-*/
+// #stats datafile using 2 nooutput
+// #min = STATS_min
+// #max = STATS_max
+// #range_extension = 0.2 * (max - min)
+// #set yrange [min - range_extension : max + range_extension]
+
+// #stats datafile using 3 nooutput
+// #min = STATS_min
+// #max = STATS_max
+// #range_extension = 0.2 * (max - min)
+// #set y2range [min - range_extension : max + range_extension]
     script.push(`plot ${plots.join(',\\\n     ')}`);
     writeEatFile(scriptfilename, script.join('\n'));
     console.log('delve plotting...done.');
 };
+*/

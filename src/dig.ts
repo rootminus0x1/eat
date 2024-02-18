@@ -3,31 +3,40 @@ import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
 import { ethers } from 'hardhat';
-import { FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
+import { Contract, FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
 const sourceDir = './eat-source';
 
-import { BlockchainAddress, addTokenToWhale, getSignerAt, getSigner, whale } from './Blockchain';
+import {
+    IBlockchainAddress,
+    BlockchainAddress,
+    addTokenToWhale,
+    getSignerAt,
+    getSigner,
+    whale,
+    ContractWithAddress,
+} from './Blockchain';
 import {
     Link,
-    Measure,
     backLinks,
     contracts,
     links,
-    measures,
+    readers,
     nodes,
     users,
-    events,
-    parseArg,
+    triggers,
     Role,
     roles,
     GraphNode,
+    resetGraph,
 } from './graph';
-import { getConfig, writeEatFile, writeFile } from './config';
-import { mermaid } from './mermaid';
+import { Reader, doReaderBasic } from './delve';
+import { getConfig, parseArg, writeEatFile, writeFile } from './config';
 
-export const dig = async () => {
-    console.log('digging...');
+export const dig = async (stack: string) => {
+    console.log(`digging(${stack})...`);
+    // we reset the graph (which is a set of global variables)
+    resetGraph();
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
     const done = new Set<string>(); // ensure addresses are only visited once
     const depth = getConfig().depth || 10; // don't go deeper than this, from any of the specified addresses
@@ -49,7 +58,7 @@ export const dig = async () => {
             : []),
     ];
 
-    const localNodes = new Map<string, GraphNode>();
+    const tempNodes = new Map<string, GraphNode>();
     while (addresses && addresses.length) {
         addresses.sort((a, b) => b.follow - a.follow); // biggest follow first
         const address = addresses[0];
@@ -58,17 +67,17 @@ export const dig = async () => {
             done.add(address.address);
             const blockchainAddress = digOne(address.address);
             if (blockchainAddress) {
-                localNodes.set(
+                tempNodes.set(
                     address.address,
                     Object.assign(
                         { name: await blockchainAddress.contractNamish(), leaf: address.follow == 0 },
                         blockchainAddress,
                     ),
                 );
-                // add the measures to the contract
+                // add the readers to the contract
 
                 const dugUp = await digDeep(blockchainAddress);
-                measures.set(address.address, dugUp.measures);
+                readers.set(address.address, dugUp.readers);
                 // process the roles - add them as addresses, even if they are on leaf addresses
                 const addAddress = (address: string, follow: number) => {
                     // need to merge them as the depth shoud take on the larger of the two
@@ -119,7 +128,7 @@ export const dig = async () => {
 
     // make node names unique and also javascript identifiers
     const nodeNames = new Map<string, string[]>();
-    for (const [address, node] of localNodes) {
+    for (const [address, node] of tempNodes) {
         // make it javascript id
         // replace multiple whitespaces with underscores
         node.name = node.name.replace(/\s+/g, '_');
@@ -137,7 +146,7 @@ export const dig = async () => {
             // find the links to get some name for them
             let unique = 0;
             for (const address of addresses) {
-                const node = localNodes.get(address);
+                const node = tempNodes.get(address);
                 if (node) {
                     const backLinksForAddress = backLinks.get(address);
                     let done = false;
@@ -163,12 +172,9 @@ export const dig = async () => {
         );
     };
 
-    sort(localNodes, (v) => v.name).forEach(([k, v]) => nodes.set(k, v));
+    sort(tempNodes, (v) => v.name).forEach(([k, v]) => nodes.set(k, v));
 
     // TODO: make nodes sorted after dig
-
-    // all the nodes are set up, so print the diagram
-    if (getConfig().diagram) writeEatFile('diagram.md', await mermaid());
 
     // set up the graph contracts and users for executing the actions
     for (const [address, node] of nodes) {
@@ -176,7 +182,7 @@ export const dig = async () => {
         if (contract) {
             const richContract = Object.assign(contract, {
                 name: node.name,
-                contractType: node.contractName,
+                // contractType: node.contractName,
                 ownerSigner: await getSignerAt(address, 'owner'),
                 roles: roles.get(contract.address),
             });
@@ -249,9 +255,9 @@ export const dig = async () => {
                     throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
                 }
                 // find all the contracts this user interacts with and allow them to spend there
-                if (getConfig().events) {
+                if (getConfig().triggers) {
                     for (const contract of getConfig()
-                        .events.filter((a) => a.user && a.user === userName)
+                        .triggers.filter((a) => a.user && a.user === userName)
                         .map((a) => a.contract)) {
                         // allow the wallet to be spent
                         if (
@@ -268,38 +274,40 @@ export const dig = async () => {
             }
         }
     }
-    // set up the events
-    if (getConfig().events) {
-        getConfig().events.forEach((ue) => {
+    // set up the triggers
+    if (getConfig().triggers) {
+        getConfig().triggers.forEach((ue) => {
             // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
             const copy = Object.assign({ ...ue });
             console.log(`userEvent: ${ue.name}`);
-            events[ue.name] = copy; // add do: doUserEvent(copy)
-            // events.set(ue.name, copy);
+            triggers[ue.name] = copy; // add do: doUserEvent(copy)
+            // triggers.set(ue.name, copy);
         });
     }
-    console.log('digging...done.');
+    console.log(`digging(${stack})...done.`);
 };
 
-export const digOne = (address: string): BlockchainAddress | null => {
+export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
     return address !== ZeroAddress ? new BlockchainAddress(address) : null;
 };
 
-const outputName = (func: FunctionFragment, outputIndex?: number, arrayIndex?: number): string => {
+const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: number): string => {
     let result = func.name;
-    if (outputIndex || outputIndex === 0) {
+    if (func.outputs.length > 1) {
         result = `${result}.${func.outputs[outputIndex].name === '' ? outputIndex : func.outputs[outputIndex].name}`;
     }
-    if (arrayIndex || arrayIndex === 0) {
+    if (arrayIndex !== undefined) {
         result = `${result}[${arrayIndex}]`;
     }
     return result;
 };
 
-const digDeep = async (address: BlockchainAddress): Promise<{ measures: Measure[]; links: Link[]; roles: Role[] }> => {
+const digDeep = async (
+    address: IBlockchainAddress<Contract>,
+): Promise<{ readers: Reader[]; links: Link[]; roles: Role[] }> => {
     const roles: Role[] = [];
     const links: Link[] = [];
-    const measures: Measure[] = [];
+    const readers: Reader[] = [];
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
@@ -382,57 +390,43 @@ const digDeep = async (address: BlockchainAddress): Promise<{ measures: Measure[
                 }
                 return indices;
             }, [] as number[])) {
-                const returnsSingle = func.outputs.length == 1;
-                const returnsArray = func.outputs[outputIndex].type.endsWith('[]');
-                const returnsAddress = func.outputs[outputIndex].type.startsWith('address');
-                const name = outputName(func, returnsSingle ? undefined : outputIndex);
-                const type = func.outputs[outputIndex].type;
-                // TODO: merge these two using ...arg: any[]
-                const call: (arg?: any) => any = argTypes
-                    ? async (address: string) => await contract[func.name](address)
-                    : async () => await contract[func.name]();
-                const process: any[] = [];
-                if (!returnsSingle) {
-                    // multiple outputs so have to extract the one in question - single outputs are already extracted
-                    process.push((result: any[]): any => result[outputIndex]);
-                }
-                if (returnsArray) {
-                    if (returnsAddress) {
-                        // translate addess to string
-                        process.push((result: any[]): string[] => result.map((a: string) => a));
-                    } else {
-                        // translate numbers to bigint
-                        process.push((result: any[]): bigint[] => result.map((a: bigint) => a));
-                    }
-                }
-                // chain the call and processing
-                const calculation = async (address?: any): Promise<any> => {
-                    let result = await call(address);
-                    for (const p of process) {
-                        result = p(result);
-                    }
-                    return result;
+                const reader = {
+                    address: (await address.getContract())?.address as string, // TODO: fix this
+                    contract: await address.contractNamish(),
+                    function: func.name,
+                    field:
+                        func.outputs.length != 1
+                            ? { name: func.outputs[outputIndex].name, index: outputIndex }
+                            : undefined,
+                    argTypes: func.inputs.length == 1 ? ['address'] : undefined,
+                    type: func.outputs[outputIndex].type,
+                    read: async (...args: any[]): Promise<any> => await contract[func.name](...args),
                 };
+                readers.push(reader);
 
-                // now add the data into measures, measuresOnAddress & links
-                if (returnsAddress && !argTypes) {
+                // now add the data into links
+                if (func.outputs[outputIndex].type.startsWith('address') && func.inputs.length == 0) {
                     // need to execute the function
                     try {
-                        const result = await calculation(); // the same calc as a measure will use
-                        if (Array.isArray(result)) {
-                            for (let i = 0; i < result.length; i++) {
-                                links.push({ name: outputName(func, outputIndex, i), address: result[i] });
+                        const result = await doReaderBasic(reader);
+                        if (result.value === undefined) throw Error(`failed to read ${result.error}`);
+                        if (Array.isArray(result.value)) {
+                            // TODO: should against reader.type.endsWith('[]')
+                            for (let i = 0; i < result.value.length; i++) {
+                                links.push({
+                                    name: outputName(func, outputIndex, i),
+                                    address: result.value[i] as string,
+                                });
                             }
                         } else {
-                            links.push({ name: name, address: result });
+                            links.push({ name: outputName(func, outputIndex), address: result.value as string });
                         }
                     } catch (err) {
                         console.error(`linking - error calling ${address} ${func.name} ${func.selector}: ${err}`);
                     }
                 }
-                measures.push({ name: name, type: type, calculation: calculation, argTypes: argTypes });
             }
         }
     }
-    return { measures: measures, links: links, roles: roles };
+    return { readers: readers, links: links, roles: roles };
 };

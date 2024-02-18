@@ -10,7 +10,7 @@ import { reset, setBalance } from '@nomicfoundation/hardhat-network-helpers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 import { asDateString } from './datetime';
-import { contracts, nodes } from './graph';
+import { contracts, localNodes, nodes } from './graph';
 import { getConfig } from './config';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 
@@ -22,25 +22,27 @@ export type ContractWithAddress<T extends BaseContract = Contract> = T & {
     address: string;
 };
 
-export async function deploy<T extends BaseContract>(
-    factoryName: string,
-    ...deployArgs: any[]
-): Promise<ContractWithAddress<T>> {
+export async function deploy<T extends BaseContract>(factoryName: string, ...deployArgs: any[]): Promise<void> {
     const contractFactory = await ethers.getContractFactory(factoryName, whale);
     const contract = await contractFactory.deploy(...deployArgs);
     await contract.waitForDeployment();
-    let address = await contract.getAddress();
+    const address = await contract.getAddress();
 
-    //console.log("%s = %s", address, factoryName);
+    const contractWithAddress = Object.assign(
+        {
+            address: address,
+        },
+        contract,
+    );
 
-    // TODO: need to create a BlockchainAddress with contract pre-loaded, with abi, etc
-    // i.e. add it to the graph, so that a new diagram can be exhibited
-
-    const result: ContractWithAddress<T> = Object.assign(contract as unknown as T, {
+    const result = Object.assign(new LocalBlockchainAddress(contractWithAddress, factoryName), {
         name: factoryName,
         address: address,
     }); //as ContractWithAddress<T>;
-    return result;
+
+    contracts[factoryName] = result;
+    contracts[address] = result;
+    localNodes.set(factoryName, result);
 }
 
 /*
@@ -216,7 +218,63 @@ type RawAddressInfo = {
     implementationContractInfo: RawContractInfo | null;
 };
 
-export class BlockchainAddress {
+export interface IBlockchainAddress<T extends BaseContract> {
+    getContract: (signer?: SignerWithAddress) => Promise<ContractWithAddress<T> | null>;
+    contractName: () => Promise<string | undefined>;
+    contractNamish: () => Promise<string>; // a name for a contract, based on the contract type (or address), but not unique
+    getSourceCode: () => Promise<string | undefined>;
+    implementationAddress: () => Promise<string | undefined>;
+    implementationContractName: () => Promise<string | undefined>;
+    erc20Symbol: () => Promise<string | undefined>;
+    erc20Name: () => Promise<string | undefined>;
+    isContract: () => Promise<boolean>;
+    isAddress: () => Promise<boolean>;
+}
+
+class LocalBlockchainAddress<T extends BaseContract> implements IBlockchainAddress<T> {
+    constructor(private contract: ContractWithAddress<T>, private name: string) {}
+
+    public getContract = async (signer?: SignerWithAddress): Promise<ContractWithAddress<T> | null> => {
+        return this.contract;
+    };
+    public contractName = async (): Promise<string | undefined> => {
+        TODO: return '';
+    };
+
+    public contractNamish = async (): Promise<string> => {
+        return this.name;
+    };
+
+    public getSourceCode = async (): Promise<string | undefined> => {
+        return "it's in you project somewhere, go find it!";
+    };
+
+    public implementationAddress = async (): Promise<string | undefined> => {
+        return undefined;
+    };
+
+    public implementationContractName = async (): Promise<string | undefined> => {
+        return undefined;
+    };
+
+    public erc20Symbol = async (): Promise<string | undefined> => {
+        return undefined;
+    };
+
+    public erc20Name = async (): Promise<string | undefined> => {
+        return undefined;
+    };
+
+    public isContract = async (): Promise<boolean> => {
+        return true;
+    };
+
+    public isAddress = async (): Promise<boolean> => {
+        return true;
+    };
+}
+
+export class BlockchainAddress implements IBlockchainAddress<Contract> {
     constructor(public address: string) {
         this.info = this.getAddressInfo();
     }
@@ -357,14 +415,14 @@ export class BlockchainAddress {
         return info.erc20Fields?.symbol;
     };
 
-    public contractName = async (): Promise<string | undefined> => {
-        const info = await this.info;
-        return info.contractInfo?.sourceCode?.ContractName || undefined;
-    };
-
     public implementationAddress = async (): Promise<string | undefined> => {
         const info = await this.info;
         return info.contractInfo?.sourceCode?.Implementation;
+    };
+
+    public contractName = async (): Promise<string | undefined> => {
+        const info = await this.info;
+        return info.contractInfo?.sourceCode?.ContractName || undefined;
     };
 
     public implementationContractName = async (): Promise<string | undefined> => {
@@ -372,7 +430,7 @@ export class BlockchainAddress {
         return info.implementationContractInfo?.sourceCode?.ContractName;
     };
 
-    public vyperContractName = async (): Promise<string | undefined> => {
+    private vyperContractName = async (): Promise<string | undefined> => {
         const info = await this.info;
         if (info.contractInfo?.sourceCode?.ContractName === 'Vyper_contract') {
             const match = info.contractInfo?.sourceCode?.SourceCode.match(/^\s*@title\s+(.*)\s*$/m);

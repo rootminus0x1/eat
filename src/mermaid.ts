@@ -55,7 +55,7 @@ const nodeMermaid = (
             f,
             `${address}${pre}"${makeLeaf(
                 makeContractName(name, contractName, logicName, tokenSymbol, tokenName),
-                // TODO: add the measurements (values or deltas here)
+                // TODO: add the readings (values or deltas here)
                 leaf,
             )}"${post}:::contract`,
         );

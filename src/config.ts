@@ -1,8 +1,167 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml'; // config files are in yaml
-import lodash from 'lodash';
+import lodash, { result } from 'lodash';
+import { formatUnits, parseUnits } from 'ethers';
+
 import yargs from 'yargs';
 import path from 'path';
+import { Reading, ReadingType, ReadingValue, TriggerOutcome } from './delve';
+import { users, contracts, nodes } from './graph';
+
+const replaceMatch = (
+    value: string,
+    replacers: [RegExp, (match: RegExpMatchArray) => string | bigint][],
+): string | bigint => {
+    for (const [pattern, processor] of replacers) {
+        const matches = value.match(pattern);
+        if (matches) {
+            return processor(matches);
+        }
+    }
+    return value;
+};
+
+export const parseArg = (configArg: any): string | bigint => {
+    let arg: any;
+    if (typeof configArg === 'bigint') {
+        arg = configArg;
+    } else if (typeof configArg === 'string') {
+        // contract or user or address or string or number
+        arg = replaceMatch(configArg, [
+            // address - just leave as is
+            [/^0x[a-fA-F0-9]{40}$/, (match) => match[0]],
+            // 1ether, 1 ether
+            [/^\s*(\d+)\s*(\w+)\s*$/, (match) => parseUnits(match[1], match[2])],
+            // name to address lookup
+            [
+                /^.+$/,
+                (match) => {
+                    if (users[match[0]]) return users[match[0]].address;
+                    if (contracts[match[0]]) return contracts[match[0]].address;
+                    return match[0];
+                },
+            ],
+        ]);
+    } else if (typeof configArg === 'number') {
+        arg = BigInt(configArg);
+    } else {
+        arg = configArg;
+    }
+    return arg;
+};
+
+const getDecimals = (unit: string | number | undefined): number => {
+    if (typeof unit === 'string') {
+        const baseValue = formatUnits(1n, unit);
+        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
+        return decimalPlaces;
+    } else return unit || 0;
+};
+
+const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
+    const doUnit = (value: bigint): string => {
+        return unit ? formatUnits(value, unit) : value.toString();
+    };
+    let result = doUnit(value);
+    if (precision !== undefined) {
+        // it's been formatted, so round to that precision
+        let decimalIndex = result.indexOf('.');
+        // Calculate the number of decimal places 123.45 di=3,l=6,cd=2; 12345 di=-1,l=5,cd=0
+        const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
+        if (currentDecimals > precision) {
+            if (result[result.length + precision - currentDecimals] >= '5') {
+                result = doUnit(value + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
+            }
+            // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
+            result = result.slice(undefined, precision - currentDecimals);
+            // strip a trailing "."
+            if (result[result.length - 1] === '.') result = result.slice(undefined, result.length - 1);
+            // add back the zeros
+            if (precision < 0) result = result + '0'.repeat(-precision);
+        }
+    }
+    return (addPlus && value > 0 ? '+' : '') + result;
+};
+
+const formatFromConfig = (
+    value: ReadingValue,
+    contract: string,
+    reading: string,
+    type: string,
+    delta: boolean = false,
+): string | string[] => {
+    let result: string | string[];
+    if (type.endsWith('[]')) {
+        result = (value as bigint[]).map((elem: any) => elem.toString());
+    } else {
+        result = value.toString();
+    }
+    if (getConfig().format) {
+        let mergedFormat: ConfigFormatApply = {};
+        let donotformat = false;
+        for (const format of getConfig().format) {
+            // TODO: make addresses, map on to contracts or users, not just for target fields
+            // TODO: could some things,
+            // like timestamps be represented as date/times
+            // or numbers
+            // merge all the formats that apply
+            // TODO: add regexp matches, rather than === matches
+            if (
+                (!format.type || type === format.type) &&
+                (!format.reading || reading.endsWith(format.reading)) &&
+                (!format.contract || contract === format.contract)
+            ) {
+                if (format.unit === undefined && format.precision === undefined) {
+                    donotformat = true;
+                    break; // got a no format request
+                }
+
+                if (format.unit !== undefined && mergedFormat.unit === undefined) mergedFormat.unit = format.unit;
+                if (format.precision !== undefined && mergedFormat.precision === undefined)
+                    mergedFormat.precision = format.precision;
+
+                if (mergedFormat.unit !== undefined && mergedFormat.precision !== undefined) break; // got enough
+            }
+        }
+        if (donotformat) {
+            /*
+            if (getConfig().show?.includes('format')) {
+                reading.format = {};
+            }
+            */
+        } else if (mergedFormat.unit !== undefined || mergedFormat.precision !== undefined) {
+            const unformatted = value;
+            if (type.endsWith('[]')) {
+                result = (value as bigint[]).map((elem: any) =>
+                    doFormat(elem, delta, mergedFormat.unit as string | number, mergedFormat.precision),
+                );
+            } else {
+                result = doFormat(value as bigint, delta, mergedFormat.unit as string | number, mergedFormat.precision);
+            }
+            /*
+            if (getConfig().show?.includes('format')) {
+                reading.format = mergedFormat;
+                reading.unformatted = unformatted;
+            }
+            */
+        }
+    }
+    return result;
+};
+
+export const formatArg = (arg: ReadingType): string => {
+    if (arg == undefined) {
+        console.log('undefined arg');
+    }
+    if (typeof arg === 'string') {
+        return replaceMatch(arg, [
+            // address - look up the name
+            [/^0x[a-fA-F0-9]{40}$/, (match) => nodes.get(match[0])?.name || match[0]],
+        ]).toString();
+    }
+    // TODO: format from config here, need contact, function and field to do that
+    return arg.toString();
+};
 
 export type ConfigItem = { name: string; config: Config };
 
@@ -39,24 +198,51 @@ export const writeEatFile = (name: string, results: string): void => {
 };
 
 type Formatter = (value: any) => any;
-const removeInvalidYamlTypes: Formatter = (value: any): any => {
+
+const replacer = (key: string, value: any) => {
     if (typeof value === 'bigint') {
-        return value.toString();
+        return value.toString() + 'n'; // Append 'n' to indicate BigInt
+    } else if (typeof value === 'function') {
+        return undefined; // strip out the functions
+    } else {
+        return value; // Return the value unchanged
     }
+};
+
+const transformReadings = (orig: Reading[]): any => {
+    let contracts: any = {};
+    orig.forEach((r) => {
+        if (contracts[r.id] === undefined) {
+            contracts[r.id] = `${r.contract}@${r.address}`;
+        }
+    });
+
+    let readings: any = {};
+    orig.forEach(
+        (r) =>
+            (readings[r.reading] = r.value ? formatFromConfig(r.value, r.contract, r.reading, r.type) : `!${r.error}`),
+    );
+
+    return { contracts: contracts, readings: readings };
 };
 
 export const writeYaml = (name: string, results: any, formatter?: Formatter): void => {
     if (formatter) results = lodash.cloneDeepWith(results, formatter);
-    // console.log(`   writing ${getConfig().outputFileRoot + eatFileName(name)}`);
-    writeEatFile(name, yaml.dump(lodash.cloneDeepWith(results, removeInvalidYamlTypes)));
+    writeEatFile(name, yaml.dump(transformReadings(results), { replacer: replacer }));
+};
+
+const yamlIt = (it: any): string => yaml.dump(it, { replacer: replacer });
+
+export const writeReadings = (name: string, results: Reading[], simulation?: TriggerOutcome[]): void => {
+    let data = simulation ? yamlIt({ simulation: simulation }) : '';
+    data += yamlIt(transformReadings(results));
+    writeEatFile(name + '.yml', data);
 };
 
 export type ConfigFormatMatch = {
     type?: string;
-    contract?: string;
-    contractType?: string;
-    measurement?: string;
-    // TODO: add field, for returned structures, make field have the precedence as contract & name/measurement
+    contract?: string; // contract type
+    reading?: string; // tail part of the reading name
 };
 
 export type ConfigFormatApply = {
@@ -107,7 +293,7 @@ export type Config = {
     timestamp: number;
     datetime: string;
 
-    events: ConfigUserEvent[];
+    triggers: ConfigUserEvent[];
     users: ConfigUser[];
 
     // where to look
@@ -144,7 +330,7 @@ const sortFormats = (formats: ConfigFormat[]): any => {
                     if (x.precision) value += 1000; // do .unit befoe .precision
                     // then do it in order of matches against .contract/.name and then .type
                     if (x.contract) value += 100;
-                    if (x.measurement) value += 100;
+                    if (x.reading) value += 100;
                     if (x.type) value += 10;
                     return value;
                 };
