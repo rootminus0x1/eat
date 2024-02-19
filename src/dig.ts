@@ -315,9 +315,6 @@ const digDeep = async (
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
-    if (contract?.address === '0xc6dEe5913e010895F3702bc43a40d661B13a40BD') {
-        console.log('0xc6dEe5913e010895F3702bc43a40d661B13a40BD');
-    }
     if (contract) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
 

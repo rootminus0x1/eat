@@ -111,8 +111,7 @@ const formatFromConfig = (
             // merge all the formats that apply
             if (
                 (!format.type || type === format.type) &&
-                (!format.reading ||
-                    reading.match(new RegExp(`(^|\\.\\b)${regexpEscape(format.reading)}(\\b\\.|$)`, 'g'))) &&
+                (!format.reading || reading.match(new RegExp(`(^|\\.)${regexpEscape(format.reading)}(\\.\\(||$)`))) &&
                 (!format.contract || contract === format.contract)
             ) {
                 if (format.unit === undefined && format.precision === undefined) {
