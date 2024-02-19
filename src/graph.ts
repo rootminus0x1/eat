@@ -20,7 +20,7 @@ export let readers: Map<string, any>;
 
 // for use in code - no type checking at the moment
 export let contracts: any;
-export let users: any;
+export let users: any = {};
 export let triggers: any;
 
 // not resettable: contracts deployed programmatically, not from a blockchain fork
@@ -35,7 +35,6 @@ export const resetGraph = () => {
 
     // for use in code - no type checking at the moment
     contracts = {};
-    users = {};
     triggers = {};
 };
 

@@ -18,60 +18,41 @@ let etherscanHttp = new EtherscanHttp(process.env.ETHERSCAN_API_KEY || '');
 
 export let whale: SignerWithAddress;
 
-export type ContractWithAddress<T extends BaseContract = Contract> = T & {
+export type ContractWithAddress<T extends BaseContract> = T & {
     address: string;
 };
 
-export async function deploy<T extends BaseContract>(factoryName: string, ...deployArgs: any[]): Promise<void> {
-    const contractFactory = await ethers.getContractFactory(factoryName, whale);
-    const contract = await contractFactory.deploy(...deployArgs);
-    await contract.waitForDeployment();
-    const address = await contract.getAddress();
+export type UserWithAddress = SignerWithAddress & { name: string; address: string };
 
-    const contractWithAddress = Object.assign(
-        {
-            address: address,
-        },
-        contract,
-    );
-
-    const result = Object.assign(new LocalBlockchainAddress(contractWithAddress, factoryName), {
-        name: factoryName,
-        address: address,
-    }); //as ContractWithAddress<T>;
-
-    contracts[factoryName] = result;
-    contracts[address] = result;
-    localNodes.set(factoryName, result);
-}
-
-/*
-export async function deploy<T extends Contract>(
+export async function deploy<T extends BaseContract>(
     factoryName: string,
-    deployer: SignerWithAddress,
     ...deployArgs: any[]
 ): Promise<ContractWithAddress<T>> {
-    const contractFactory = await ethers.getContractFactory(factoryName, deployer);
+    const contractFactory = await ethers.getContractFactory(factoryName, whale);
     const contract = await contractFactory.deploy(...deployArgs);
     await contract.waitForDeployment();
     let address = await contract.getAddress();
 
-    let erc20 = await getERC20Fields(address);
-
-    return Object.assign(contract as T, {
-        name: factoryName,
+    const contractWithAddress = Object.assign(contract as unknown as T, {
         address: address,
-        contractName: factoryName,
-        implementationContractName: undefined,
-        tokenName: erc20.name,
-        tokenSymbol: erc20.symbol,
-        connect: (signer: SignerWithAddress): T => {
-            return new BaseContract(contract.target, contract.interface, signer) as T;
-        },
-    }) as ContractWithAddress<T>;
+    });
+
+    // for use now
+    contracts[factoryName] = contractWithAddress;
+    contracts[address] = contractWithAddress;
+
+    // for use after another dig
+    localNodes.set(
+        address,
+        Object.assign(new LocalBlockchainAddress(contractWithAddress, factoryName), {
+            name: factoryName,
+            address: address,
+        }),
+    );
+
+    return contractWithAddress;
 }
 
-*/
 import {
     weeks,
     days,
@@ -110,10 +91,14 @@ export const setupBlockchain = async (): Promise<void> => {
 
 let allSigners: SignerWithAddress[] | undefined;
 let allocatedSigners = 0;
+let addedSigners = new Map<string, SignerWithAddress>();
 
 export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     if (!allSigners) throw 'need to setupBlockchain';
-    return allSigners[allocatedSigners++] as SignerWithAddress;
+    let found = addedSigners.get(name);
+    if (!found) found = allSigners[allocatedSigners++] as SignerWithAddress;
+    addedSigners.set(name, found);
+    return found;
 };
 
 export const getSignerAt = async (address: string, field?: string): Promise<HardhatEthersSigner | null> => {
@@ -238,7 +223,7 @@ class LocalBlockchainAddress<T extends BaseContract> implements IBlockchainAddre
         return this.contract;
     };
     public contractName = async (): Promise<string | undefined> => {
-        TODO: return '';
+        TODO: return this.name;
     };
 
     public contractNamish = async (): Promise<string> => {
@@ -362,7 +347,7 @@ export class BlockchainAddress implements IBlockchainAddress<Contract> {
         return result;
     };
 
-    public getContract = async (signer?: SignerWithAddress): Promise<ContractWithAddress | null> => {
+    public getContract = async (signer?: SignerWithAddress): Promise<ContractWithAddress<Contract> | null> => {
         const info = await this.info;
         // get abi, handling proxies
         const abi = info.implementationContractInfo?.sourceCode?.ABI || info.contractInfo?.sourceCode?.ABI;

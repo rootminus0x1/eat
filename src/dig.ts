@@ -29,6 +29,7 @@ import {
     roles,
     GraphNode,
     resetGraph,
+    localNodes,
 } from './graph';
 import { Reader, doReaderBasic } from './delve';
 import { getConfig, parseArg, writeEatFile, writeFile } from './config';
@@ -219,7 +220,7 @@ export const dig = async (stack: string) => {
             }
         } else {
             users[node.name] = await ethers.getImpersonatedSigner(address);
-            contracts[address] = users[node.name];
+            users[address] = users[node.name];
         }
     }
 
@@ -229,6 +230,7 @@ export const dig = async (stack: string) => {
         const totalHoldings = new Map<string, bigint>(); // contractname to total amount
         for (const user of getConfig().users) {
             const signer = await getSigner(user.name);
+            // The next two operations are safe to do multiply
             users[user.name] = signer; // to be used in actions
             // add them to the graph, too
             nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, digOne(signer.address)));
@@ -279,16 +281,18 @@ export const dig = async (stack: string) => {
         getConfig().triggers.forEach((ue) => {
             // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
             const copy = Object.assign({ ...ue });
-            console.log(`userEvent: ${ue.name}`);
-            triggers[ue.name] = copy; // add do: doUserEvent(copy)
-            // triggers.set(ue.name, copy);
+            console.log(`user trigger: ${ue.name}`);
+            triggers[ue.name] = copy;
         });
     }
     console.log(`digging(${stack})...done.`);
 };
 
 export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
-    return address !== ZeroAddress ? new BlockchainAddress(address) : null;
+    if (address === ZeroAddress) return null;
+    const local = localNodes.get(address);
+    if (local) return local;
+    return new BlockchainAddress(address);
 };
 
 const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: number): string => {
@@ -311,6 +315,9 @@ const digDeep = async (
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
+    if (contract?.address === '0xc6dEe5913e010895F3702bc43a40d661B13a40BD') {
+        console.log('0xc6dEe5913e010895F3702bc43a40d661B13a40BD');
+    }
     if (contract) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
 

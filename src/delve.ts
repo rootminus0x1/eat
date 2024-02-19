@@ -2,7 +2,7 @@ import * as crypto from 'crypto-js';
 
 import { contracts, readers, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, writeEatFile, writeYaml } from './config';
+import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, writeEatFile } from './config';
 import lodash from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 
@@ -72,7 +72,7 @@ export type Reading = ReadingBasic & {
     reading: string; //name of the reading
     contract: string; // type of the contract
     type: string;
-    id: string;
+    contractInstance: string;
     address: string; // address of the contract
     // value can hold a value or a delta value for comparisons
     delta?: ReadingValue;
@@ -112,8 +112,8 @@ export const doReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<
     const addressToName = (address: string): string => nodes.get(address)?.name || address;
     const callToName = (fn: string, args: any[], field?: string) => {
         let result = fn;
-        if (args.length) result += `(${args})`;
         if (field) result += `.${field}`;
+        if (args.length) result += `(${args})`;
         return result;
     };
     const basic = await doReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
@@ -124,15 +124,14 @@ export const doReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<
             basic.value = formatArg(basic.value as ReadingType);
         }
     }
-    // TODO: call this function on address, or address[] results
     return Object.assign(
         {
             reading: `${addressToName(reader.address)}.${callToName(
                 reader.function,
                 friendlyArgs.map((a: any) => formatArg(a)),
-                reader.field?.name,
+                reader.field?.name || reader.field?.index.toString(), // if there's no name, use the index in the name
             )}`,
-            id: addressToName(reader.address),
+            contractInstance: addressToName(reader.address),
             contract: reader.contract,
             address: reader.address,
             type: reader.type,
