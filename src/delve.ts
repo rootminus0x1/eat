@@ -62,6 +62,25 @@ export type Reader = {
     read: (...args: any[]) => Promise<any>;
 };
 
+export const makeReader = (address: string, fn: string, field?: string): Reader => {
+    const forContract = readers.get(address);
+    if (forContract) {
+        const reader = forContract.filter((r: Reader) => {
+            if (r.function !== fn) return false; // mismatched function name
+            if (r.field === undefined && field === undefined) return true; // neither has a field, so matched
+            // both must have fields
+            if (r.field === undefined || field === undefined) return false; // mismatched field existence
+            // if we get here, both have fields
+            return field === r.field.name || field === r.field.index.toString(); // allow field to have a numeric value
+        });
+        if (reader.length === 1) return reader[0];
+        if (reader.length > 1)
+            throw Error('when making a Reader, more than one match was found - maybe need to define a field?');
+        if (reader.length === 0) throw Error('when making a Reader, none was found');
+    }
+    throw Error('when making a Reader, none was found at the address given');
+};
+
 export type ReadingBasic = {
     value?: ReadingValue; // if it's an address or array of addresses they are translated into contract names
     // error can hold an error, a change in error message or indicate a change from a value to/from an error
@@ -78,7 +97,7 @@ export type Reading = ReadingBasic & {
     delta?: ReadingValue;
 };
 
-export const doReaderBasic = async (reader: Reader, ...args: any[]): Promise<ReadingBasic> => {
+export const callReaderBasic = async (reader: Reader, ...args: any[]): Promise<ReadingBasic> => {
     let value: ReadingValue | undefined;
     let error: string | undefined;
     try {
@@ -108,15 +127,15 @@ export const doReaderBasic = async (reader: Reader, ...args: any[]): Promise<Rea
     };
 };
 
-export const doReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
+export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
     const addressToName = (address: string): string => nodes.get(address)?.name || address;
     const callToName = (fn: string, args: any[], field?: string) => {
         let result = fn;
-        if (field) result += `.${field}`;
         if (args.length) result += `(${args})`;
+        if (field) result += `.${field}`;
         return result;
     };
-    const basic = await doReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
+    const basic = await callReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
     if (basic.value !== undefined) {
         if (reader.type.endsWith('[]')) {
             basic.value = (basic.value as ReadingType[]).map((v) => formatArg(v));
@@ -138,6 +157,11 @@ export const doReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<
         },
         basic,
     );
+};
+
+export const doReading = async (address: string, fn: string, field?: string, ...args: any[]): Promise<Reading> => {
+    const reader = makeReader(address, fn, field);
+    return await callReader(reader, ...args);
 };
 
 // user events
@@ -267,10 +291,10 @@ export const doReadings = async (/*filter?: MeasurementsMatch[]*/): Promise<Read
         for (const reader of readerList) {
             if (reader.argTypes && reader.argTypes.length == 1 && reader.argTypes[0] === 'address') {
                 for (const [target, node] of nodes) {
-                    if (target !== address) result.push(await doReader(reader, target));
+                    if (target !== address) result.push(await callReader(reader, target));
                 }
             } else {
-                result.push(await doReader(reader));
+                result.push(await callReader(reader));
             }
         }
     }

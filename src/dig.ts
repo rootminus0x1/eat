@@ -31,7 +31,7 @@ import {
     resetGraph,
     localNodes,
 } from './graph';
-import { Reader, doReaderBasic } from './delve';
+import { Reader, callReaderBasic } from './delve';
 import { getConfig, parseArg, writeEatFile, writeFile } from './config';
 
 export const dig = async (stack: string) => {
@@ -253,8 +253,16 @@ export const dig = async (stack: string) => {
             // fill the wallet
             // TODO: use setBalance to set ETH holdings
             for (const [tokenName, amount] of userHoldings) {
-                if (!(await contracts[tokenName].connect(whale).transfer(users[userName].address, amount))) {
-                    throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
+                // just add enough to make it to at least the holding
+                const currentHolding = await contracts[tokenName].balanceOf(users[userName].address);
+                if (currentHolding < amount) {
+                    if (
+                        !(await contracts[tokenName]
+                            .connect(whale)
+                            .transfer(users[userName].address, amount - currentHolding))
+                    ) {
+                        throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
+                    }
                 }
                 // find all the contracts this user interacts with and allow them to spend there
                 if (getConfig().triggers) {
@@ -412,7 +420,7 @@ const digDeep = async (
                 if (func.outputs[outputIndex].type.startsWith('address') && func.inputs.length == 0) {
                     // need to execute the function
                     try {
-                        const result = await doReaderBasic(reader);
+                        const result = await callReaderBasic(reader);
                         if (result.value === undefined) throw Error(`failed to read ${result.error}`);
                         if (Array.isArray(result.value)) {
                             // TODO: should against reader.type.endsWith('[]')

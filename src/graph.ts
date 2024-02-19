@@ -16,7 +16,8 @@ export let nodes: Map<string, GraphNode>; // address to object
 export let links: Map<string, Link[]>; // address to array of links, from -> to:Link[]
 export let backLinks: Map<string, Link[]>; // reverse of above, to -> from:Link[]
 export let roles: Map<string, Role[]>; // address to array of roles
-export let readers: Map<string, any>;
+// TODO: add all view & pure functions to the readers
+export let readers: Map<string, any>; // contract address to reader
 
 // for use in code - no type checking at the moment
 export let contracts: any;
