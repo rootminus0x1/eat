@@ -7,3 +7,4 @@ export * from './dig';
 export * from './delve';
 export * from './coingecko';
 export * from './graph';
+export * from './logging';

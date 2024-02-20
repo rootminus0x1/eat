@@ -2,9 +2,11 @@ import * as crypto from 'crypto-js';
 
 import { contracts, readers, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, writeEatFile } from './config';
-import lodash from 'lodash';
+import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, stringCompare, writeEatFile } from './config';
+import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
+import { withLogging, withLoggingSync } from './logging';
+import { log } from 'console';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -57,9 +59,10 @@ export type Reader = {
         name: string; // for multiple outputs, arrays are not multiple outputs, name is for user extraction
         index: number;
     }; // the output index of the field (for generic extraction)
-    argTypes?: string[]; // types or the args
+    argTypes: string[]; // types or the args
     type: string; // solidity type of result, you know how to extract the resulta
     read: (...args: any[]) => Promise<any>;
+    formatting?: ConfigFormatApply;
 };
 
 export const makeReader = (address: string, fn: string, field?: string): Reader => {
@@ -90,11 +93,16 @@ export type ReadingBasic = {
 export type Reading = ReadingBasic & {
     reading: string; //name of the reading
     contract: string; // type of the contract
+    function: string;
+    field?: string;
+    argTypes: string[];
+    args: any[];
     type: string;
     contractInstance: string;
     address: string; // address of the contract
     // value can hold a value or a delta value for comparisons
-    delta?: ReadingValue;
+    delta?: ReadingBasic;
+    formatting?: ConfigFormatApply;
 };
 
 export const callReaderBasic = async (reader: Reader, ...args: any[]): Promise<ReadingBasic> => {
@@ -127,14 +135,16 @@ export const callReaderBasic = async (reader: Reader, ...args: any[]): Promise<R
     };
 };
 
+export const callToName = (reader: Reader, args?: any[]) => {
+    let result = reader.function;
+    if (args?.length) result += `(${args})`;
+    const field = reader.field?.name || reader.field?.index.toString(); // if there's no name, use the index in the name
+    if (field) result += `.${field}`;
+    return result;
+};
+
 export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
     const addressToName = (address: string): string => nodes.get(address)?.name || address;
-    const callToName = (fn: string, args: any[], field?: string) => {
-        let result = fn;
-        if (args.length) result += `(${args})`;
-        if (field) result += `.${field}`;
-        return result;
-    };
     const basic = await callReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
     if (basic.value !== undefined) {
         if (reader.type.endsWith('[]')) {
@@ -146,14 +156,18 @@ export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promis
     return Object.assign(
         {
             reading: `${addressToName(reader.address)}.${callToName(
-                reader.function,
+                reader, //
                 friendlyArgs.map((a: any) => formatArg(a)),
-                reader.field?.name || reader.field?.index.toString(), // if there's no name, use the index in the name
             )}`,
             contractInstance: addressToName(reader.address),
             contract: reader.contract,
+            function: reader.function,
+            field: reader.field?.name || reader.field?.index.toString(),
             address: reader.address,
+            argTypes: reader.argTypes,
+            args: friendlyArgs,
             type: reader.type,
+            formatting: reader.formatting,
         },
         basic,
     );
@@ -203,7 +217,7 @@ export const doTrigger = async (trigger: Trigger, ...overrideArgs: any[]): Promi
     };
 };
 
-// generate multiple events based on some sequance generator
+// generate multiple triggers based on some sequance generator
 
 export function makeTrigger(base: Trigger, ...args: any[]): Trigger {
     return Object.assign({}, base, { args: args }); // override the args
@@ -223,73 +237,19 @@ export type Experiment = {
 };
 
 ////////////////////////////////////////////////////////////////////////
-// calculateMeasures
-/*
-export type MeasurementsMatch = {
-    contract: string;
-    reading: string;
-    // TODO: rename, everywhere target -> args
-    target?: string;
-};
-*/
+// doReadings
 
-// note that the order in the filter is important
-export const doReadings = async (/*filter?: MeasurementsMatch[]*/): Promise<Reading[]> => {
+const compareReadingKeys = (a: Reading, b: Reading) =>
+    stringCompare(a.contractInstance, b.contractInstance) || stringCompare(a.reading, b.reading);
+
+const sortReadings = (r: Reading[]): Reading[] => r.sort(compareReadingKeys);
+
+export const doReadings = async (): Promise<Reading[]> => {
     const result: Reading[] = [];
-    let count = 0;
-    /*
-    type MeasurementSpec = {
-        node: GraphNode;
-        reading: Reader;
-        targetAddress?: string;
-    };
-    let measurementsToDo: MeasurementSpec[] = [];
-    if (!filter) {
-        // TODO: put this into dig
-        for (const [address, node] of nodes) {
-            for (const reading of readers.get(address) ?? []) {
-                // only do measurments for addresses with a name (they're users otherwise)
-                if (!reading.name) continue;
-                if (reading.argTypes) {
-                    for (const [targetAddress, targetNode] of nodes) {
-                        if (targetAddress === address) continue; // skip self
-                        measurementsToDo.push({ node: node, reading: reading, targetAddress: targetNode.address });
-                    }
-                } else {
-                    measurementsToDo.push({ node: node, reading: reading });
-                }
-            }
-        }
-    } else {
-        // maybe do this somewhere too and change the input to this function
-        for (const match of filter) {
-            const nodeAddress = contracts[match.contract]?.address;
-            if (!nodeAddress) {
-                throw Error(`unable to find node for ${match.contract}`);
-            }
-            const node = nodes.get(nodeAddress);
-            if (!node) {
-                throw Error(`unable to find node ${match.contract} at ${nodeAddress}`);
-            }
-            const nodeMeasures = readers.get(nodeAddress);
-            if (!nodeMeasures) {
-                throw Error(`unable to find node reading for ${match.contract} at ${nodeAddress}`);
-            }
-            const reading = nodeMeasures.find((reading) => reading.name === match.reading);
-            if (!reading) {
-                throw Error(`unable to find node reading called ${match.reading} on ${match.contract}`);
-            }
-
-            const targetAddress = match.target
-                ? contracts[match.target]?.address || users[match.target]?.address
-                : undefined;
-            measurementsToDo.push({ node: node, reading: reading, targetAddress: targetAddress });
-        }
-    }
-*/
     for (const [address, readerList] of readers) {
         for (const reader of readerList) {
             if (reader.argTypes && reader.argTypes.length == 1 && reader.argTypes[0] === 'address') {
+                // nodes are already sorted by name
                 for (const [target, node] of nodes) {
                     if (target !== address) result.push(await callReader(reader, target));
                 }
@@ -298,30 +258,10 @@ export const doReadings = async (/*filter?: MeasurementsMatch[]*/): Promise<Read
             }
         }
     }
-    /*
-    // console.log(`   Nodes: ${sortedNodes.length}, Measurements: ${count}`);
-    if (filter) {
-        return result; // return it as asked
-    } else {
-        // collapse contracts into the same result
-        const mergedEntries: Record<string, ContractMeasurements> = {};
 
-        // Iterate through the array and group by 'contract'
-        result.forEach((contractMeasurements) => {
-            if (!mergedEntries[contractMeasurements.name]) {
-                // If the contract doesn't exist, add it to the mergedEntries
-                mergedEntries[contractMeasurements.name] = { ...contractMeasurements };
-            } else {
-                // If the contract exists, merge the readers
-                mergedEntries[contractMeasurements.name].readings.push(...contractMeasurements.readings);
-            }
-        });
-
-        // Convert the mergedEntries object back into an array
-        return Object.values(mergedEntries);
-    }
-    */
-    return result;
+    // make sure Readings are always sorted, regardless of Reader/Node order
+    // use the reading field as it rolls up function name, arguments and fields
+    return sortReadings(result);
 };
 /*
 ////////////////////////////////////////////////////////////////////////
@@ -356,143 +296,79 @@ export const calculateSlimMeasures = async (baseMeasurements: Measurements): Pro
     }
     return result;
 };
-
+*/
 ////////////////////////////////////////////////////////////////////////
-// calculateDeltaMeasures
-export const calculateDeltaMeasures = (
-    baseMeasurements: Measurements,
-    actionedMeasurements: Measurements,
-): Measurements => {
-    const results: Measurements = [];
+// diff Readings
+const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
+    const deltas: Reading[] = [];
+    let a = 0,
+        b = 0;
+    while (a < readings.length && b < baseReadings.length) {
+        const reading = readings[a];
+        const base = baseReadings[b];
+        const cmp = compareReadingKeys(reading, base);
+        if (cmp === -1) {
+            deltas.push(reading); // a new reading, not in base
+            a++;
+        } else if (cmp === 1) {
+            // ignore these - they are not in the new reading, only in base, so not that interesting
+            // deltas.push(base); // a missing reading, only in base
+            b++;
+        } else {
+            a++;
+            b++;
+            let delta: ReadingBasic = {};
+            // check the errors first
+            if (reading.error === undefined && base.error !== undefined)
+                delta.error = `"${base.error}" -> ${reading.error}`;
+            if (reading.error !== undefined && base.error === undefined)
+                delta.error = `${base.error} -> "${reading.error}"`;
+            if (reading.error !== base.error) delta.error = `"${base.error}" -> "${reading.error}"`;
 
-    // loop through actioned readings, just the actual readings, nothing else
-    const actionedContractMeasurements: Measurements = actionedMeasurements.filter((m: any) =>
-        m.readings ? true : false,
-    );
-    const baseContractMeasurements: Measurements = baseMeasurements.filter((m: any) => (m.readings ? true : false));
-
-    if (baseContractMeasurements.length !== actionedContractMeasurements.length)
-        throw Error(
-            `contract readings differ: baseMeasurements ${baseContractMeasurements.length} actionedMeasurements ${actionedContractMeasurements.length}`,
-        );
-
-    for (let a = 0; a < actionedContractMeasurements.length; a++) {
-        const baseContract = baseContractMeasurements[a] as ContractMeasurements;
-        const actionedContract = actionedContractMeasurements[a] as ContractMeasurements;
-
-        if (
-            actionedContract.address !== baseContract.address ||
-            actionedContract.name !== baseContract.name ||
-            actionedContract.contractType !== baseContract.contractType
-        )
-            throw Error(
-                `contract readings[${a}] mismatch base: ${JSON.stringify(baseContract)}; actioned: ${JSON.stringify(
-                    actionedContract,
-                )}`,
-            );
-
-        if (actionedContract.readings.length !== baseContract.readings.length)
-            throw Error(`contract readings[${a}] mismatch on number of readings`);
-
-        const deltas: Reading[] = [];
-        for (let m = 0; m < actionedContract.readings.length; m++) {
-            const baseMeasurement = baseContract.readings[m];
-            const actionedMeasurement = actionedContract.readings[m];
-
-            if (actionedMeasurement.name !== baseMeasurement.name || actionedMeasurement.type !== baseMeasurement.type)
-                throw Error('attempt to diff readings of different structures');
-
-            // TODO: handle arrays of values wherever a "value:" or "delta:" is written below
-            if (baseMeasurement.error && actionedMeasurement.error) {
-                // both errors
-                if (baseMeasurement.error !== actionedMeasurement.error)
-                    deltas.push({
-                        name: actionedMeasurement.name,
-                        type: actionedMeasurement.type,
-                        error: `"${baseMeasurement.error}" => "${actionedMeasurement.error}"`,
-                    });
-            } else if (baseMeasurement.error && !actionedMeasurement.error) {
-                // different kind of result
-                deltas.push({
-                    name: actionedMeasurement.name,
-                    type: actionedMeasurement.type,
-                    error: `"${baseMeasurement.error}" => value`,
-                    value: actionedMeasurement.value,
-                });
-            } else if (!baseMeasurement.error && actionedMeasurement.error) {
-                // different kind of result
-                deltas.push({
-                    name: actionedMeasurement.name,
-                    type: actionedMeasurement.type,
-                    error: `value => "${actionedMeasurement.error}"`,
-                    value: baseMeasurement.value,
-                });
-            } else {
-                // both values
-                // TODO: handle address comparisons
-                const baseIsArray = lodash.isArray(baseMeasurement.value);
-                const actionedIsArray = lodash.isArray(actionedMeasurement.value);
-                if (!baseIsArray && !actionedIsArray) {
-                    // both bigint
-                    if (baseMeasurement.value !== actionedMeasurement.value) {
-                        deltas.push({
-                            name: actionedMeasurement.name,
-                            type: actionedMeasurement.type,
-                            target: actionedMeasurement.target,
-                            delta: (actionedMeasurement.value as bigint) - (baseMeasurement.value as bigint),
-                        });
+            // now check the values that are the same type (by definition) but may be arrays or scalars
+            const scalarDelta = (type: string, a: ReadingType, b: ReadingType): ReadingType => {
+                let result: any = undefined;
+                if (a !== b) {
+                    if (a !== undefined && b !== undefined) {
+                        if (type.includes('int')) result = (b as bigint) - (a as bigint);
+                        else if (type === 'bool') result = a; // changed from !reading.value to reading.value
+                        else if (type === 'string' || type.startsWith('address') || type.startsWith('bytes'))
+                            result = `"${base.value}" -> "${reading.value}}"`;
+                        else throw Error(`unsupported reading type in deltas: ${reading.type}`);
                     }
-                } else if (baseIsArray && actionedIsArray) {
-                    // both bigint[]
-                    const baseArray = baseMeasurement.value as bigint[];
-                    const actionedArray = actionedMeasurement.value as bigint[];
-                    if (baseArray.length === actionedArray.length) {
-                        let delta: bigint[] = [];
-                        let diffs = false;
-                        for (let i = 0; i < baseArray.length; i++) {
-                            if (actionedArray[i] !== baseArray[i]) diffs = true;
-                            delta.push(actionedArray[i] - baseArray[i]);
-                        }
-                        if (diffs) {
-                            deltas.push({
-                                name: actionedMeasurement.name,
-                                type: actionedMeasurement.type,
-                                target: actionedMeasurement.target,
-                                delta: delta,
-                            });
-                        }
+                }
+                return result;
+            };
+            // like for like comparison
+            if (reading.type.endsWith('[]')) {
+                // do array comparison
+                if (reading.value === undefined && base.value !== undefined)
+                    delta.value = `[${base.value.toString()}] -> ${reading.value}`;
+                if (reading.value !== undefined && base.value === undefined)
+                    delta.value = `${base.value} -> [${reading.value.toString()}]`;
+                if (reading.value !== undefined && base.value !== undefined) {
+                    const readingA = reading.value as ReadingType[];
+                    const baseA = reading.value as ReadingType[];
+                    if (readingA.length === baseA.length) {
+                        delta.value = readingA.map((a, i) => scalarDelta(reading.type.replace('[]', ''), a, baseA[i]));
                     } else {
-                        deltas.push({
-                            name: actionedMeasurement.name,
-                            type: actionedMeasurement.type,
-                            target: actionedMeasurement.target,
-                            error: `arrays changed length: ${baseArray.length} => ${actionedArray.length}`,
-                        });
+                        delta.value = `${baseA.length}:[${baseA.toString()}] -> ${
+                            readingA.length
+                        }[${readingA.toString()}]`;
                     }
-                } else {
-                    // but different types
-                    deltas.push({
-                        name: actionedMeasurement.name,
-                        type: actionedMeasurement.type,
-                        target: actionedMeasurement.target,
-                        error: `int${baseIsArray ? '[]' : ''} => int${actionedIsArray ? '[]' : ''}`,
-                    });
                 }
             }
+            if (delta.value !== undefined || delta.error !== undefined)
+                deltas.push(Object.assign({ delta: delta }, reading));
         }
-        if (deltas.length > 0)
-            results.push({
-                address: actionedContract.address,
-                name: actionedContract.name,
-                contractType: actionedContract.contractType,
-                readings: deltas,
-            });
     }
-    return results;
+    // add anything left over as more readings
+    while (a < readings.length) deltas.push(readings[a++]); // a new reading, not in base
+    // while (b < baseReadings.length) deltas.push(baseReadings[b++]); // a missing reading, only in base
+    return sortReadings(deltas);
 };
 
-
-
+export const readingsDeltas = withLoggingSync(_readingsDeltas);
 
 ////////////////////////////////////////////////////////////////////////
 // delve
@@ -684,8 +560,7 @@ const delveSimulation = async (stack: string, simulation: Trigger[] = [], contex
 };
 */
 // do each event and after it, do each simulation then reset the blockchain before the next event
-export const delve = async (stack: string, simulation: Trigger[] = []): Promise<[Reading[], TriggerOutcome[]]> => {
-    console.log(`delving(${stack})...`);
+const _delve = async (stack: string, simulation: Trigger[] = []): Promise<[Reading[], TriggerOutcome[]]> => {
     const outcomes: TriggerOutcome[] = [];
     // do each event
     /*    for (const trigger of simulation) {
@@ -695,9 +570,10 @@ export const delve = async (stack: string, simulation: Trigger[] = []): Promise<
     }
 */
     const readings = await doReadings();
-    console.log(`delving(${stack})...done.`);
     return [readings, outcomes];
 };
+
+export const delve = withLogging(_delve);
 
 /*
 type Simulation = Event[];

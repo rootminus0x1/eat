@@ -31,11 +31,11 @@ import {
     resetGraph,
     localNodes,
 } from './graph';
-import { Reader, callReaderBasic } from './delve';
-import { getConfig, parseArg, writeEatFile, writeFile } from './config';
+import { Reader, callReaderBasic, callToName } from './delve';
+import { ConfigFormatApply, getConfig, parseArg, stringCompare, writeEatFile, writeFile } from './config';
+import { withLogging, withLoggingSync } from './logging';
 
-export const dig = async (stack: string) => {
-    console.log(`digging(${stack})...`);
+const _dig = async (stack: string) => {
     // we reset the graph (which is a set of global variables)
     resetGraph();
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
@@ -109,7 +109,7 @@ export const dig = async (stack: string) => {
 
                 // follow the roles (even on a leaf)
                 if (dugUp.roles.length) {
-                    dugUp.roles.forEach((role) =>
+                    dugUp.roles.forEach((role: Role) =>
                         addLinks(
                             address.address,
                             role.addresses.map((a) => ({ address: a, name: role.name })),
@@ -167,15 +167,12 @@ export const dig = async (stack: string) => {
         }
     }
 
-    const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) => {
-        return Array.from(unsorted.entries()).sort((a, b) =>
-            field(a[1]).localeCompare(field(b[1]), 'en', { sensitivity: 'base' }),
-        );
-    };
+    // sort the nodes by name
+    // TODO: find out why
+    const sort = <K, V>(unsorted: Map<K, V>, field: (v: V) => string) =>
+        Array.from(unsorted.entries()).sort((a, b) => stringCompare(field(a[1]), field(b[1])));
 
     sort(tempNodes, (v) => v.name).forEach(([k, v]) => nodes.set(k, v));
-
-    // TODO: make nodes sorted after dig
 
     // set up the graph contracts and users for executing the actions
     for (const [address, node] of nodes) {
@@ -293,7 +290,6 @@ export const dig = async (stack: string) => {
             triggers[ue.name] = copy;
         });
     }
-    console.log(`digging(${stack})...done.`);
 };
 
 export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
@@ -312,6 +308,44 @@ const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: nu
         result = `${result}[${arrayIndex}]`;
     }
     return result;
+};
+
+//const regexpEscape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const getFormatting = (reader: Reader) => {
+    if (getConfig().format) {
+        let mergedFormat: ConfigFormatApply = {};
+        for (const format of getConfig().format) {
+            // TODO: could some things,
+            // like timestamps be represented as date/times
+            // or numbers
+            // merge all the formats that apply
+            if (
+                (!format.type || reader.type === format.type) &&
+                (!format.reading || callToName(reader) === format.reading) &&
+                (!format.contract || reader.contract === format.contract)
+            ) {
+                // is it a highest priority no-format spec
+                if (format.unit === undefined && format.precision === undefined) {
+                    return {}; // this overrides any formatting specified previously
+                }
+
+                // merge the formatting but don't override
+                if (format.unit !== undefined && mergedFormat.unit === undefined) {
+                    mergedFormat.unit = format.unit;
+                }
+                if (format.precision !== undefined && mergedFormat.precision === undefined) {
+                    mergedFormat.precision = format.precision;
+                }
+                // got a full format? if so we're done
+                if (mergedFormat.unit !== undefined && mergedFormat.precision !== undefined) return mergedFormat; // got enough
+            }
+        }
+        if (mergedFormat.unit !== undefined || mergedFormat.precision !== undefined) {
+            return mergedFormat;
+        }
+    }
+    return undefined;
 };
 
 const digDeep = async (
@@ -340,17 +374,6 @@ const digDeep = async (
             ) {
                 roleFunctions.push(func.name);
             }
-        });
-        // sort the functions, by parameter count then function name, then parameter name
-        functions.sort((a, b) => {
-            let cmp = a.inputs.length - b.inputs.length;
-            if (!cmp) {
-                // same number of arguments, so compare names - we
-                cmp = a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
-                if (!cmp && a.inputs.length == 1)
-                    cmp = a.inputs[0].name.localeCompare(b.inputs[0].name, 'en', { sensitivity: 'base' });
-            }
-            return cmp;
         });
 
         // get the role names
@@ -392,28 +415,29 @@ const digDeep = async (
                 (f.stateMutability === 'view' || f.stateMutability === 'pure') &&
                 (f.inputs.length == 0 || (f.inputs.length == 1 && f.inputs[0].type === 'address')),
         )) {
-            // TODO: expand this to work with all arg types and all arg numbers
+            // TODO: expand this to work with all arg types and all arg numbers for general use
             const argTypes = func.inputs.length == 1 ? [func.inputs[0].type] : undefined;
             // get all the functions that return a numeric or address or arrays of them
             for (const outputIndex of func.outputs.reduce((indices, elem, index) => {
-                // TODO:  add bool?
+                // TODO:  add bool, bytes1 .. bytes32, and enums?
                 if (elem.type === 'address' || elem.type === 'address[]' || /^u?int\d+(\[\])?$/.test(elem.type)) {
                     indices.push(index);
                 }
                 return indices;
             }, [] as number[])) {
-                const reader = {
-                    address: (await address.getContract())?.address as string, // TODO: fix this
+                const reader: Reader = {
+                    address: contract.address,
                     contract: await address.contractNamish(),
                     function: func.name,
                     field:
                         func.outputs.length != 1
                             ? { name: func.outputs[outputIndex].name, index: outputIndex }
                             : undefined,
-                    argTypes: func.inputs.length == 1 ? ['address'] : undefined,
+                    argTypes: func.inputs.length == 1 ? ['address'] : [],
                     type: func.outputs[outputIndex].type,
                     read: async (...args: any[]): Promise<any> => await contract[func.name](...args),
                 };
+                reader.formatting = getFormatting(reader);
                 readers.push(reader);
 
                 // now add the data into links
@@ -442,3 +466,5 @@ const digDeep = async (
     }
     return { readers: readers, links: links, roles: roles };
 };
+
+export const dig = withLogging(_dig);

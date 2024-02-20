@@ -1,12 +1,15 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml'; // config files are in yaml
-import lodash, { result } from 'lodash';
+import lodash, { result, values } from 'lodash'; //
 import { formatUnits, parseUnits } from 'ethers';
 
 import yargs from 'yargs';
 import path from 'path';
-import { Reading, ReadingType, ReadingValue, TriggerOutcome } from './delve';
+import { Reading, ReadingBasic, ReadingType, ReadingValue, TriggerOutcome } from './delve';
 import { users, contracts, nodes } from './graph';
+import { log } from './logging';
+
+export const stringCompare = (a: string, b: string): number => a.localeCompare(b, 'en', { sensitivity: 'base' });
 
 const replaceMatch = (
     value: string,
@@ -50,18 +53,18 @@ export const parseArg = (configArg: any): string | bigint => {
     return arg;
 };
 
-const getDecimals = (unit: string | number | undefined): number => {
-    if (typeof unit === 'string') {
-        const baseValue = formatUnits(1n, unit);
-        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
-        return decimalPlaces;
-    } else return unit || 0;
-};
-
 const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
     const doUnit = (value: bigint): string => {
         return unit ? formatUnits(value, unit) : value.toString();
     };
+    const getDecimals = (): number => {
+        if (typeof unit === 'string') {
+            const baseValue = formatUnits(1n, unit);
+            const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
+            return decimalPlaces;
+        } else return unit || 0;
+    };
+
     let result = doUnit(value);
     if (precision !== undefined) {
         // it's been formatted, so round to that precision
@@ -70,7 +73,7 @@ const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, preci
         const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
         if (currentDecimals > precision) {
             if (result[result.length + precision - currentDecimals] >= '5') {
-                result = doUnit(BigInt(value) + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
+                result = doUnit(BigInt(value) + 5n * 10n ** BigInt(getDecimals() - precision - 1));
             }
             // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
             result = result.slice(undefined, precision - currentDecimals);
@@ -88,68 +91,32 @@ type formatSpec = { unit?: number | string; precision?: number } | undefined;
 
 const formatFromConfig = (
     value: ReadingValue,
-    contract: string,
-    reading: string,
     type: string,
+    formatting?: ConfigFormatApply,
     delta: boolean = false,
-): [string | string[], formatSpec] => {
+): string | string[] => {
     let result: string | string[];
-    let formatResult: formatSpec = undefined;
-    if (type.endsWith('[]')) {
-        result = (value as bigint[]).map((elem: any) => elem.toString());
+    if (formatting?.unit !== undefined || formatting?.precision !== undefined) {
+        if (type.endsWith('[]') && Array.isArray(value)) {
+            result = value.map((elem: any) =>
+                doFormat(BigInt(elem.toString()), delta, formatting.unit as string | number, formatting.precision),
+            );
+        } else {
+            result = doFormat(
+                BigInt(value.toString()),
+                delta,
+                formatting.unit as string | number,
+                formatting.precision,
+            );
+        }
     } else {
-        result = value.toString();
-    }
-    if (getConfig().format) {
-        let mergedFormat: ConfigFormatApply = {};
-        let donotformat = false;
-        for (const format of getConfig().format) {
-            // TODO: make addresses, map on to contracts or users, not just for target fields
-            // TODO: could some things,
-            // like timestamps be represented as date/times
-            // or numbers
-            // merge all the formats that apply
-            if (
-                (!format.type || type === format.type) &&
-                (!format.reading || reading.match(new RegExp(`(^|\\.)${regexpEscape(format.reading)}(\\.\\(||$)`))) &&
-                (!format.contract || contract === format.contract)
-            ) {
-                if (format.unit === undefined && format.precision === undefined) {
-                    donotformat = true;
-                    break; // got a no format request, so we're done
-                }
-
-                if (format.unit !== undefined && mergedFormat.unit === undefined) mergedFormat.unit = format.unit;
-                if (format.precision !== undefined && mergedFormat.precision === undefined)
-                    mergedFormat.precision = format.precision;
-
-                if (mergedFormat.unit !== undefined && mergedFormat.precision !== undefined) break; // got enough
-            }
-        }
-        if (donotformat) {
-            formatResult = {};
-        } else if (mergedFormat.unit !== undefined || mergedFormat.precision !== undefined) {
-            formatResult = mergedFormat;
-            if (type.endsWith('[]') && Array.isArray(value)) {
-                result = value.map((elem: any) =>
-                    doFormat(
-                        BigInt(elem.toString()),
-                        delta,
-                        mergedFormat.unit as string | number,
-                        mergedFormat.precision,
-                    ),
-                );
-            } else {
-                result = doFormat(
-                    BigInt(value.toString()),
-                    delta,
-                    mergedFormat.unit as string | number,
-                    mergedFormat.precision,
-                );
-            }
+        if (type.endsWith('[]')) {
+            result = (value as bigint[]).map((elem: any) => elem?.toString());
+        } else {
+            result = value.toString();
         }
     }
-    return [result, formatResult];
+    return result;
 };
 
 export const formatArg = (arg: ReadingType): string => {
@@ -186,7 +153,7 @@ export const ensureDirectory = (filePath: string) => {
 };
 
 export const writeFile = (filePath: string, results: string): void => {
-    // console.log(`   writing ${filePath}`);
+    // log(`writing ${filePath}`);
     ensureDirectory(filePath);
     fs.writeFileSync(filePath, results, { encoding: 'utf-8' });
 };
@@ -196,7 +163,7 @@ export const eatFileName = (name: string): string => {
 };
 
 export const writeEatFile = (name: string, results: string): void => {
-    console.log(`   writing ${eatFileName(name)}`);
+    log(`writing ${eatFileName(name)}`);
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
 
@@ -218,22 +185,48 @@ const transformReadings = (orig: Reading[]): any => {
     let readings: any = {};
 
     orig.forEach((r) => {
-        if (addresses[r.contractInstance] === undefined) {
-            addresses[r.contractInstance] = `${r.contract}@${r.address}`;
+        // save the value/delta/error
+        let value: any = undefined;
+        let error: string | undefined = undefined;
+
+        const readingDisplay = (rb: ReadingBasic, delta: boolean = false): [any, string | undefined] => {
+            let value: any = undefined;
+            let error: string | undefined = undefined;
+            if (rb.value !== undefined) {
+                const formatted = formatFromConfig(rb.value, r.type, r.formatting, delta);
+                let comment = ''; // `${r.type}`;
+                if (r.formatting) comment = ` # ${JSON.stringify(r.formatting).replace(/"/g, '')}`;
+                value = r.type.endsWith('[]')
+                    ? (formatted as string[]).map((f) => `${f}${comment}`)
+                    : `${formatted}${comment}`;
+            }
+            if (r.error !== undefined) error = `${r.error}`;
+            return [value, error];
+        };
+
+        if (r.delta !== undefined) {
+            [value, error] = r.delta ? readingDisplay(r.delta, true) : [undefined, undefined];
+        } else {
+            [value, error] = readingDisplay(r);
         }
 
-        if (contracts[r.contract] === undefined) contracts[r.contract] = {};
-        // remove the contract instance and parameters
-        contracts[r.contract][r.reading.replace(/^[^.]*\./, '').replace(/\([^)]*\)/, '')] = r.type;
-        if (r.value !== undefined) {
-            const [formatted, formats] = formatFromConfig(r.value, r.contract, r.reading, r.type);
-            let comment = ''; // `${r.type}`;
-            if (formats) comment = ` # ${JSON.stringify(formats).replace(/"/g, '')}`;
-            readings[r.reading] = r.type.endsWith('[]')
-                ? (formatted as string[]).map((f) => `${f}${comment}`)
-                : `${formatted}${comment}`;
-        } else {
-            readings[r.reading] = `!${r.error}`;
+        const display =
+            value !== undefined && error !== undefined
+                ? { value: value, error: error }
+                : value !== undefined
+                ? value
+                : error;
+
+        if (display != undefined) {
+            readings[r.reading] = display;
+
+            if (addresses[r.contractInstance] === undefined) {
+                addresses[r.contractInstance] = `${r.contract}@${r.address}`;
+            }
+
+            if (contracts[r.contract] === undefined) contracts[r.contract] = {};
+            // remove the contract instance and parameters
+            contracts[r.contract][r.reading.replace(/^[^.]*\./, '').replace(/\([^)]*\)/, '')] = r.type;
         }
     });
 
@@ -394,7 +387,7 @@ export const getConfig = (): Config => {
 
         // load the requested config
         const configFilePath = path.resolve(argv._[0]);
-        console.log(configFilePath);
+        log(configFilePath);
 
         const configName = getConfigName(configFilePath);
 

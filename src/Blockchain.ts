@@ -60,6 +60,7 @@ import {
     minutes,
     seconds,
 } from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration';
+import { log } from './logging';
 
 const timeUnits = new Map<string, number>([
     ['week', weeks(1)],
@@ -86,7 +87,7 @@ export const setupBlockchain = async (): Promise<void> => {
     allSigners = await ethers.getSigners();
     whale = await getSigner('whale');
 
-    console.log(`${network.name} ${await time.latestBlock()} ${getConfig().datetime} UX:${getConfig().timestamp}`);
+    log(`${network.name} ${await time.latestBlock()} ${getConfig().datetime} UX:${getConfig().timestamp}`);
 };
 
 let allSigners: SignerWithAddress[] | undefined;
