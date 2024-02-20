@@ -5,7 +5,7 @@ import { MaxInt256, formatEther, formatUnits } from 'ethers';
 import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, stringCompare, writeEatFile } from './config';
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
-import { withLogging, withLoggingSync } from './logging';
+import { withLogging } from './logging';
 import { log } from 'console';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
@@ -368,7 +368,7 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
     return sortReadings(deltas);
 };
 
-export const readingsDeltas = withLoggingSync(_readingsDeltas);
+export const readingsDeltas = withLogging(_readingsDeltas);
 
 ////////////////////////////////////////////////////////////////////////
 // delve

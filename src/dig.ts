@@ -7,15 +7,7 @@ import { Contract, FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
 const sourceDir = './eat-source';
 
-import {
-    IBlockchainAddress,
-    BlockchainAddress,
-    addTokenToWhale,
-    getSignerAt,
-    getSigner,
-    whale,
-    ContractWithAddress,
-} from './Blockchain';
+import { IBlockchainAddress, BlockchainAddress, addTokenToWhale, getSignerAt, getSigner, whale } from './Blockchain';
 import {
     Link,
     backLinks,
@@ -33,7 +25,7 @@ import {
 } from './graph';
 import { Reader, callReaderBasic, callToName } from './delve';
 import { ConfigFormatApply, getConfig, parseArg, stringCompare, writeEatFile, writeFile } from './config';
-import { withLogging, withLoggingSync } from './logging';
+import { withLogging } from './logging';
 
 const _dig = async (stack: string) => {
     // we reset the graph (which is a set of global variables)

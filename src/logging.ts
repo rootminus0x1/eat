@@ -6,8 +6,10 @@ const indentation = 2; // spaces
 const maxArgsLength = 30;
 
 // type of function to be wrapped
+/*
 type AnyFunctionSync = (...args: any[]) => any;
 type AnyFunction = (...args: any[]) => Promise<any>;
+*/
 
 const indent = () => ' '.repeat(indentLevel * indentation);
 
@@ -52,6 +54,7 @@ export const log = (...args: any[]) => {
     console.log(`${indent()}${argsStr(1000, ...args)}`);
 };
 
+/*
 // wrapping function, returns the wrapped function, err, wrapped
 export const withLoggingSync = (fn: AnyFunctionSync) => {
     return (...args: Parameters<AnyFunctionSync>): ReturnType<AnyFunctionSync> => {
@@ -65,9 +68,10 @@ export const withLoggingSync = (fn: AnyFunctionSync) => {
         }
     };
 };
+*/
 
-export const withLogging = (fn: AnyFunction) => {
-    return async (...args: Parameters<AnyFunctionSync>): Promise<ReturnType<AnyFunctionSync>> => {
+export const withLogging = (fn: any) => {
+    return async (...args: any[]) => {
         logStart(fn.name, args);
         const start = performance.now();
         try {
@@ -78,3 +82,19 @@ export const withLogging = (fn: AnyFunction) => {
         }
     };
 };
+
+class Timer {
+    private startTime: number;
+    private functionName: string;
+
+    constructor(functionName: string) {
+        this.functionName = functionName;
+        this.startTime = performance.now();
+        console.log(`${this.functionName} started`);
+    }
+
+    end() {
+        const endTime = performance.now();
+        console.log(`${this.functionName} executed in ${endTime - this.startTime} milliseconds.`);
+    }
+}
