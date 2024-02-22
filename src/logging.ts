@@ -5,12 +5,6 @@ let indentLevel = 0;
 const indentation = 2; // spaces
 const maxArgsLength = 30;
 
-// type of function to be wrapped
-/*
-type AnyFunctionSync = (...args: any[]) => any;
-type AnyFunction = (...args: any[]) => Promise<any>;
-*/
-
 const indent = () => ' '.repeat(indentLevel * indentation);
 
 const replacer = (key: string, value: any) => {
@@ -34,6 +28,8 @@ const argsStr = (maxLength: number, ...args: any[]): string => {
     return result;
 };
 
+/*
+
 const logStart = (fnName: string, ...args: any[]) => {
     if (fnName.startsWith('_')) fnName = fnName.substring(1);
     console.log(`${indent()}${fnName}(${argsStr(maxArgsLength, ...args)})...`);
@@ -50,51 +46,48 @@ const logFinish = (fnName: string, start: number, finish: number, ...args: any[]
     );
 };
 
-export const log = (...args: any[]) => {
-    console.log(`${indent()}${argsStr(1000, ...args)}`);
-};
-
-/*
-// wrapping function, returns the wrapped function, err, wrapped
-export const withLoggingSync = (fn: AnyFunctionSync) => {
-    return (...args: Parameters<AnyFunctionSync>): ReturnType<AnyFunctionSync> => {
-        logStart(fn.name, args);
-        const start = performance.now();
-        try {
-            return fn(...args); // Execute the original function
-        } finally {
-            const finish = performance.now();
-            logFinish(fn.name, start, finish, args);
-        }
-    };
-};
 */
+
+export class Logger {
+    private startTime: number;
+    private leader: string;
+
+    constructor(name: string, ...args: any[]) {
+        if (name.startsWith('_')) name = name.substring(1);
+        this.leader = `${indent()}${name}`;
+        if (args) this.leader += `(${argsStr(maxArgsLength, ...args)})`;
+        console.log(`${this.leader}...`);
+        indentLevel++; // Increase indent level for nested calls
+        this.startTime = performance.now();
+    }
+
+    finish(): number {
+        const duration = performance.now() - this.startTime;
+        indentLevel--;
+        console.log(`${this.leader} took ${(duration / 1000).toLocaleString('en')}s.`);
+        return duration;
+    }
+}
+
+let buffer: string = '';
+export const log = (text: string, endl: boolean = true) => {
+    buffer += text;
+    if (endl) {
+        console.log(`${indent()}${buffer}`);
+        erase();
+    }
+};
+export const erase = () => {
+    buffer = '';
+};
 
 export const withLogging = (fn: any) => {
     return async (...args: any[]) => {
-        logStart(fn.name, args);
-        const start = performance.now();
+        const timer = new Logger(fn.name, args);
         try {
             return await fn(...args); // Execute the original function
         } finally {
-            const finish = performance.now();
-            logFinish(fn.name, start, finish, args);
+            timer.finish();
         }
     };
 };
-
-class Timer {
-    private startTime: number;
-    private functionName: string;
-
-    constructor(functionName: string) {
-        this.functionName = functionName;
-        this.startTime = performance.now();
-        console.log(`${this.functionName} started`);
-    }
-
-    end() {
-        const endTime = performance.now();
-        console.log(`${this.functionName} executed in ${endTime - this.startTime} milliseconds.`);
-    }
-}

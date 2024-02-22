@@ -2,11 +2,19 @@ import * as crypto from 'crypto-js';
 
 import { contracts, readers, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import { ConfigFormatApply, eatFileName, formatArg, getConfig, parseArg, stringCompare, writeEatFile } from './config';
+import {
+    ConfigFormatApply,
+    eatFileName,
+    formatArg,
+    getConfig,
+    getDecimals,
+    parseArg,
+    stringCompare,
+    writeEatFile,
+} from './config';
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
-import { withLogging } from './logging';
-import { log } from 'console';
+import { withLogging, Logger, log, erase } from './logging';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -135,6 +143,8 @@ export const callReaderBasic = async (reader: Reader, ...args: any[]): Promise<R
     };
 };
 
+export const addressToName = (address: string): string => nodes.get(address)?.name || address;
+
 export const callToName = (reader: Reader, args?: any[]) => {
     let result = reader.function;
     if (args?.length) result += `(${args})`;
@@ -144,7 +154,6 @@ export const callToName = (reader: Reader, args?: any[]) => {
 };
 
 export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
-    const addressToName = (address: string): string => nodes.get(address)?.name || address;
     const basic = await callReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
     if (basic.value !== undefined) {
         if (reader.type.endsWith('[]')) {
@@ -247,6 +256,7 @@ const sortReadings = (r: Reading[]): Reading[] => r.sort(compareReadingKeys);
 export const doReadings = async (): Promise<Reading[]> => {
     const result: Reading[] = [];
     for (const [address, readerList] of readers) {
+        //const logger = new Logger(`reading: ${addressToName(address)}`);
         for (const reader of readerList) {
             if (reader.argTypes && reader.argTypes.length == 1 && reader.argTypes[0] === 'address') {
                 // nodes are already sorted by name
@@ -257,6 +267,7 @@ export const doReadings = async (): Promise<Reading[]> => {
                 result.push(await callReader(reader));
             }
         }
+        //logger.finish();
     }
 
     // make sure Readings are always sorted, regardless of Reader/Node order
@@ -307,10 +318,12 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
         const reading = readings[a];
         const base = baseReadings[b];
         const cmp = compareReadingKeys(reading, base);
-        if (cmp === -1) {
+        if (cmp < 0) {
+            // log(`${reading.reading} only in new - keeping`);
             deltas.push(reading); // a new reading, not in base
             a++;
-        } else if (cmp === 1) {
+        } else if (cmp > 0) {
+            // log(`${base.reading} only in base - discarding`);
             // ignore these - they are not in the new reading, only in base, so not that interesting
             // deltas.push(base); // a missing reading, only in base
             b++;
@@ -330,8 +343,23 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
                 let result: any = undefined;
                 if (a !== b) {
                     if (a !== undefined && b !== undefined) {
-                        if (type.includes('int')) result = (b as bigint) - (a as bigint);
-                        else if (type === 'bool') result = a; // changed from !reading.value to reading.value
+                        if (type.includes('int')) {
+                            result = (b as bigint) - (a as bigint);
+                            // take into account any formatting, units and precision
+                            if (reading.formatting?.precision != undefined) {
+                                const decimals = getDecimals(reading.formatting.unit); // e.g. 16, 18 or 0
+                                const precision = reading.formatting.precision || 0; // e.g. 0, 1 or -1
+                                // * 10 ** (16, 17, 1)
+                                // log(
+                                //     ` result=${result} after decimals=${decimals}, precision=${precision}, result=${
+                                //         result * 10 ** (precision - decimals)
+                                //     }`,
+                                // );
+                                if (result * 10 ** (precision - decimals) <= 0.0) {
+                                    result = undefined;
+                                }
+                            }
+                        } else if (type === 'bool') result = a; // changed from !reading.value to reading.value
                         else if (type === 'string' || type.startsWith('address') || type.startsWith('bytes'))
                             result = `"${base.value}" -> "${reading.value}}"`;
                         else throw Error(`unsupported reading type in deltas: ${reading.type}`);
@@ -339,25 +367,37 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
                 }
                 return result;
             };
+
+            if (reading.value === undefined && base.value !== undefined)
+                delta.value = `[${base.value.toString()}] -> ${reading.value}`;
+            if (reading.value !== undefined && base.value === undefined)
+                delta.value = `${base.value} -> [${reading.value.toString()}]`;
+
             // like for like comparison
-            if (reading.type.endsWith('[]')) {
-                // do array comparison
-                if (reading.value === undefined && base.value !== undefined)
-                    delta.value = `[${base.value.toString()}] -> ${reading.value}`;
-                if (reading.value !== undefined && base.value === undefined)
-                    delta.value = `${base.value} -> [${reading.value.toString()}]`;
-                if (reading.value !== undefined && base.value !== undefined) {
+            if (reading.value !== undefined && base.value !== undefined) {
+                if (reading.type.endsWith('[]')) {
+                    // do array comparison
                     const readingA = reading.value as ReadingType[];
-                    const baseA = reading.value as ReadingType[];
+                    const baseA = base.value as ReadingType[];
                     if (readingA.length === baseA.length) {
-                        delta.value = readingA.map((a, i) => scalarDelta(reading.type.replace('[]', ''), a, baseA[i]));
+                        const proposed = readingA.map((readingAi, i) =>
+                            scalarDelta(reading.type.replace('[]', ''), readingAi, baseA[i]),
+                        );
+                        const defined = proposed.reduce((count, v) => (v !== undefined ? count + 1 : count), 0);
+                        delta.value = defined > 0 ? proposed : undefined;
                     } else {
                         delta.value = `${baseA.length}:[${baseA.toString()}] -> ${
                             readingA.length
                         }[${readingA.toString()}]`;
                     }
+                } else {
+                    // do scalar comparison
+                    log(reading.reading, false);
+                    delta.value = scalarDelta(reading.type, reading.value as ReadingType, base.value as ReadingType);
+                    erase();
                 }
             }
+
             if (delta.value !== undefined || delta.error !== undefined)
                 deltas.push(Object.assign({ delta: delta }, reading));
         }

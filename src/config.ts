@@ -53,16 +53,17 @@ export const parseArg = (configArg: any): string | bigint => {
     return arg;
 };
 
+export const getDecimals = (unit?: number | string): number => {
+    if (typeof unit === 'string') {
+        const baseValue = formatUnits(1n, unit);
+        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
+        return decimalPlaces;
+    } else return unit || 0;
+};
+
 const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
     const doUnit = (value: bigint): string => {
         return unit ? formatUnits(value, unit) : value.toString();
-    };
-    const getDecimals = (): number => {
-        if (typeof unit === 'string') {
-            const baseValue = formatUnits(1n, unit);
-            const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
-            return decimalPlaces;
-        } else return unit || 0;
     };
 
     let result = doUnit(value);
@@ -73,7 +74,7 @@ const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, preci
         const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
         if (currentDecimals > precision) {
             if (result[result.length + precision - currentDecimals] >= '5') {
-                result = doUnit(BigInt(value) + 5n * 10n ** BigInt(getDecimals() - precision - 1));
+                result = doUnit(BigInt(value) + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
             }
             // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
             result = result.slice(undefined, precision - currentDecimals);

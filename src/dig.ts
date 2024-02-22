@@ -33,26 +33,26 @@ const _dig = async (stack: string) => {
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
     const done = new Set<string>(); // ensure addresses are only visited once
     const depth = getConfig().depth || 10; // don't go deeper than this, from any of the specified addresses
-    const addresses: Address[] = [
-        ...(getConfig().root
-            ? getConfig().root.map((a) => {
-                  return { address: a, follow: depth, config: true };
-              })
-            : []),
-        ...(getConfig().twig
-            ? getConfig().twig.map((a) => {
-                  return { address: a, follow: 1, config: true };
-              })
-            : []),
-        ...(getConfig().leaf
-            ? getConfig().leaf.map((a) => {
-                  return { address: a, follow: 0, config: true };
-              })
-            : []),
-    ];
+    const roots = getConfig().root.map((a) => {
+        return { address: a, follow: depth, config: true };
+    });
+    const twigs = getConfig().twig.map((a) => {
+        return { address: a, follow: 1, config: true };
+    });
+    const leafs = getConfig().leaf.map((a) => {
+        return { address: a, follow: 0, config: true };
+    });
+
+    // the addresses to search
+    const addresses = roots || twigs || leafs;
+    // the bounds of the search
+    const limits = new Map<string, Address>();
+    [...twigs, ...leafs].forEach((a) => {
+        limits.set(a.address, a);
+    });
 
     const tempNodes = new Map<string, GraphNode>();
-    while (addresses && addresses.length) {
+    while (addresses && addresses.length > 0) {
         addresses.sort((a, b) => b.follow - a.follow); // biggest follow first
         const address = addresses[0];
         addresses.shift();
@@ -75,14 +75,20 @@ const _dig = async (stack: string) => {
                 const addAddress = (address: string, follow: number) => {
                     // need to merge them as the depth shoud take on the larger of the two
                     const actualFollow = Math.max(follow - 1, 0);
-                    const found = addresses.findIndex((a, i) => a.address === address);
-                    if (found !== -1) {
-                        // update the original
-                        // make it the longest depth, unless it's a config item
-                        if (!addresses[found].config)
-                            addresses[found].follow = Math.max(addresses[found].follow, actualFollow);
+                    const comingUp = addresses.findIndex((a, i) => a.address === address);
+                    if (comingUp !== -1) {
+                        // update the one that was coming up
+                        // make it the longer depth, unless it's a config item
+                        if (!addresses[comingUp].config)
+                            addresses[comingUp].follow = Math.max(addresses[comingUp].follow, actualFollow);
                     } else {
-                        addresses.push({ address: address, follow: actualFollow });
+                        // add a new one but with in the config limits
+                        const limited = limits.get(address);
+                        addresses.push({
+                            address: address,
+                            follow: limited ? Math.min(actualFollow, limited.follow) : actualFollow,
+                            config: limited ? true : false,
+                        });
                     }
                 };
 
