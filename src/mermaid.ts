@@ -85,14 +85,23 @@ const linkMermaid = (from: string, to: string, name: string, logic?: string): st
     return f.join('\n');
 };
 
-const headerMermaid = (blockNumber: number, asOf: string, config?: any): string => {
+export const asMD = (mmd: string, blockNumber: number, asOf: string): string => {
+    const header: string[] = [],
+        footer: string[] = [];
+    cl(header, '```mermaid');
+    cl(header, '---');
+    cl(header, `title: contract graph as of block ${getConfig().block}, ${getConfig().datetime}`);
+    cl(header, '---');
+
+    cl(footer, '```');
+    cl(footer, '');
+    return header.join('\n') + mmd + footer.join('\n');
+};
+
+const mmdHeader = (): string => {
     const f: string[] = [];
-    cl(f, '```mermaid');
-    cl(f, '---');
-    cl(f, `title: contract graph as of block ${blockNumber}, ${asOf}`);
-    cl(f, '---');
-    if (config?.renderer) {
-        cl(f, `%%{init: {"flowchart": {"defaultRenderer": "${config.renderer}"}} }%%`);
+    if (getConfig()?.diagram?.renderer) {
+        cl(f, `%%{init: {"flowchart": {"defaultRenderer": "${getConfig()?.diagram?.renderer}"}} }%%`);
     }
     //%%{ init: { 'flowchart': { 'curve': 'stepBefore' } } }%%
 
@@ -105,7 +114,7 @@ const headerMermaid = (blockNumber: number, asOf: string, config?: any): string 
     return f.join('\n');
 };
 
-const footerMermaid = (): string => {
+const mmdFooter = (): string => {
     const f: string[] = [];
     /*
     cl(f, 'classDef contract font:11px Roboto');
@@ -113,14 +122,13 @@ const footerMermaid = (): string => {
     cl(f, 'classDef proxy fill:#ffffff,font:11px Roboto');
     cl(f, 'classDef link stroke-width:0px,fill:#ffffff,font:11px Roboto');
     */
-    cl(f, '```');
-    cl(f, '');
+
     return f.join('\n');
 };
 
 export const mermaid = async (): Promise<string> => {
     const f: string[] = [];
-    cl(f, headerMermaid(getConfig().block, getConfig().datetime, getConfig().diagram));
+    cl(f, mmdHeader());
     for (const [address, node] of nodes) {
         cl(
             f,
@@ -148,6 +156,6 @@ export const mermaid = async (): Promise<string> => {
                 cl(f, linkMermaid(address, link.address, link.name, await node.implementationAddress()));
             }
     }
-    cl(f, footerMermaid());
+    cl(f, mmdFooter());
     return f.join('\n');
 };

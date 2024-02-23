@@ -163,7 +163,7 @@ export const eatFileName = (name: string): string => {
     return getConfig().configName + '.' + name;
 };
 
-export const writeEatFile = (name: string, results: string): void => {
+const writeEatFile = (name: string, results: string): void => {
     log(`writing ${eatFileName(name)}`);
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
@@ -243,6 +243,20 @@ export const writeReadings = (name: string, results: Reading[], simulation?: Tri
     let data = simulation ? yamlIt({ simulation: simulation }) : '';
     data += yamlIt(transformReadings(results));
     writeEatFile(name + '.readings.yml', data);
+};
+
+export const writeReadingsDelta = (name: string, results: Reading[], simulation: TriggerOutcome[]): void => {
+    let data = yamlIt({ simulation: simulation });
+    data += yamlIt(transformReadings(results));
+    writeEatFile(name + '.readings.delta.yml', data);
+};
+
+export const writeDiagram = (name: string, diagram: string): void => {
+    writeEatFile(name + '.diagram.mmd', diagram);
+};
+
+export const writeMarkDown = (name: string, diagram: string): void => {
+    writeEatFile(name + '.diagram.md', diagram);
 };
 
 export type ConfigFormatMatch = {

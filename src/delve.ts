@@ -2,16 +2,7 @@ import * as crypto from 'crypto-js';
 
 import { contracts, readers, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import {
-    ConfigFormatApply,
-    eatFileName,
-    formatArg,
-    getConfig,
-    getDecimals,
-    parseArg,
-    stringCompare,
-    writeEatFile,
-} from './config';
+import { ConfigFormatApply, eatFileName, formatArg, getConfig, getDecimals, parseArg, stringCompare } from './config';
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 import { withLogging, Logger, log, erase } from './logging';

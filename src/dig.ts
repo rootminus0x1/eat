@@ -24,7 +24,7 @@ import {
     localNodes,
 } from './graph';
 import { Reader, callReaderBasic, callToName } from './delve';
-import { ConfigFormatApply, getConfig, parseArg, stringCompare, writeEatFile, writeFile } from './config';
+import { ConfigFormatApply, getConfig, parseArg, stringCompare, writeFile } from './config';
 import { withLogging } from './logging';
 
 const _dig = async (stack: string) => {
