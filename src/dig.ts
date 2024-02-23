@@ -33,13 +33,13 @@ const _dig = async (stack: string) => {
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
     const done = new Set<string>(); // ensure addresses are only visited once
     const depth = getConfig().depth || 10; // don't go deeper than this, from any of the specified addresses
-    const roots = getConfig().root.map((a) => {
+    const roots = getConfig().root?.map((a) => {
         return { address: a, follow: depth, config: true };
     });
-    const twigs = getConfig().twig.map((a) => {
+    const twigs = getConfig().twig?.map((a) => {
         return { address: a, follow: 1, config: true };
     });
-    const leafs = getConfig().leaf.map((a) => {
+    const leafs = getConfig().leaf?.map((a) => {
         return { address: a, follow: 0, config: true };
     });
 
@@ -47,7 +47,7 @@ const _dig = async (stack: string) => {
     const addresses = roots || twigs || leafs;
     // the bounds of the search
     const limits = new Map<string, Address>();
-    [...twigs, ...leafs].forEach((a) => {
+    [...(twigs || []), ...(leafs || [])].forEach((a) => {
         limits.set(a.address, a);
     });
 

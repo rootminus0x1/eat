@@ -10,7 +10,7 @@ import { reset, setBalance } from '@nomicfoundation/hardhat-network-helpers';
 
 import { EtherscanHttp, getContractCreationResponse, getSourceCodeResponse } from './etherscan';
 import { asDateString } from './datetime';
-import { contracts, localNodes, nodes } from './graph';
+import { contracts, localNodes, nodes, resetGraph } from './graph';
 import { getConfig } from './config';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 
@@ -78,6 +78,7 @@ export const parseTime = (amount: number, units: string): number => {
 };
 
 export const setupBlockchain = async (): Promise<void> => {
+    resetGraph();
     // go to the block
     await reset(process.env.MAINNET_RPC_URL, getConfig().block);
     getConfig().timestamp = await time.latest();

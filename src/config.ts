@@ -5,7 +5,7 @@ import { formatUnits, parseUnits } from 'ethers';
 
 import yargs from 'yargs';
 import path from 'path';
-import { Reading, ReadingBasic, ReadingType, ReadingValue, TriggerOutcome } from './delve';
+import { Reading, ReadingBasic, ReadingType, ReadingValue, TriggerOutcome, addressToName } from './delve';
 import { users, contracts, nodes } from './graph';
 import { Logger, log } from './logging';
 
@@ -24,11 +24,9 @@ const replaceMatch = (
     return value;
 };
 
-export const parseArg = (configArg: any): string | bigint => {
+export const parseArg = (configArg: any): any => {
     let arg: any;
-    if (typeof configArg === 'bigint') {
-        arg = configArg;
-    } else if (typeof configArg === 'string') {
+    if (typeof configArg === 'string') {
         // contract or user or address or string or number
         arg = replaceMatch(configArg, [
             // address - just leave as is
@@ -45,8 +43,6 @@ export const parseArg = (configArg: any): string | bigint => {
                 },
             ],
         ]);
-    } else if (typeof configArg === 'number') {
-        arg = BigInt(configArg);
     } else {
         arg = configArg;
     }
@@ -90,6 +86,14 @@ const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, preci
 const regexpEscape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 type formatSpec = { unit?: number | string; precision?: number } | undefined;
 
+export const formatArg = (value: any, type: string) => {
+    if (type === 'address') {
+        const match = value.match(/^0x[a-fA-F0-9]{40}$/);
+        if (match) return addressToName(value);
+    }
+    return value;
+};
+
 const formatFromConfig = (
     value: ReadingValue,
     type: string,
@@ -111,27 +115,13 @@ const formatFromConfig = (
             );
         }
     } else {
-        if (type.endsWith('[]')) {
-            result = (value as bigint[]).map((elem: any) => elem?.toString());
+        if (type.endsWith('[]') && Array.isArray(value)) {
+            result = value.map((elem: any) => formatArg(elem, type.replace('[]', '')).toString());
         } else {
-            result = value.toString();
+            result = formatArg(value, type).toString();
         }
     }
     return result;
-};
-
-export const formatArg = (arg: ReadingType): string => {
-    if (arg == undefined) {
-        console.log('undefined arg');
-    }
-    if (typeof arg === 'string') {
-        return replaceMatch(arg, [
-            // address - look up the name
-            [/^0x[a-fA-F0-9]{40}$/, (match) => nodes.get(match[0])?.name || match[0]],
-        ]).toString();
-    }
-    // TODO: format from config here, need contact, function and field to do that
-    return arg.toString();
 };
 
 export type ConfigItem = { name: string; config: Config };
@@ -242,7 +232,8 @@ const transformReadings = (orig: Reading[]): any => {
     let fName = '';
     let fIndex: number = -1;
     let fnReadings: any[] = [];
-    const logger = new Logger('transform readings');
+
+    //const logger = new Logger('transform readings');
 
     orig.forEach((r) => {
         // save the value/delta/error
@@ -251,6 +242,11 @@ const transformReadings = (orig: Reading[]): any => {
         let error: string | undefined = undefined;
 
         const readingDisplay = (rb: ReadingBasic, delta: boolean = false): [any, string | undefined] => {
+            // log(
+            //     `formatting ${r.reading}: ${r.type}, ${typeof rb.value}, ${
+            //         rb.value
+            //     }, as string: '${rb.value?.toString()}'`,
+            // );
             let value: any = undefined;
             let error: string | undefined = undefined;
             if (rb.value !== undefined) {
@@ -266,7 +262,7 @@ const transformReadings = (orig: Reading[]): any => {
         };
 
         if (r.delta !== undefined) {
-            [value, error] = r.delta ? readingDisplay(r.delta, true) : [undefined, undefined];
+            [value, error] = readingDisplay(r.delta, true);
         } else {
             [value, error] = readingDisplay(r);
         }
@@ -321,7 +317,7 @@ const transformReadings = (orig: Reading[]): any => {
 
     if (cIndex !== -1 && fIndex !== -1) readings[cIndex].functions[fIndex].readings = fnReadings;
 
-    logger.finish();
+    //logger.finish();
     return readings;
 };
 

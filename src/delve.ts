@@ -151,18 +151,13 @@ export const callToName = (reader: Reader, args?: any[]) => {
 
 export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
     const basic = await callReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
-    if (basic.value !== undefined) {
-        if (reader.type.endsWith('[]')) {
-            basic.value = (basic.value as ReadingType[]).map((v) => formatArg(v));
-        } else {
-            basic.value = formatArg(basic.value as ReadingType);
-        }
-    }
+
     return Object.assign(
         {
+            // TODO: remove reading to config where t is written out
             reading: `${addressToName(reader.address)}.${callToName(
                 reader, //
-                friendlyArgs.map((a: any) => formatArg(a)),
+                friendlyArgs.map((a: any, i: number) => formatArg(a, reader.argTypes[i])),
             )}`,
             contractInstance: addressToName(reader.address),
             contract: reader.contract,
@@ -189,34 +184,44 @@ export type Trigger = {
     //user: string;
     //contract: string;
     //function: string;
-    args?: (string | bigint)[]; // this replaces args below
+    args?: any[]; // this replaces args below
     pull: (...args: any[]) => Promise<any>; // async fuction that executes (pulls) the trigger to make the effect
     // TODO: add list of events that can be parsed for results, for this contract
 };
 export type TriggerOutcome = {
     trigger: Trigger;
 } & Partial<{ error: string }> &
-    Partial<{ gas?: bigint; events: any }>;
+    Partial<{ events: any[]; gas: bigint }> &
+    Partial<{ value: any }>;
 
 export const doTrigger = async (trigger: Trigger, ...overrideArgs: any[]): Promise<TriggerOutcome> => {
-    let gas: bigint | undefined;
-    // let events;
-    let error: string | undefined;
+    let gas: bigint | undefined = undefined;
+    let value: any = undefined;
+    let error: string | undefined = undefined;
     try {
-        const args = (overrideArgs || trigger.args)?.map((a: any) => parseArg(a));
+        //log(`inside doTrigger, trigger.args: ${trigger.args?.toString()}`);
+        //log(`                  OverrideArgs: ${overrideArgs.toString()}`);
+        const args = (overrideArgs.length ? overrideArgs : trigger.args || []).map((a: any) => parseArg(a));
+        //log(`                  args: ${args.toString()}`);
         const tx = await trigger.pull(...args);
-        // TODO: generate user functions elsewhere
-        // const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
-        // TODO: get the returned values out
-        // would be nice to capture any log events emitted too :-) see expect.to.emit
-        const receipt = await tx.wait();
-        gas = receipt?.gasUsed;
+        if (typeof tx === 'object') {
+            // TODO: generate user functions elsewhere
+            // const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
+            // TODO: get the returned values out
+            // would be nice to capture any log events emitted too :-) see expect.to.emit
+            const receipt = await tx.wait();
+            gas = receipt?.gasUsed;
+        } else {
+            value = tx;
+        }
         // TODO: parse the results into events, etc
     } catch (e: any) {
+        log(`error doing a trigger: ${e.message}`);
         error = e.message;
     }
     return {
         trigger: trigger,
+        value: value,
         error: error,
         gas: gas,
     };
@@ -340,18 +345,16 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
                 if (a !== b) {
                     if (a !== undefined && b !== undefined) {
                         if (type.includes('int')) {
-                            result = (b as bigint) - (a as bigint);
+                            result = (a as bigint) - (b as bigint);
                             // take into account any formatting, units and precision
                             if (reading.formatting?.precision != undefined) {
                                 const decimals = getDecimals(reading.formatting.unit); // e.g. 16, 18 or 0
                                 const precision = reading.formatting.precision || 0; // e.g. 0, 1 or -1
                                 // * 10 ** (16, 17, 1)
-                                // log(
-                                //     ` result=${result} after decimals=${decimals}, precision=${precision}, result=${
-                                //         result * 10 ** (precision - decimals)
-                                //     }`,
-                                // );
-                                if (result * 10 ** (precision - decimals) <= 0.0) {
+                                const exponent = BigInt(precision - decimals);
+                                let scaler = exponent < 0n ? result / 10n ** -exponent : result * 10n ** exponent;
+                                if (scaler < 0) scaler = -scaler;
+                                if (scaler === 0n) {
                                     result = undefined;
                                 }
                             }
@@ -371,10 +374,10 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
 
             // like for like comparison
             if (reading.value !== undefined && base.value !== undefined) {
-                if (reading.type.endsWith('[]')) {
+                if (reading.type.endsWith('[]') && Array.isArray(reading.value) && Array.isArray(base.value)) {
                     // do array comparison
-                    const readingA = reading.value as ReadingType[];
-                    const baseA = base.value as ReadingType[];
+                    const readingA = reading.value;
+                    const baseA = base.value;
                     if (readingA.length === baseA.length) {
                         const proposed = readingA.map((readingAi, i) =>
                             scalarDelta(reading.type.replace('[]', ''), readingAi, baseA[i]),
@@ -598,13 +601,10 @@ const delveSimulation = async (stack: string, simulation: Trigger[] = [], contex
 // do each event and after it, do each simulation then reset the blockchain before the next event
 const _delve = async (stack: string, simulation: Trigger[] = []): Promise<[Reading[], TriggerOutcome[]]> => {
     const outcomes: TriggerOutcome[] = [];
-    // do each event
-    /*    for (const trigger of simulation) {
+    // do each trigger
+    for await (const trigger of simulation) {
         outcomes.push(await doTrigger(trigger));
-        // TODO: not just a string, but the value to be unshifted into readers before saving
-        await delveSimulation(stack, simulation, event);
     }
-*/
     const readings = await doReadings();
     return [readings, outcomes];
 };

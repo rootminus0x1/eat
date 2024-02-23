@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { IBlockchainAddress } from './Blockchain';
 import { Contract } from 'ethers';
+import { log } from './logging';
 
 // the nodes, also contains static information about the nodes, name, etc
 export type GraphNode = {
@@ -28,6 +29,7 @@ export let triggers: any;
 export let localNodes = new Map<string, GraphNode>();
 
 export const resetGraph = () => {
+    // log('resetting graph');
     nodes = new Map<string, GraphNode>(); // address to object
     links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
     backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
@@ -38,5 +40,3 @@ export const resetGraph = () => {
     contracts = {};
     triggers = {};
 };
-
-resetGraph();
