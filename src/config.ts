@@ -180,7 +180,7 @@ const replacer = (key: string, value: any) => {
     }
 };
 
-const transformReadingsOrig = (orig: Reading[]): any => {
+/*const transformReadingsOrig = (orig: Reading[]): any => {
     let addresses: any = {};
     let contracts: any = {};
     let readings: any = {};
@@ -233,6 +233,7 @@ const transformReadingsOrig = (orig: Reading[]): any => {
 
     return { addresses: addresses, contracts: contracts, readings: readings };
 };
+*/
 
 const transformReadings = (orig: Reading[]): any => {
     let readings: any[] = [];
@@ -331,8 +332,8 @@ const yamlIt = (it: any): string =>
 
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
     let simData = simulation ? yamlIt({ simulation: simulation }) : '';
-    writeEatFile(fileName, simData + yamlIt(transformReadingsOrig(results)));
-    writeEatFile('new_' + fileName, simData + yamlIt({ readings: transformReadings(results) }));
+    // writeEatFile("old_" + fileName, simData + yamlIt(transformReadingsOrig(results)));
+    writeEatFile(fileName, simData + yamlIt({ readings: transformReadings(results) }));
 };
 
 export const writeReadings = (name: string, results: Reading[], simulation?: TriggerOutcome[]): void => {
