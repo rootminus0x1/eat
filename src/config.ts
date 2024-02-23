@@ -7,7 +7,7 @@ import yargs from 'yargs';
 import path from 'path';
 import { Reading, ReadingBasic, ReadingType, ReadingValue, TriggerOutcome } from './delve';
 import { users, contracts, nodes } from './graph';
-import { log } from './logging';
+import { Logger, log } from './logging';
 
 export const stringCompare = (a: string, b: string): number => a.localeCompare(b, 'en', { sensitivity: 'base' });
 
@@ -180,7 +180,7 @@ const replacer = (key: string, value: any) => {
     }
 };
 
-const transformReadings = (orig: Reading[]): any => {
+const transformReadingsOrig = (orig: Reading[]): any => {
     let addresses: any = {};
     let contracts: any = {};
     let readings: any = {};
@@ -234,21 +234,113 @@ const transformReadings = (orig: Reading[]): any => {
     return { addresses: addresses, contracts: contracts, readings: readings };
 };
 
+const transformReadings = (orig: Reading[]): any => {
+    let readings: any[] = [];
+    let cName = '';
+    let cIndex: number = -1;
+    let fName = '';
+    let fIndex: number = -1;
+    let fnReadings: any[] = [];
+    const logger = new Logger('transform readings');
+
+    orig.forEach((r) => {
+        // save the value/delta/error
+        let value: any = undefined;
+        let delta: any = undefined;
+        let error: string | undefined = undefined;
+
+        const readingDisplay = (rb: ReadingBasic, delta: boolean = false): [any, string | undefined] => {
+            let value: any = undefined;
+            let error: string | undefined = undefined;
+            if (rb.value !== undefined) {
+                const formatted = formatFromConfig(rb.value, r.type, r.formatting, delta);
+                let comment = ''; // `${r.type}`;
+                if (r.formatting) comment = ` # ${JSON.stringify(r.formatting).replace(/"/g, '')}`;
+                value = r.type.endsWith('[]')
+                    ? (formatted as string[]).map((f) => `${f}${comment}`)
+                    : `${formatted}${comment}`;
+            }
+            if (r.error !== undefined) error = `${r.error}`;
+            return [value, error];
+        };
+
+        if (r.delta !== undefined) {
+            [value, error] = r.delta ? readingDisplay(r.delta, true) : [undefined, undefined];
+        } else {
+            [value, error] = readingDisplay(r);
+        }
+
+        const display =
+            value !== undefined && error !== undefined
+                ? { value: value, error: error }
+                : value !== undefined
+                ? value
+                : error;
+
+        if (display != undefined) {
+            // contract
+            if (cName !== r.contractInstance || fName !== r.function) {
+                if (cIndex !== -1) {
+                    readings[cIndex].functions[fIndex].readings = fnReadings;
+                    fnReadings = [];
+                }
+
+                if (cName !== r.contractInstance) {
+                    cName = r.contractInstance;
+
+                    // add this contract instance
+                    readings.push({});
+                    cIndex = readings.length - 1;
+
+                    // update the fields
+                    readings[cIndex][cName] = r.address;
+                    readings[cIndex].contract = r.contract;
+                    readings[cIndex].functions = [];
+
+                    fName = '';
+                }
+
+                if (fName !== r.function && cIndex !== -1) fName = r.function;
+                // add the function to the contract instance
+                readings[cIndex].functions.push({});
+                fIndex = readings[cIndex].functions.length - 1;
+            }
+        }
+
+        if (r.field) {
+            readings[cIndex].functions[fIndex][`${r.function}.${r.field}`] = r.type;
+        } else {
+            readings[cIndex].functions[fIndex][r.function] = r.type;
+        }
+
+        const reading: any = {};
+        reading[r.reading.replace(/^[^.]*\./, '')] = display;
+        fnReadings.push(reading);
+    });
+
+    if (cIndex !== -1 && fIndex !== -1) readings[cIndex].functions[fIndex].readings = fnReadings;
+
+    logger.finish();
+    return readings;
+};
+
 const yamlIt = (it: any): string =>
     yaml.dump(it, {
         replacer: replacer,
     });
 
+const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
+    let simData = simulation ? yamlIt({ simulation: simulation }) : '';
+    writeEatFile(fileName, simData + yamlIt(transformReadingsOrig(results)));
+    writeEatFile('new_' + fileName, simData + yamlIt({ readings: transformReadings(results) }));
+};
+
 export const writeReadings = (name: string, results: Reading[], simulation?: TriggerOutcome[]): void => {
-    let data = simulation ? yamlIt({ simulation: simulation }) : '';
-    data += yamlIt(transformReadings(results));
-    writeEatFile(name + '.readings.yml', data);
+    _writeReadings(name + '.readings.yml', results, simulation);
 };
 
 export const writeReadingsDelta = (name: string, results: Reading[], simulation: TriggerOutcome[]): void => {
-    let data = yamlIt({ simulation: simulation });
-    data += yamlIt(transformReadings(results));
-    writeEatFile(name + '.readings.delta.yml', data);
+    _writeReadings(name + '.readings.delta.yml', results, simulation);
 };
 
 export const writeDiagram = (name: string, diagram: string): void => {

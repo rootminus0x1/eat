@@ -49,15 +49,18 @@ export type ContractInfo = {
 
 export type ReadingType = bigint | string | boolean;
 export type ReadingValue = ReadingType | ReadingType[];
+export type Field =
+    // the output index of the field (for generic extraction)
+    {
+        name: string; // for multiple outputs, arrays are not multiple outputs, name is for user extraction
+        index: number;
+    };
 
 export type Reader = {
     address: string; // the address of the contract
     contract: string;
     function: string;
-    field?: {
-        name: string; // for multiple outputs, arrays are not multiple outputs, name is for user extraction
-        index: number;
-    }; // the output index of the field (for generic extraction)
+    field?: Field;
     argTypes: string[]; // types or the args
     type: string; // solidity type of result, you know how to extract the resulta
     read: (...args: any[]) => Promise<any>;
@@ -136,10 +139,12 @@ export const callReaderBasic = async (reader: Reader, ...args: any[]): Promise<R
 
 export const addressToName = (address: string): string => nodes.get(address)?.name || address;
 
+export const fieldToName = (field?: Field): string | undefined => field?.name || field?.index.toString(); // if there's no name, use the index as the name
+
 export const callToName = (reader: Reader, args?: any[]) => {
     let result = reader.function;
     if (args?.length) result += `(${args})`;
-    const field = reader.field?.name || reader.field?.index.toString(); // if there's no name, use the index in the name
+    const field = fieldToName(reader.field);
     if (field) result += `.${field}`;
     return result;
 };
@@ -162,7 +167,7 @@ export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promis
             contractInstance: addressToName(reader.address),
             contract: reader.contract,
             function: reader.function,
-            field: reader.field?.name || reader.field?.index.toString(),
+            field: fieldToName(reader.field),
             address: reader.address,
             argTypes: reader.argTypes,
             args: friendlyArgs,
