@@ -1,11 +1,14 @@
 import * as crypto from 'crypto-js';
 
-import { contracts, readers, nodes, users, GraphNode } from './graph';
+import { contracts, readerTemplates, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import { ConfigFormatApply, eatFileName, formatArg, getConfig, getDecimals, parseArg, stringCompare } from './config';
+import { ConfigFormatApply, eatFileName, getConfig, numberCompare, stringCompare } from './config';
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 import { withLogging, Logger, log, erase } from './logging';
+import { Reader, Reading, ReadingData, ReadingType, makeReading } from './read';
+import { getDecimals } from './friendly';
+import { Trigger, TriggerOutcome, doTrigger } from './trigg';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -41,231 +44,40 @@ export const addContract = async (
 };
 */
 
-export type ContractInfo = {
-    identifier: string;
-    contract: string;
-    address: string; // this is the only place an address should be, everywhere else it's the contract identifier, which might be an address
-};
-
-export type ReadingType = bigint | string | boolean;
-export type ReadingValue = ReadingType | ReadingType[];
-export type Field =
-    // the output index of the field (for generic extraction)
-    {
-        name: string; // for multiple outputs, arrays are not multiple outputs, name is for user extraction
-        index: number;
-    };
-
-export type Reader = {
-    address: string; // the address of the contract
-    contract: string;
-    function: string;
-    field?: Field;
-    argTypes: string[]; // types or the args
-    type: string; // solidity type of result, you know how to extract the resulta
-    read: (...args: any[]) => Promise<any>;
-    formatting?: ConfigFormatApply;
-};
-
-export const makeReader = (address: string, fn: string, field?: string): Reader => {
-    const forContract = readers.get(address);
-    if (forContract) {
-        const reader = forContract.filter((r: Reader) => {
-            if (r.function !== fn) return false; // mismatched function name
-            if (r.field === undefined && field === undefined) return true; // neither has a field, so matched
-            // both must have fields
-            if (r.field === undefined || field === undefined) return false; // mismatched field existence
-            // if we get here, both have fields
-            return field === r.field.name || field === r.field.index.toString(); // allow field to have a numeric value
-        });
-        if (reader.length === 1) return reader[0];
-        if (reader.length > 1)
-            throw Error('when making a Reader, more than one match was found - maybe need to define a field?');
-        if (reader.length === 0) throw Error('when making a Reader, none was found');
-    }
-    throw Error('when making a Reader, none was found at the address given');
-};
-
-export type ReadingBasic = {
-    value?: ReadingValue; // if it's an address or array of addresses they are translated into contract names
-    // error can hold an error, a change in error message or indicate a change from a value to/from an error
-    error?: string;
-};
-
-export type Reading = ReadingBasic & {
-    reading: string; //name of the reading
-    contract: string; // type of the contract
-    function: string;
-    field?: string;
-    argTypes: string[];
-    args: any[];
-    type: string;
-    contractInstance: string;
-    address: string; // address of the contract
-    // value can hold a value or a delta value for comparisons
-    delta?: ReadingBasic;
-    formatting?: ConfigFormatApply;
-};
-
-export const callReaderBasic = async (reader: Reader, ...args: any[]): Promise<ReadingBasic> => {
-    let value: ReadingValue | undefined;
-    let error: string | undefined;
-    try {
-        let result = await reader.read(...args);
-        if (reader.field) {
-            value = result[reader.field.index];
-        } else {
-            value = result;
-        }
-        // TODO: maybe do the below
-        /*
-        if (reader.type.endsWith('[]')) {
-            if (reader.type.startsWith('address')) {
-                result = result.map((a: string) => a);
-            } else {
-                // translate numbers to bigint
-                result = result.map((n: bigint) => n);
-            }
-        }
-        */
-    } catch (e: any) {
-        error = e.message;
-    }
-    return {
-        value: value,
-        error: error,
-    };
-};
-
-export const addressToName = (address: string): string => nodes.get(address)?.name || address;
-
-export const fieldToName = (field?: Field): string | undefined => field?.name || field?.index.toString(); // if there's no name, use the index as the name
-
-export const callToName = (reader: Reader, args?: any[]) => {
-    let result = reader.function;
-    if (args?.length) result += `(${args})`;
-    const field = fieldToName(reader.field);
-    if (field) result += `.${field}`;
-    return result;
-};
-
-export const callReader = async (reader: Reader, ...friendlyArgs: any[]): Promise<Reading> => {
-    const basic = await callReaderBasic(reader, ...friendlyArgs.map((a: any) => parseArg(a)));
-
-    return Object.assign(
-        {
-            // TODO: remove reading to config where t is written out
-            reading: `${addressToName(reader.address)}.${callToName(
-                reader, //
-                friendlyArgs.map((a: any, i: number) => formatArg(a, reader.argTypes[i])),
-            )}`,
-            contractInstance: addressToName(reader.address),
-            contract: reader.contract,
-            function: reader.function,
-            field: fieldToName(reader.field),
-            address: reader.address,
-            argTypes: reader.argTypes,
-            args: friendlyArgs,
-            type: reader.type,
-            formatting: reader.formatting,
-        },
-        basic,
-    );
-};
-
+/*
 export const doReading = async (address: string, fn: string, field?: string, ...args: any[]): Promise<Reading> => {
     const reader = makeReader(address, fn, field);
     return await callReader(reader, ...args);
 };
-
-// user events
-export type Trigger = {
-    name: string; // useful name given that summarises the below (TODO: could make this a function?)
-    //user: string;
-    //contract: string;
-    //function: string;
-    args?: any[]; // this replaces args below
-    pull: (...args: any[]) => Promise<any>; // async fuction that executes (pulls) the trigger to make the effect
-    // TODO: add list of events that can be parsed for results, for this contract
-};
-export type TriggerOutcome = {
-    trigger: Trigger;
-} & Partial<{ error: string }> &
-    Partial<{ events: any[]; gas: bigint }> &
-    Partial<{ value: any }>;
-
-export const doTrigger = async (trigger: Trigger, ...overrideArgs: any[]): Promise<TriggerOutcome> => {
-    let gas: bigint | undefined = undefined;
-    let value: any = undefined;
-    let error: string | undefined = undefined;
-    try {
-        //log(`inside doTrigger, trigger.args: ${trigger.args?.toString()}`);
-        //log(`                  OverrideArgs: ${overrideArgs.toString()}`);
-        const args = (overrideArgs.length ? overrideArgs : trigger.args || []).map((a: any) => parseArg(a));
-        //log(`                  args: ${args.toString()}`);
-        const tx = await trigger.pull(...args);
-        if (typeof tx === 'object') {
-            // TODO: generate user functions elsewhere
-            // const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
-            // TODO: get the returned values out
-            // would be nice to capture any log events emitted too :-) see expect.to.emit
-            const receipt = await tx.wait();
-            gas = receipt?.gasUsed;
-        } else {
-            value = tx;
-        }
-        // TODO: parse the results into events, etc
-    } catch (e: any) {
-        log(`error doing a trigger: ${e.message}`);
-        error = e.message;
-    }
-    return {
-        trigger: trigger,
-        value: value,
-        error: error,
-        gas: gas,
-    };
-};
-
-// generate multiple triggers based on some sequance generator
-
-export function makeTrigger(base: Trigger, ...args: any[]): Trigger {
-    return Object.assign({}, base, { args: args }); // override the args
-}
-
-export function makeTriggers(base: Trigger, start: bigint, finish: bigint, step: bigint = 1n): Trigger[] {
-    const result: Trigger[] = [];
-    for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
-        result.push(makeTrigger(base, i));
-    }
-    return result;
-}
-
+*/
+/*
 export type Experiment = {
     simulation: TriggerOutcome[];
     readings: Reading[];
 };
-
+*/
 ////////////////////////////////////////////////////////////////////////
 // doReadings
 
 const compareReadingKeys = (a: Reading, b: Reading) =>
-    stringCompare(a.contractInstance, b.contractInstance) || stringCompare(a.reading, b.reading);
-
+    stringCompare(a.contract, b.contract) ||
+    stringCompare(a.address, b.address) ||
+    stringCompare(a.function, b.function) ||
+    (a.field && b.field ? numberCompare(a.field.index, b.field.index) : 0);
 const sortReadings = (r: Reading[]): Reading[] => r.sort(compareReadingKeys);
 
 export const doReadings = async (): Promise<Reading[]> => {
     const result: Reading[] = [];
-    for (const [address, readerList] of readers) {
+    for (const [address, readerList] of readerTemplates) {
         //const logger = new Logger(`reading: ${addressToName(address)}`);
         for (const reader of readerList) {
             if (reader.argTypes && reader.argTypes.length == 1 && reader.argTypes[0] === 'address') {
                 // nodes are already sorted by name
                 for (const [target, node] of nodes) {
-                    if (target !== address) result.push(await callReader(reader, target));
+                    if (target !== address) result.push(await makeReading(reader, target));
                 }
             } else {
-                result.push(await callReader(reader));
+                result.push(await makeReading(reader)); // no args needed here
             }
         }
         //logger.finish();
@@ -331,7 +143,7 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
         } else {
             a++;
             b++;
-            let delta: ReadingBasic = {};
+            let delta: ReadingData = {};
             // check the errors first
             if (reading.error === undefined && base.error !== undefined)
                 delta.error = `"${base.error}" -> ${reading.error}`;
@@ -391,9 +203,7 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
                     }
                 } else {
                     // do scalar comparison
-                    log(reading.reading, false);
                     delta.value = scalarDelta(reading.type, reading.value as ReadingType, base.value as ReadingType);
-                    erase();
                 }
             }
 
@@ -627,7 +437,7 @@ type SimulationThenMeasurement = {
 const formatForCSV = (value: string): string =>
     // If the value contains a comma, newline, or double quote, enclose it in double quotes
     /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
-
+*/
 class ErrorFormatter {
     private runErrorsMap = new Map<string, string>(); // map of error message to error hash string, stored in file .errors.csv
 
@@ -667,7 +477,7 @@ class ErrorFormatter {
         return code;
     };
 }
-
+/*
 const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
     // there is
     // 1. the requested value,
@@ -692,6 +502,7 @@ const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
     return eventDisplay;
 };
 
+THE NEW DELVEPLOT - for reference
 export const delvePlot = async (
     name: string, // TODO: generate this
     xlabel: string,
@@ -805,6 +616,176 @@ export const delvePlot = async (
             plotRow.push(...results);
             await snapshot.restore();
         } // dependents
+        // work out if the x-axis needs to be reversed
+        if (prevValue !== undefined) {
+            reverse = event.value < prevValue;
+        } else {
+            prevValue = event.value;
+        }
+        data.push(plotRow.map((m) => formatForCSV(m)).join(','));
+        first = false;
+    } // independents
+
+    writeEatFile(datafilename, [headers.map((h) => formatForCSV(h)).join(','), ...data].join('\n'));
+    writeEatFile(
+        errorfilename,
+        ef
+            .errorMap()
+            .map((e) => formatForCSV(e))
+            .join('\n'),
+    );
+
+    let script = [
+        `datafile = "${datafilepath}"`,
+        `# additional imformation and error in ${errorfilepath}`,
+        `set datafile separator comma`,
+        `set key autotitle columnheader`,
+        `set key bmargin`, // at the bottome
+        `# set terminal pngcairo`,
+        `# set output "${pngfilepath}`,
+        `set terminal svg enhanced size 800 500 background rgb "gray90"`,
+        `set autoscale`,
+        `# set output "${svgfilepath}`,
+        `set xlabel "${xlabel}"`,
+        `set colorsequence default`,
+    ];
+    // normalise the ylabels
+    let ylabels: [string, string] = Array.isArray(ylabel) ? ylabel : [ylabel, ''];
+    ylabels.forEach((l, i) => {
+        if (l) {
+            const axis = i == 1 ? 'y2' : 'y';
+            script.push(`set ${axis}label "${l}"`);
+            if (l.endsWith('(sqrt)')) {
+                script.push(`set nonlinear ${axis} via sqrt(y) inverse y*y`);
+            }
+            script.push(`set ${axis}tics`);
+        }
+    });
+
+    if (reverse) {
+        script.push(`set xrange reverse`);
+    }
+
+// #stats datafile using 1 nooutput
+// #min = STATS_min
+// #max = STATS_max
+// #range_extension = 0.2 * (max - min)
+// #set xrange [min - range_extension : max + range_extension]
+
+// #stats datafile using 2 nooutput
+// #min = STATS_min
+// #max = STATS_max
+// #range_extension = 0.2 * (max - min)
+// #set yrange [min - range_extension : max + range_extension]
+
+// #stats datafile using 3 nooutput
+// #min = STATS_min
+// #max = STATS_max
+// #range_extension = 0.2 * (max - min)
+// #set y2range [min - range_extension : max + range_extension]
+    script.push(`plot ${plots.join(',\\\n     ')}`);
+    writeEatFile(scriptfilename, script.join('\n'));
+    console.log('delve plotting...done.');
+};
+
+*/
+/*
+THE NEW DELVEPLOT
+export const delvePlot = async (
+    name: string, // TODO: generate this
+    xlabel: string,
+    causeIndependent: Trigger[],
+    independent: Reader,
+    ylabel: string | [string, string],
+    dependents: Reader[],
+): Promise<void> => {
+    const scriptfilename = `${name}.gnuplot.gp`;
+    const datafilename = `${name}.gnuplot.csv`;
+    const datafilepath = `${eatFileName(datafilename)}`;
+    const errorfilename = `${name}.error.csv`;
+    const errorfilepath = `${eatFileName(errorfilename)}`;
+    const svgfilename = `${name}.gnuplot.svg`;
+    const svgfilepath = `${eatFileName(svgfilename)}`;
+    const pngfilename = `${name}.gnuplot.png`;
+    const pngfilepath = `${eatFileName(pngfilename)}`;
+    console.log(`delve plotting ${name}...`);
+    // let prevMeasurements: Measurements = null; // for doing  diff
+    // generate a gnuplot data file and a command
+
+    // headers, plots, data container, error report
+    const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
+    const plots: string[] = []; // plots of the data fields
+    let data: string[] = []; // the data (errors are inserted in-place)
+
+    // automatically plot the x-axis in the right order (gnuplot always does it ascending)
+    let reverse = false;
+    let prevValue = undefined;
+
+    for await (const trigger of causeIndependent) {
+        headers.push(trigger.name || "no x trigger name!");
+    }
+    for await (const reader of dependents) {
+        headers.push(reader.
+                `${calculation.match.contract}.${calculation.match.reading}${
+                    calculation.match.target
+                        ? '(' +
+                          (contracts[calculation.match.target].name ||
+                              users[calculation.match.target].name ||
+                              calculation.match.target) +
+                          ')'
+                        : ''
+                }${dependent.simulation ? '>' + simulationName : ''}`,
+            );
+            // what are the y-scales
+            let ycolumn = `(\$${headers.length.toString()})`;
+            plots.push(
+                `datafile using 2:${ycolumn} with lines ${calculation.lineStyle ? calculation.lineStyle : ''} ${
+                    calculation.y2axis ? 'axes x1y2' : ''
+                }`,
+            );
+        }
+}
+
+    const snapshot = await takeSnapshot(); // to be restored after all dependents have been read
+    // TODO: make independent a series of simulations, not just a series of triggers
+    for await (const trigger of causeIndependent) {
+        await doTrigger(trigger); // change the dependent
+        const xreading = await callReader(independent);
+        if (!xreading.value) throw 'events on the x axis have to have a value';
+
+        // the X value
+        const plotRow: string[] = [];
+        {
+            const xDisplay = readingDisplay(xreading);
+            log(`x=${xDisplay}`);
+            plotRow.push(xDisplay);
+        }
+
+        // calculate each reading under each simulation
+        for (const reader of dependents) {
+            // now do the calculations, do the headers and plots first
+            if (first) {
+                // the header for a dependent has part of the simulation in it's name
+            }
+            // get the dependent values, as a flattened, formatted row
+            const results = (
+                await calculateMeasures([...dependent.calculations.map((calculation) => calculation.match)])
+            )
+                // flatten and format per config
+                .map((cm) => formatFromConfig(cm))
+                .flatMap((cm) => cm.readings)
+                // convert them to CSV values or errors
+                .map((m) =>
+                    m.value !== undefined
+                        ? m.value
+                        : m.error !== undefined
+                        ? ef.formatError(m.error)
+                        : 'undefined error',
+                );
+            // add the results for this dependent to the row
+            plotRow.push(...results);
+        } // dependents
+        await snapshot.restore();
         // work out if the x-axis needs to be reversed
         if (prevValue !== undefined) {
             reverse = event.value < prevValue;

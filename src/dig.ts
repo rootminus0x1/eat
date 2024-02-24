@@ -5,6 +5,8 @@ dotenvExpand.expand(dotenv.config());
 import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
 
+import { parseArg } from './friendly';
+
 const sourceDir = './eat-source';
 
 import { IBlockchainAddress, BlockchainAddress, addTokenToWhale, getSignerAt, getSigner, whale } from './Blockchain';
@@ -13,19 +15,19 @@ import {
     backLinks,
     contracts,
     links,
-    readers,
+    readerTemplates,
     nodes,
     users,
-    triggers,
     Role,
     roles,
     GraphNode,
     resetGraph,
     localNodes,
+    triggerTemplate,
 } from './graph';
-import { Reader, callReaderBasic, callToName } from './delve';
-import { ConfigFormatApply, getConfig, parseArg, stringCompare, writeFile } from './config';
-import { withLogging } from './logging';
+import { getConfig, getFormatting, stringCompare, writeFile } from './config';
+import { log, withLogging } from './logging';
+import { ReaderTemplate, callReaderTemplate } from './read';
 
 const _dig = async (stack: string) => {
     // we reset the graph (which is a set of global variables)
@@ -60,17 +62,21 @@ const _dig = async (stack: string) => {
             done.add(address.address);
             const blockchainAddress = digOne(address.address);
             if (blockchainAddress) {
+                const dugUp = await digDeep(blockchainAddress);
                 tempNodes.set(
                     address.address,
                     Object.assign(
-                        { name: await blockchainAddress.contractNamish(), leaf: address.follow == 0 },
+                        {
+                            address: address.address,
+                            name: await blockchainAddress.contractNamish(),
+                            leaf: address.follow == 0,
+                            extraNameAddress: dugUp.extraNameAddress,
+                        },
                         blockchainAddress,
                     ),
                 );
                 // add the readers to the contract
-
-                const dugUp = await digDeep(blockchainAddress);
-                readers.set(address.address, dugUp.readers);
+                readerTemplates.set(address.address, dugUp.readerTemplates);
                 // process the roles - add them as addresses, even if they are on leaf addresses
                 const addAddress = (address: string, follow: number) => {
                     // need to merge them as the depth shoud take on the larger of the two
@@ -126,8 +132,14 @@ const _dig = async (stack: string) => {
     }
 
     // make node names unique and also javascript identifiers
+    // first make them javascript identifier
     const nodeNames = new Map<string, string[]>();
     for (const [address, node] of tempNodes) {
+        // augment the name with the extraNameAddress, if we ca find it
+        if (node.extraNameAddress) {
+            const extraName = tempNodes.get(node.extraNameAddress)?.name;
+            if (extraName) node.name = `${node.name}__${extraName}`;
+        }
         // make it javascript id
         // replace multiple whitespaces with underscores
         node.name = node.name.replace(/\s+/g, '_');
@@ -139,9 +151,11 @@ const _dig = async (stack: string) => {
         // then add it to the list for uniqueness check below
         nodeNames.set(node.name, (nodeNames.get(node.name) ?? []).concat(address));
     }
+
+    // now find duplicates
     for (const [name, addresses] of nodeNames) {
         if (addresses.length > 1) {
-            //console.log(`name ${name} has more than one address`);
+            log(`name ${name} has more than one address`);
             // find the links to get some name for them
             let unique = 0;
             for (const address of addresses) {
@@ -228,7 +242,13 @@ const _dig = async (stack: string) => {
             // The next two operations are safe to do multiply
             users[user.name] = signer; // to be used in actions
             // add them to the graph, too
-            nodes.set(signer.address, Object.assign({ name: user.name, signer: signer }, digOne(signer.address)));
+            nodes.set(
+                signer.address,
+                Object.assign(
+                    { address: signer.address, name: user.name, signer: signer, extraNameAddress: '' },
+                    digOne(signer.address),
+                ),
+            );
             if (user.wallet) {
                 const userHoldings = new Map<string, bigint>();
                 for (const holding of user.wallet) {
@@ -285,7 +305,7 @@ const _dig = async (stack: string) => {
             // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
             const copy = Object.assign({ ...ue });
             console.log(`user trigger: ${ue.name}`);
-            triggers[ue.name] = copy;
+            triggerTemplate.set(ue.name, copy);
         });
     }
 };
@@ -297,6 +317,7 @@ export const digOne = (address: string): IBlockchainAddress<Contract> | null => 
     return new BlockchainAddress(address);
 };
 
+// TODO: put this in friedly?
 const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: number): string => {
     let result = func.name;
     if (func.outputs.length > 1) {
@@ -310,48 +331,13 @@ const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: nu
 
 //const regexpEscape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const getFormatting = (reader: Reader) => {
-    if (getConfig().format) {
-        let mergedFormat: ConfigFormatApply = {};
-        for (const format of getConfig().format) {
-            // TODO: could some things,
-            // like timestamps be represented as date/times
-            // or numbers
-            // merge all the formats that apply
-            if (
-                (!format.type || reader.type === format.type) &&
-                (!format.reading || callToName(reader) === format.reading) &&
-                (!format.contract || reader.contract === format.contract)
-            ) {
-                // is it a highest priority no-format spec
-                if (format.unit === undefined && format.precision === undefined) {
-                    return {}; // this overrides any formatting specified previously
-                }
-
-                // merge the formatting but don't override
-                if (format.unit !== undefined && mergedFormat.unit === undefined) {
-                    mergedFormat.unit = format.unit;
-                }
-                if (format.precision !== undefined && mergedFormat.precision === undefined) {
-                    mergedFormat.precision = format.precision;
-                }
-                // got a full format? if so we're done
-                if (mergedFormat.unit !== undefined && mergedFormat.precision !== undefined) return mergedFormat; // got enough
-            }
-        }
-        if (mergedFormat.unit !== undefined || mergedFormat.precision !== undefined) {
-            return mergedFormat;
-        }
-    }
-    return undefined;
-};
-
 const digDeep = async (
     address: IBlockchainAddress<Contract>,
-): Promise<{ readers: Reader[]; links: Link[]; roles: Role[] }> => {
+): Promise<{ readerTemplates: ReaderTemplate[]; links: Link[]; roles: Role[]; extraNameAddress: string }> => {
     const roles: Role[] = [];
     const links: Link[] = [];
-    const readers: Reader[] = [];
+    const readerTemplates: ReaderTemplate[] = [];
+    let extraNameAddress = '';
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
@@ -423,26 +409,27 @@ const digDeep = async (
                 }
                 return indices;
             }, [] as number[])) {
-                const reader: Reader = {
+                const _contract = await address.contractNamish();
+                const _field =
+                    func.outputs.length != 1 ? { name: func.outputs[outputIndex].name, index: outputIndex } : undefined;
+                const _type = func.outputs[outputIndex].type;
+                const readerTemplate: ReaderTemplate = {
                     address: contract.address,
-                    contract: await address.contractNamish(),
+                    contract: _contract,
                     function: func.name,
-                    field:
-                        func.outputs.length != 1
-                            ? { name: func.outputs[outputIndex].name, index: outputIndex }
-                            : undefined,
+                    field: _field,
                     argTypes: func.inputs.length == 1 ? ['address'] : [],
-                    type: func.outputs[outputIndex].type,
+                    type: _type,
                     read: async (...args: any[]): Promise<any> => await contract[func.name](...args),
+                    formatting: getFormatting(_type, _contract, func.name, _field),
                 };
-                reader.formatting = getFormatting(reader);
-                readers.push(reader);
+                readerTemplates.push(readerTemplate);
 
                 // now add the data into links
                 if (func.outputs[outputIndex].type.startsWith('address') && func.inputs.length == 0) {
                     // need to execute the function
                     try {
-                        const result = await callReaderBasic(reader);
+                        const result = await callReaderTemplate(readerTemplate);
                         if (result.value === undefined) throw Error(`failed to read ${result.error}`);
                         if (Array.isArray(result.value)) {
                             // TODO: should against reader.type.endsWith('[]')
@@ -453,6 +440,12 @@ const digDeep = async (
                                 });
                             }
                         } else {
+                            // TODO: make this configurable from config
+                            if (
+                                readerTemplate.contract === 'BoostableRebalancePool' &&
+                                readerTemplate.function === 'wrapper'
+                            )
+                                extraNameAddress = result.value as string;
                             links.push({ name: outputName(func, outputIndex), address: result.value as string });
                         }
                     } catch (err) {
@@ -462,7 +455,7 @@ const digDeep = async (
             }
         }
     }
-    return { readers: readers, links: links, roles: roles };
+    return { readerTemplates: readerTemplates, links: links, roles: roles, extraNameAddress: extraNameAddress };
 };
 
 export const dig = withLogging(_dig);
