@@ -27,9 +27,21 @@ export type ReaderTemplate = {
 };
 
 export type Reader = ReaderTemplate & {
-    address: string;
     args: any[]; // raw args
 };
+
+/*
+export const makeErrorReader = (error: string, extra: string = '') => ({
+    address: '',
+    contract: extra.match(/^[^.]+/),
+    function: extra.match(/[.][^.]+/),
+    field: undefined,
+    argTypes: [], // types or the args
+    type: 'string', // solidity type of result, you know how to extract the resulta
+    read: () => ({ error: `ERROR! ${error}: ${extra}` }),
+    args: [], // raw args
+});
+*/
 
 export type ReadingData = {
     value?: ReadingValue; // if it's an address or array of addresses they are translated into contract names
@@ -41,26 +53,8 @@ export type Reading = Reader &
     ReadingData & {
         delta?: ReadingData;
     };
-/*
-export const makeReader = (address: string, fn: string, field?: string): Reader => {
-    const forContract = contracts.get(address);
-    if (forContract) {
-        const reader = forContract.filter((r: Reader) => {
-            if (r.function !== fn) return false; // mismatched function name
-            if (r.field === undefined && field === undefined) return true; // neither has a field, so matched
-            // both must have fields
-            if (r.field === undefined || field === undefined) return false; // mismatched field existence
-            // if we get here, both have fields
-            return field === r.field.name || field === r.field.index.toString(); // allow field to have a numeric value
-        });
-        if (reader.length === 1) return reader[0];
-        if (reader.length > 1)
-            throw Error('when making a Reader, more than one match was found - maybe need to define a field?');
-        if (reader.length === 0) throw Error('when making a Reader, none was found');
-    }
-    throw Error('when making a Reader, none was found at the address given');
-};
-*/
+
+const makeReader = (template: ReaderTemplate, ...args: any[]): Reader => Object.assign({ args: args }, template);
 
 export const callReaderTemplate = async (reader: ReaderTemplate, ...args: any[]): Promise<ReadingData> => {
     let value: ReadingValue | undefined;

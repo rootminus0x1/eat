@@ -9,6 +9,8 @@ import { log } from './logging';
 
 export type TriggerTemplate = {
     name: string;
+    // TODO: merge these two fields below with readertemplate
+    argTypes: string[];
     pull: (...args: any[]) => Promise<any>; // async fuction that executes (pulls) the trigger to make the effect
     // TODO: add list of events that can be parsed for results, for this contract
 };
@@ -40,7 +42,6 @@ export const doTrigger = async (trigger: Trigger): Promise<TriggerOutcome> => {
         }
         // TODO: parse the results into events, etc
     } catch (e: any) {
-        log(`error doing a trigger: ${e.message}`);
         error = e.message;
     }
     return {

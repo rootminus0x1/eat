@@ -1,6 +1,6 @@
 import { formatUnits, parseUnits } from 'ethers';
 
-import { nodes } from './graph';
+import { contracts, nodes } from './graph';
 import { Field, Reader, Reading, ReadingData, ReadingValue } from './read';
 import { ConfigFormatApply } from './config';
 
@@ -40,7 +40,7 @@ export const friendlyArgs = (rawArgs: any[], argTypes: string[]): string => {
 export const functionField = (func: string, field?: Field): string => `${func}${addField(field)}`;
 
 // instanceName: contractInstance.function(friendlyArgs).field
-export const friendlyFunctionReading = (reading: Reading): string =>
+export const friendlyFunctionReader = (reading: Reader): string =>
     `${reading.function}${friendlyArgs(reading.args, reading.argTypes)}${addField(reading.field)}`;
 
 export const getDecimals = (unit?: number | string): number => {
@@ -107,7 +107,22 @@ const friendlyReadingValue = (
     return result;
 };
 
-const readingBasicDisplay = (
+export const readingDataValues = (
+    rb: ReadingData,
+    type: string,
+    formatting?: ConfigFormatApply,
+    delta: boolean = false,
+): [any, string | undefined] => {
+    let value: any = undefined;
+    let error: string | undefined = undefined;
+    if (rb.value !== undefined) {
+        value = friendlyReadingValue(rb.value, type, formatting, delta);
+    }
+    if (rb.error !== undefined) error = `"${rb.error}"`;
+    return [value, error];
+};
+
+const readingDataFormats = (
     rb: ReadingData,
     type: string,
     formatting?: ConfigFormatApply,
@@ -130,15 +145,33 @@ const readingBasicDisplay = (
     return [value, error];
 };
 
+export const readingDataDisplay = (
+    rb: ReadingData,
+    type: string,
+    formatting?: ConfigFormatApply,
+    delta: boolean = false,
+): string => {
+    let value: any = undefined;
+    let error: string | undefined = undefined;
+    [value, error] = readingDataValues(rb, type, formatting, delta);
+
+    return value !== undefined && error !== undefined
+        ? { value: value, error: error }
+        : value !== undefined
+        ? value
+        : error;
+};
+
 export const readingDisplay = (r: Reading): string => {
     let value: any = undefined;
     let delta: any = undefined;
     let error: string | undefined = undefined;
 
+    // TODO: replace this with a call to the function above
     if (r.delta !== undefined) {
-        [value, error] = readingBasicDisplay(r.delta, r.type, r.formatting, true);
+        [value, error] = readingDataValues(r.delta, r.type, r.formatting, true);
     } else {
-        [value, error] = readingBasicDisplay(r, r.type, r.formatting);
+        [value, error] = readingDataValues(r, r.type, r.formatting);
     }
 
     return value !== undefined && error !== undefined
@@ -193,7 +226,7 @@ export const transformReadings = (orig: Reading[]): any => {
         readings[cIndex].functions[fIndex][functionField(r.function, r.field)] = r.type;
 
         const reading: any = {};
-        reading[friendlyFunctionReading(r)] = display;
+        reading[friendlyFunctionReader(r)] = display;
         fnReadings.push(reading);
     });
 
@@ -217,7 +250,7 @@ const replaceMatch = (
     return value;
 };
 
-const nameToAddress = (name: string): string => nodes.get(name)?.address || name;
+export const nameToAddress = (name: string): string => contracts[name]?.address || name;
 
 export const parseArg = (configArg: any): any => {
     let arg: any;

@@ -83,7 +83,8 @@ export const eatFileName = (name: string): string => {
     return getConfig().configName + '.' + name;
 };
 
-const writeEatFile = (name: string, results: string): void => {
+// TODO: make a specific writer for plot files and unexport this
+export const writeEatFile = (name: string, results: string): void => {
     log(`writing ${eatFileName(name)}`);
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };

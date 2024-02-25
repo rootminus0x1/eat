@@ -2,12 +2,19 @@ import * as crypto from 'crypto-js';
 
 import { contracts, readerTemplates, nodes, users, GraphNode } from './graph';
 import { MaxInt256, formatEther, formatUnits } from 'ethers';
-import { ConfigFormatApply, eatFileName, getConfig, numberCompare, stringCompare } from './config';
+import { ConfigFormatApply, eatFileName, getConfig, numberCompare, stringCompare, writeEatFile } from './config';
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 import { withLogging, Logger, log, erase } from './logging';
-import { Reader, Reading, ReadingData, ReadingType, makeReading } from './read';
-import { getDecimals } from './friendly';
+import { Reader, Reading, ReadingData, ReadingType, callReaderTemplate, makeReading } from './read';
+import {
+    addressToName,
+    friendlyArgs,
+    friendlyFunctionReader,
+    getDecimals,
+    readingDataDisplay,
+    readingDisplay,
+} from './friendly';
 import { Trigger, TriggerOutcome, doTrigger } from './trigg';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
@@ -411,11 +418,13 @@ const delveSimulation = async (stack: string, simulation: Trigger[] = [], contex
 // do each event and after it, do each simulation then reset the blockchain before the next event
 const _delve = async (stack: string, simulation: Trigger[] = []): Promise<[Reading[], TriggerOutcome[]]> => {
     const outcomes: TriggerOutcome[] = [];
+    const snapshot = await takeSnapshot(); // to be restored at the end of this
     // do each trigger
     for await (const trigger of simulation) {
         outcomes.push(await doTrigger(trigger));
     }
     const readings = await doReadings();
+    await snapshot.restore();
     return [readings, outcomes];
 };
 
@@ -433,11 +442,12 @@ type SimulationThenMeasurement = {
         y2axis?: boolean;
     }[];
 };
+*/
 
 const formatForCSV = (value: string): string =>
     // If the value contains a comma, newline, or double quote, enclose it in double quotes
     /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
-*/
+
 class ErrorFormatter {
     private runErrorsMap = new Map<string, string>(); // map of error message to error hash string, stored in file .errors.csv
 
@@ -691,13 +701,32 @@ export const delvePlot = async (
 */
 /*
 THE NEW DELVEPLOT
+*/
+
+export type XAxis = {
+    label: string;
+    reversed?: boolean;
+    cause: Trigger[];
+    reader: Reader;
+};
+
+export type Line = {
+    reader: Reader;
+    axis2?: boolean;
+    style?: string;
+};
+
+export type YAxis = {
+    label: string;
+    label2?: string;
+    simulation?: Trigger[];
+    lines: Line[];
+};
+
 export const delvePlot = async (
     name: string, // TODO: generate this
-    xlabel: string,
-    causeIndependent: Trigger[],
-    independent: Reader,
-    ylabel: string | [string, string],
-    dependents: Reader[],
+    xAxis: XAxis,
+    yAxis: YAxis,
 ): Promise<void> => {
     const scriptfilename = `${name}.gnuplot.gp`;
     const datafilename = `${name}.gnuplot.csv`;
@@ -714,89 +743,59 @@ export const delvePlot = async (
 
     // headers, plots, data container, error report
     const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
-    const plots: string[] = []; // plots of the data fields
     let data: string[] = []; // the data (errors are inserted in-place)
 
-    // automatically plot the x-axis in the right order (gnuplot always does it ascending)
-    let reverse = false;
-    let prevValue = undefined;
-
-    for await (const trigger of causeIndependent) {
-        headers.push(trigger.name || "no x trigger name!");
-    }
-    for await (const reader of dependents) {
-        headers.push(reader.
-                `${calculation.match.contract}.${calculation.match.reading}${
-                    calculation.match.target
-                        ? '(' +
-                          (contracts[calculation.match.target].name ||
-                              users[calculation.match.target].name ||
-                              calculation.match.target) +
-                          ')'
-                        : ''
-                }${dependent.simulation ? '>' + simulationName : ''}`,
-            );
-            // what are the y-scales
-            let ycolumn = `(\$${headers.length.toString()})`;
-            plots.push(
-                `datafile using 2:${ycolumn} with lines ${calculation.lineStyle ? calculation.lineStyle : ''} ${
-                    calculation.y2axis ? 'axes x1y2' : ''
-                }`,
-            );
+    // headers - the simulation
+    //for (const trigger of causeIndependent) {
+    //    headers.push(`${trigger.name}(${friendlyArgs(trigger.args, trigger.argTypes)})`);
+    //}
+    headers.push(xAxis.cause[0].name); // maybe the x-axis label?
+    if (yAxis.simulation)
+        for (const sim of yAxis.simulation) {
+            headers.push(sim.name);
         }
-}
+
+    // headers - the x & y values
+    const xindex = headers.length;
+    const yReaders = yAxis.lines.map((line) => line.reader);
+    for (const reader of [xAxis.reader, ...yReaders]) {
+        headers.push(`${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
+    }
+    // plots
+    const column = (index: number): string => `(\$${index.toString()})`;
+    const plots = yAxis.lines.map(
+        (line, yindex) =>
+            `datafile using ${column(xindex + 1)}:${column(xindex + yindex + 2)} with lines ${
+                line.style ? line.style : ''
+            } ${line.axis2 ? 'axes x1y2' : ''}`,
+    );
 
     const snapshot = await takeSnapshot(); // to be restored after all dependents have been read
-    // TODO: make independent a series of simulations, not just a series of triggers
-    for await (const trigger of causeIndependent) {
-        await doTrigger(trigger); // change the dependent
-        const xreading = await callReader(independent);
-        if (!xreading.value) throw 'events on the x axis have to have a value';
+    for await (const trigger of xAxis.cause) {
+        const outcome = await doTrigger(trigger); // change the dependent
+        const plotRow: string[] = [friendlyArgs(trigger.args, trigger.argTypes)];
 
-        // the X value
-        const plotRow: string[] = [];
-        {
-            const xDisplay = readingDisplay(xreading);
-            log(`x=${xDisplay}`);
+        // TODO: capture the outcomes of the simulation
+        if (yAxis.simulation)
+            for await (const sim of yAxis.simulation) {
+                //log(`doing simulation: ${sim.name}`);
+                const outcome: TriggerOutcome = await doTrigger(sim);
+                plotRow.push(`"${outcome.value || outcome.error || trigger.args}"`);
+            }
+        // x and y values
+        for (const reader of [xAxis.reader, ...yReaders]) {
+            // TODO: why not callReader?
+            const readingData = await callReaderTemplate(reader); // no args
+            const xDisplay = readingDataDisplay(readingData, reader.type, reader.formatting);
             plotRow.push(xDisplay);
         }
 
-        // calculate each reading under each simulation
-        for (const reader of dependents) {
-            // now do the calculations, do the headers and plots first
-            if (first) {
-                // the header for a dependent has part of the simulation in it's name
-            }
-            // get the dependent values, as a flattened, formatted row
-            const results = (
-                await calculateMeasures([...dependent.calculations.map((calculation) => calculation.match)])
-            )
-                // flatten and format per config
-                .map((cm) => formatFromConfig(cm))
-                .flatMap((cm) => cm.readings)
-                // convert them to CSV values or errors
-                .map((m) =>
-                    m.value !== undefined
-                        ? m.value
-                        : m.error !== undefined
-                        ? ef.formatError(m.error)
-                        : 'undefined error',
-                );
-            // add the results for this dependent to the row
-            plotRow.push(...results);
-        } // dependents
         await snapshot.restore();
-        // work out if the x-axis needs to be reversed
-        if (prevValue !== undefined) {
-            reverse = event.value < prevValue;
-        } else {
-            prevValue = event.value;
-        }
         data.push(plotRow.map((m) => formatForCSV(m)).join(','));
-        first = false;
-    } // independents
+    }
 
     writeEatFile(datafilename, [headers.map((h) => formatForCSV(h)).join(','), ...data].join('\n'));
+    /*
     writeEatFile(
         errorfilename,
         ef
@@ -804,7 +803,7 @@ export const delvePlot = async (
             .map((e) => formatForCSV(e))
             .join('\n'),
     );
-
+        */
     let script = [
         `datafile = "${datafilepath}"`,
         `# additional imformation and error in ${errorfilepath}`,
@@ -816,45 +815,43 @@ export const delvePlot = async (
         `set terminal svg enhanced size 800 500 background rgb "gray90"`,
         `set autoscale`,
         `# set output "${svgfilepath}`,
-        `set xlabel "${xlabel}"`,
+        `set xlabel "${xAxis.label}"`,
         `set colorsequence default`,
     ];
     // normalise the ylabels
-    let ylabels: [string, string] = Array.isArray(ylabel) ? ylabel : [ylabel, ''];
-    ylabels.forEach((l, i) => {
+    [yAxis.label, yAxis.label2].forEach((l, i) => {
         if (l) {
             const axis = i == 1 ? 'y2' : 'y';
             script.push(`set ${axis}label "${l}"`);
-            if (l.endsWith('(sqrt)')) {
-                script.push(`set nonlinear ${axis} via sqrt(y) inverse y*y`);
-            }
+            //            if (l.endsWith('(sqrt)')) {
+            //                script.push(`set nonlinear ${axis} via sqrt(y) inverse y*y`);
+            //            }
             script.push(`set ${axis}tics`);
         }
     });
 
-    if (reverse) {
+    if (xAxis.reversed) {
         script.push(`set xrange reverse`);
     }
 
-// #stats datafile using 1 nooutput
-// #min = STATS_min
-// #max = STATS_max
-// #range_extension = 0.2 * (max - min)
-// #set xrange [min - range_extension : max + range_extension]
+    // #stats datafile using 1 nooutput
+    // #min = STATS_min
+    // #max = STATS_max
+    // #range_extension = 0.2 * (max - min)
+    // #set xrange [min - range_extension : max + range_extension]
 
-// #stats datafile using 2 nooutput
-// #min = STATS_min
-// #max = STATS_max
-// #range_extension = 0.2 * (max - min)
-// #set yrange [min - range_extension : max + range_extension]
+    // #stats datafile using 2 nooutput
+    // #min = STATS_min
+    // #max = STATS_max
+    // #range_extension = 0.2 * (max - min)
+    // #set yrange [min - range_extension : max + range_extension]
 
-// #stats datafile using 3 nooutput
-// #min = STATS_min
-// #max = STATS_max
-// #range_extension = 0.2 * (max - min)
-// #set y2range [min - range_extension : max + range_extension]
+    // #stats datafile using 3 nooutput
+    // #min = STATS_min
+    // #max = STATS_max
+    // #range_extension = 0.2 * (max - min)
+    // #set y2range [min - range_extension : max + range_extension]
     script.push(`plot ${plots.join(',\\\n     ')}`);
     writeEatFile(scriptfilename, script.join('\n'));
     console.log('delve plotting...done.');
 };
-*/
