@@ -1,13 +1,11 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml'; // config files are in yaml
-import lodash, { result, values } from 'lodash'; //
-import { formatUnits, parseUnits } from 'ethers';
+import lodash from 'lodash'; //
 
 import yargs from 'yargs';
 import path from 'path';
-import { users, contracts, nodes } from './graph';
 import { Logger, log } from './logging';
-import { functionField, transformReadings } from './friendly';
+import { functionField, transformReadings, yamlIt } from './friendly';
 import { Field, Reading } from './read';
 import { TriggerOutcome } from './trigg';
 
@@ -89,18 +87,6 @@ export const writeEatFile = (name: string, results: string): void => {
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
 
-type Formatter = (value: any) => any;
-
-const replacer = (key: string, value: any) => {
-    if (typeof value === 'bigint') {
-        return value.toString() + 'n'; // Append 'n' to indicate BigInt
-    } else if (typeof value === 'function') {
-        return undefined; // strip out the functions
-    } else {
-        return value; // Return the value unchanged
-    }
-};
-
 /*const transformReadingsOrig = (orig: Reading[]): any => {
     let addresses: any = {};
     let contracts: any = {};
@@ -155,11 +141,6 @@ const replacer = (key: string, value: any) => {
     return { addresses: addresses, contracts: contracts, readings: readings };
 };
 */
-
-const yamlIt = (it: any): string =>
-    yaml.dump(it, {
-        replacer: replacer,
-    });
 
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
     let simData = simulation ? yamlIt({ simulation: simulation }) : '';

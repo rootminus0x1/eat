@@ -3,9 +3,14 @@ import { formatUnits, parseUnits } from 'ethers';
 import { contracts, nodes } from './graph';
 import { Field, Reader, Reading, ReadingData, ReadingValue } from './read';
 import { ConfigFormatApply } from './config';
+import { TriggerOutcome } from './trigg';
+import * as yaml from 'js-yaml'; // config files are in yaml
 
 ///////////////////////////////////////////////////////////////////////////////
 // raw to friendly
+
+const ifDefined = (prefix: string, value: any | undefined, suffix: string) =>
+    value === undefined ? '' : prefix + value.toString() + suffix;
 
 export const addressToName = (address: string): string => nodes.get(address)?.name || address;
 
@@ -36,6 +41,26 @@ export const friendlyArgs = (rawArgs: any[], argTypes: string[]): string => {
     if (result.length) result = `(${result})`;
     return result;
 };
+
+export const JSONreplacer = (key: string, value: any) =>
+    typeof value === 'bigint'
+        ? value.toString() + 'n' // Append 'n' to indicate BigInt
+        : typeof value === 'function'
+        ? undefined
+        : value;
+
+export const yamlIt = (it: any): string =>
+    yaml.dump(it, {
+        replacer: JSONreplacer,
+    });
+
+export const friendlyOutcome = (outcome: TriggerOutcome): string => {
+    let display = outcome.gas !== undefined ? `gas: ${outcome.gas}` : outcome.error;
+    if (outcome.value != undefined) display = `[${outcome.value}, ${display}]`;
+    if (display === undefined) display = '-';
+    return `"${display}"`;
+};
+
 // template name - contract.function.field, generated on creation
 export const functionField = (func: string, field?: Field): string => `${func}${addField(field)}`;
 
@@ -182,6 +207,31 @@ export const readingDisplay = (r: Reading): string => {
 };
 
 export const transformReadings = (orig: Reading[]): any => {
+    let readings: any[] = [];
+    let cName = '';
+
+    orig.forEach((r) => {
+        const display = readingDisplay(r);
+
+        if (display != undefined) {
+            // contract
+            {
+                const contractInstance = addressToName(r.address);
+                if (contractInstance !== cName) {
+                    cName = contractInstance;
+                    readings.push({});
+                    readings[readings.length - 1][cName] = [];
+                }
+                const reading: any = {};
+                reading[friendlyFunctionReader(r)] = display;
+                readings[readings.length - 1][cName].push(reading);
+            }
+        }
+    });
+    return readings;
+};
+
+export const transformReadingsVerbose = (orig: Reading[]): any => {
     let readings: any[] = [];
     let cName = '';
     let cIndex: number = -1;

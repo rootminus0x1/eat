@@ -11,6 +11,7 @@ import {
     addressToName,
     friendlyArgs,
     friendlyFunctionReader,
+    friendlyOutcome,
     getDecimals,
     readingDataDisplay,
     readingDisplay,
@@ -67,9 +68,11 @@ export type Experiment = {
 // doReadings
 
 const compareReadingKeys = (a: Reading, b: Reading) =>
+    // TODO: replace contract/address with contract instance name (i.e. addressToName(x.address))
     stringCompare(a.contract, b.contract) ||
     stringCompare(a.address, b.address) ||
     stringCompare(a.function, b.function) ||
+    stringCompare(friendlyArgs(a.args, a.argTypes), friendlyArgs(b.args, b.argTypes)) ||
     (a.field && b.field ? numberCompare(a.field.index, b.field.index) : 0);
 const sortReadings = (r: Reading[]): Reading[] => r.sort(compareReadingKeys);
 
@@ -703,30 +706,37 @@ export const delvePlot = async (
 THE NEW DELVEPLOT
 */
 
-export type XAxis = {
+type Axis = {
     label: string;
+    scale?: number; // divide the results by this and augment the label
+    nonlinear?: string;
     reversed?: boolean;
+};
+export type XAxis = Axis & {
     cause: Trigger[];
+    cumulative?: Trigger[];
     reader: Reader;
 };
 
 export type Line = {
     reader: Reader;
-    axis2?: boolean;
     style?: string;
 };
 
-export type YAxis = {
-    label: string;
-    label2?: string;
-    simulation?: Trigger[];
+export type YAxis = Axis & {
     lines: Line[];
+};
+
+export type YAxes = {
+    simulation?: Trigger[];
+    y: YAxis;
+    y2?: YAxis;
 };
 
 export const delvePlot = async (
     name: string, // TODO: generate this
     xAxis: XAxis,
-    yAxis: YAxis,
+    yAxes: YAxes,
 ): Promise<void> => {
     const scriptfilename = `${name}.gnuplot.gp`;
     const datafilename = `${name}.gnuplot.csv`;
@@ -741,70 +751,10 @@ export const delvePlot = async (
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
 
-    // headers, plots, data container, error report
-    const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
+    // plot data & scripts to go in files
     let data: string[] = []; // the data (errors are inserted in-place)
-
-    // headers - the simulation
-    //for (const trigger of causeIndependent) {
-    //    headers.push(`${trigger.name}(${friendlyArgs(trigger.args, trigger.argTypes)})`);
-    //}
-    headers.push(xAxis.cause[0].name); // maybe the x-axis label?
-    if (yAxis.simulation)
-        for (const sim of yAxis.simulation) {
-            headers.push(sim.name);
-        }
-
-    // headers - the x & y values
-    const xindex = headers.length;
-    const yReaders = yAxis.lines.map((line) => line.reader);
-    for (const reader of [xAxis.reader, ...yReaders]) {
-        headers.push(`${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
-    }
-    // plots
-    const column = (index: number): string => `(\$${index.toString()})`;
-    const plots = yAxis.lines.map(
-        (line, yindex) =>
-            `datafile using ${column(xindex + 1)}:${column(xindex + yindex + 2)} with lines ${
-                line.style ? line.style : ''
-            } ${line.axis2 ? 'axes x1y2' : ''}`,
-    );
-
-    const snapshot = await takeSnapshot(); // to be restored after all dependents have been read
-    for await (const trigger of xAxis.cause) {
-        const outcome = await doTrigger(trigger); // change the dependent
-        const plotRow: string[] = [friendlyArgs(trigger.args, trigger.argTypes)];
-
-        // TODO: capture the outcomes of the simulation
-        if (yAxis.simulation)
-            for await (const sim of yAxis.simulation) {
-                //log(`doing simulation: ${sim.name}`);
-                const outcome: TriggerOutcome = await doTrigger(sim);
-                plotRow.push(`"${outcome.value || outcome.error || trigger.args}"`);
-            }
-        // x and y values
-        for (const reader of [xAxis.reader, ...yReaders]) {
-            // TODO: why not callReader?
-            const readingData = await callReaderTemplate(reader); // no args
-            const xDisplay = readingDataDisplay(readingData, reader.type, reader.formatting);
-            plotRow.push(xDisplay);
-        }
-
-        await snapshot.restore();
-        data.push(plotRow.map((m) => formatForCSV(m)).join(','));
-    }
-
-    writeEatFile(datafilename, [headers.map((h) => formatForCSV(h)).join(','), ...data].join('\n'));
-    /*
-    writeEatFile(
-        errorfilename,
-        ef
-            .errorMap()
-            .map((e) => formatForCSV(e))
-            .join('\n'),
-    );
-        */
     let script = [
+        `set title "${name}"`,
         `datafile = "${datafilepath}"`,
         `# additional imformation and error in ${errorfilepath}`,
         `set datafile separator comma`,
@@ -814,25 +764,111 @@ export const delvePlot = async (
         `# set output "${pngfilepath}`,
         `set terminal svg enhanced size 800 500 background rgb "gray90"`,
         `set autoscale`,
-        `# set output "${svgfilepath}`,
-        `set xlabel "${xAxis.label}"`,
         `set colorsequence default`,
+        `# set output "${svgfilepath}`,
     ];
-    // normalise the ylabels
-    [yAxis.label, yAxis.label2].forEach((l, i) => {
-        if (l) {
-            const axis = i == 1 ? 'y2' : 'y';
-            script.push(`set ${axis}label "${l}"`);
-            //            if (l.endsWith('(sqrt)')) {
-            //                script.push(`set nonlinear ${axis} via sqrt(y) inverse y*y`);
-            //            }
-            script.push(`set ${axis}tics`);
+    [xAxis, yAxes.y, yAxes.y2].map((axis, i) => {
+        const a = ['x', 'y', 'y2'][i];
+        if (axis) {
+            if (axis.reversed) {
+                script.push(`set ${a}range reverse`);
+            }
+            script.push(`set ${a}label "${axis.label}${axis.scale ? ' (' + axis.scale.toLocaleString() + 's)' : ''}"`);
+            script.push(`set ${a}tics`);
+            script.push(`set ${a}tics nomirror`);
+            if (axis.nonlinear) {
+                if (axis.nonlinear === 'sqrt')
+                    script.push(`set nonlinear ${a} via sqrt(${a[0]}) inverse ${a[0]}*${a[0]}`);
+                if (axis.nonlinear === 'log') script.push(`set nonlinear ${a} via log(${a[0]}) inverse exp(${a[0]})`);
+            }
         }
     });
 
-    if (xAxis.reversed) {
-        script.push(`set xrange reverse`);
+    {
+        // headers - scoped out so no inadvertent later access
+        const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
+        const readerHeader = (reader: Reader) =>
+            headers.push(`${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
+        const triggerHeader = (trigger: Trigger) => headers.push(trigger.name);
+
+        // headers
+        // x-axis trigger
+        headers.push(`"${xAxis.label}"`);
+
+        // x-axis cummulative triggers - all run once on each x axis value
+        (xAxis.cumulative || []).forEach((sim) => triggerHeader(sim));
+
+        // x-axis reader
+        const xindex = headers.length;
+        readerHeader(xAxis.reader);
+
+        // y-axis simulation
+        (yAxes.simulation || []).forEach((sim) => triggerHeader(sim));
+
+        // y-axis readers
+        const yindex = headers.length;
+        // the x-axis data comes next, headers and plots
+        const plots: string[] = [];
+        const lineHeader = (line: Line, index: number, indexOffset: number, isY2: boolean) => {
+            readerHeader(line.reader);
+            const column = (index: number): string => `(\$${index.toString()})`;
+            plots.push(
+                `datafile using ${column(xindex + 1)}:${column(index + indexOffset + 1)} with lines ${
+                    line.style ? line.style : ''
+                } ${isY2 ? 'axes x1y2' : ''}`,
+            );
+        };
+        yAxes.y.lines.forEach((line, i) => lineHeader(line, i, yindex, false));
+        (yAxes.y2?.lines || []).forEach((line, i) => lineHeader(line, i, yindex + yAxes.y.lines.length, true));
+        script.push(`plot ${plots.join(',\\\n     ')}`);
+        data.push(headers.map((h) => formatForCSV(h)).join(','));
     }
+
+    const snapshot = await takeSnapshot(); // to be restored after all dependents have been read
+    for (const trigger of xAxis.cause) {
+        const rowData: string[] = [];
+        const readersData = async (readers?: Reader[], scale?: number | undefined) => {
+            for (const reader of readers || []) {
+                const readingData = await callReaderTemplate(reader); // no args
+                // TODO: work with non-bigint data?
+                let display = readingDataDisplay(readingData, reader.type, reader.formatting);
+                if (scale) display = (Number(display) / Number(scale)).toString();
+                rowData.push(display);
+            }
+        };
+        const triggersData = async (triggers?: Trigger[]) => {
+            for (const trigger of triggers || []) {
+                const outcome = await doTrigger(trigger);
+                rowData.push(friendlyOutcome(outcome));
+            }
+        };
+
+        await triggersData([trigger]); // x axis
+
+        // x-axis cumulative
+        await triggersData(xAxis.cumulative || []);
+
+        // snapshot in here, to restore after
+        // x-axis readers
+        await readersData([xAxis.reader], xAxis.scale);
+
+        // y-axis simulation - re-run
+        await triggersData(yAxes.simulation);
+
+        await readersData(
+            yAxes.y.lines.map((l) => l.reader),
+            yAxes.y.scale,
+        );
+        await readersData(
+            yAxes.y2?.lines.map((l) => l.reader),
+            yAxes.y2?.scale,
+        );
+
+        await snapshot.restore();
+        data.push(rowData.map((m) => formatForCSV(m)).join(','));
+    }
+
+    writeEatFile(datafilename, data.join('\n'));
 
     // #stats datafile using 1 nooutput
     // #min = STATS_min
@@ -851,7 +887,6 @@ export const delvePlot = async (
     // #max = STATS_max
     // #range_extension = 0.2 * (max - min)
     // #set y2range [min - range_extension : max + range_extension]
-    script.push(`plot ${plots.join(',\\\n     ')}`);
     writeEatFile(scriptfilename, script.join('\n'));
     console.log('delve plotting...done.');
 };
