@@ -2,9 +2,10 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 import { IBlockchainAddress } from './Blockchain';
 import { Contract } from 'ethers';
 import { log } from './logging';
-import { Reader, ReaderTemplate } from './read';
+import { Reader, ReaderTemplate, ReadingValue, callReader } from './read';
 import { TriggerTemplate } from './trigg';
 import { fieldToName, nameToAddress } from './friendly';
+import { readingDelta } from './delve';
 
 // the nodes, also contains static information about the nodes, name, etc
 export type GraphNode = {
@@ -26,22 +27,41 @@ export let roles: Map<string, Role[]>; // address to array of roles
 
 export let readerTemplates: Map<string, ReaderTemplate[]>; // contract address to readers
 
-export const makeReader = (nameOrAddress: string, fn: string, field?: string): Reader => {
-    const address = nameToAddress(nameOrAddress);
+export const findReader = (id: string, fn: string, field: string = '', ...args: any[]): Reader => {
+    const address = nameToAddress(id);
     const forContract = readerTemplates.get(address);
     if (forContract) {
         const readers = forContract.filter((r: ReaderTemplate) => {
             if (r.function !== fn) return false; // mismatched function name
+            if (r.argTypes.length !== args.length) return false;
+
             if (field !== undefined && r.field !== undefined) return field === fieldToName(r.field);
             if (r.field !== undefined) return fieldToName(r.field) === field;
             else return true;
         });
-        if (readers.length > 1)
-            throw Error(`more than one Reader matches ${fn}${field ? '.' + field : ''} on ${nameOrAddress}`);
-        if (readers.length === 0) throw Error(`no Reader on ${nameOrAddress}, with ${fn}${field ? '.' + field : ''}`);
-        return Object.assign({ args: [] }, readers[0]);
+        if (readers.length > 1) throw Error(`more than one Reader matches ${fn}${field ? '.' + field : ''} on ${id}`);
+        if (readers.length === 0)
+            throw Error(
+                `no Reader on ${id}, with ${fn}${args.length ? '(' + args + ')' : ''}${field ? '.' + field : ''}`,
+            );
+        return Object.assign(
+            { args: args.map((arg, i) => (readers[0].argTypes[i] === 'address' ? nameToAddress(arg) : arg)) },
+            readers[0],
+        );
     }
     throw Error('no Reader found on: ${nameOrAddress}');
+};
+
+export const findDeltaReader = async (id: string, fn: string, field: string = '', ...args: any[]): Promise<Reader> => {
+    const baseReader = findReader(id, fn, field, ...args);
+    const base = await callReader(baseReader);
+    return Object.assign({ augmentation: 'delta' }, baseReader, {
+        read: async (...args: any[]): Promise<ReadingValue> => {
+            const again = await callReader(baseReader); // call it again
+            const delta = readingDelta(again, base, baseReader.formatting, baseReader.type);
+            return delta.value !== undefined ? delta.value : 'value not defined';
+        },
+    });
 };
 
 export let triggerTemplate: Map<string, TriggerTemplate>;

@@ -6,7 +6,7 @@ import { ConfigFormatApply, eatFileName, getConfig, numberCompare, stringCompare
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 import { withLogging, Logger, log, erase } from './logging';
-import { Reader, Reading, ReadingData, ReadingType, callReaderTemplate, makeReading } from './read';
+import { Reader, Reading, ReadingData, ReadingType, callReader, makeReading } from './read';
 import {
     addressToName,
     friendlyArgs,
@@ -133,7 +133,75 @@ export const calculateSlimMeasures = async (baseMeasurements: Measurements): Pro
 */
 ////////////////////////////////////////////////////////////////////////
 // diff Readings
-const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
+
+export const readingDelta = (
+    reading: ReadingData,
+    base: ReadingData,
+    formatting: ConfigFormatApply | undefined,
+    type: string,
+): ReadingData => {
+    const delta: ReadingData = {};
+    // check the errors first
+    // TODO: do we need the quotes?
+    if (reading.error === undefined && base.error !== undefined) delta.error = `"${base.error}" -> ${reading.error}`;
+    if (reading.error !== undefined && base.error === undefined) delta.error = `${base.error} -> "${reading.error}"`;
+    if (reading.error !== base.error) delta.error = `"${base.error}" -> "${reading.error}"`;
+
+    // now check the values that are the same type (by definition) but may be arrays or scalars
+    const scalarDelta = (type: string, a: ReadingType, b: ReadingType): ReadingType => {
+        let result: ReadingType = 0n;
+        if (a !== b) {
+            if (type.includes('int')) {
+                result = (a as bigint) - (b as bigint);
+                // take into account any formatting, units and precision
+                if (formatting?.precision != undefined) {
+                    const decimals = getDecimals(formatting.unit); // e.g. 16, 18 or 0
+                    const precision = formatting.precision || 0; // e.g. 0, 1 or -1
+                    // * 10 ** (16, 17, 1)
+                    const exponent = BigInt(precision - decimals);
+                    let scaler = exponent < 0n ? result / 10n ** -exponent : result * 10n ** exponent;
+                    if (scaler < 0) scaler = -scaler;
+                    if (scaler === 0n) {
+                        result = 0n;
+                    }
+                }
+            } else if (type === 'bool') result = a; // changed from !reading.value to reading.value
+            else if (type === 'string' || type.startsWith('address') || type.startsWith('bytes'))
+                result = `"${base.value}" -> "${reading.value}}"`;
+            else throw Error(`unsupported reading type in deltas: ${type}`);
+        }
+        return result;
+    };
+
+    if (reading.value === undefined && base.value !== undefined)
+        delta.value = `[${base.value.toString()}] -> ${reading.value}`;
+    if (reading.value !== undefined && base.value === undefined)
+        delta.value = `${base.value} -> [${reading.value.toString()}]`;
+
+    // like for like comparison
+    if (reading.value !== undefined && base.value !== undefined) {
+        if (type.endsWith('[]') && Array.isArray(reading.value) && Array.isArray(base.value)) {
+            // do array comparison
+            const readingA = reading.value;
+            const baseA = base.value;
+            if (readingA.length === baseA.length) {
+                const proposed = readingA.map((readingAi, i) =>
+                    scalarDelta(type.replace('[]', ''), readingAi, baseA[i]),
+                );
+                const defined = proposed.reduce((count, v) => (v ? count + 1 : count), 0);
+                delta.value = defined > 0 ? proposed : undefined;
+            } else {
+                delta.value = `${baseA.length}:[${baseA.toString()}] -> ${readingA.length}[${readingA.toString()}]`;
+            }
+        } else {
+            // do scalar comparison
+            delta.value = scalarDelta(type, reading.value as ReadingType, base.value as ReadingType);
+        }
+    }
+    return delta;
+};
+
+export const readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
     const deltas: Reading[] = [];
     let a = 0,
         b = 0;
@@ -153,71 +221,8 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
         } else {
             a++;
             b++;
-            let delta: ReadingData = {};
-            // check the errors first
-            if (reading.error === undefined && base.error !== undefined)
-                delta.error = `"${base.error}" -> ${reading.error}`;
-            if (reading.error !== undefined && base.error === undefined)
-                delta.error = `${base.error} -> "${reading.error}"`;
-            if (reading.error !== base.error) delta.error = `"${base.error}" -> "${reading.error}"`;
-
-            // now check the values that are the same type (by definition) but may be arrays or scalars
-            const scalarDelta = (type: string, a: ReadingType, b: ReadingType): ReadingType => {
-                let result: any = undefined;
-                if (a !== b) {
-                    if (a !== undefined && b !== undefined) {
-                        if (type.includes('int')) {
-                            result = (a as bigint) - (b as bigint);
-                            // take into account any formatting, units and precision
-                            if (reading.formatting?.precision != undefined) {
-                                const decimals = getDecimals(reading.formatting.unit); // e.g. 16, 18 or 0
-                                const precision = reading.formatting.precision || 0; // e.g. 0, 1 or -1
-                                // * 10 ** (16, 17, 1)
-                                const exponent = BigInt(precision - decimals);
-                                let scaler = exponent < 0n ? result / 10n ** -exponent : result * 10n ** exponent;
-                                if (scaler < 0) scaler = -scaler;
-                                if (scaler === 0n) {
-                                    result = undefined;
-                                }
-                            }
-                        } else if (type === 'bool') result = a; // changed from !reading.value to reading.value
-                        else if (type === 'string' || type.startsWith('address') || type.startsWith('bytes'))
-                            result = `"${base.value}" -> "${reading.value}}"`;
-                        else throw Error(`unsupported reading type in deltas: ${reading.type}`);
-                    }
-                }
-                return result;
-            };
-
-            if (reading.value === undefined && base.value !== undefined)
-                delta.value = `[${base.value.toString()}] -> ${reading.value}`;
-            if (reading.value !== undefined && base.value === undefined)
-                delta.value = `${base.value} -> [${reading.value.toString()}]`;
-
-            // like for like comparison
-            if (reading.value !== undefined && base.value !== undefined) {
-                if (reading.type.endsWith('[]') && Array.isArray(reading.value) && Array.isArray(base.value)) {
-                    // do array comparison
-                    const readingA = reading.value;
-                    const baseA = base.value;
-                    if (readingA.length === baseA.length) {
-                        const proposed = readingA.map((readingAi, i) =>
-                            scalarDelta(reading.type.replace('[]', ''), readingAi, baseA[i]),
-                        );
-                        const defined = proposed.reduce((count, v) => (v !== undefined ? count + 1 : count), 0);
-                        delta.value = defined > 0 ? proposed : undefined;
-                    } else {
-                        delta.value = `${baseA.length}:[${baseA.toString()}] -> ${
-                            readingA.length
-                        }[${readingA.toString()}]`;
-                    }
-                } else {
-                    // do scalar comparison
-                    delta.value = scalarDelta(reading.type, reading.value as ReadingType, base.value as ReadingType);
-                }
-            }
-
-            if (delta.value !== undefined || delta.error !== undefined)
+            let delta: ReadingData = readingDelta(reading, base, reading.formatting, reading.type);
+            if (delta.value /* non-0 or defined */ || delta.error !== undefined)
                 deltas.push(Object.assign({ delta: delta }, reading));
         }
     }
@@ -227,69 +232,8 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
     return sortReadings(deltas);
 };
 
-export const readingsDeltas = withLogging(_readingsDeltas);
-
 ////////////////////////////////////////////////////////////////////////
 // delve
-/*
-type UnnamedVariableCalculator = AsyncIterableIterator<bigint>;
-export type VariableCalculator = UnnamedVariableCalculator & { name: string; precision: number };
-const next = async (valuec?: VariableCalculator): Promise<Variable | undefined> => {
-    if (valuec) {
-        const nextResult = await valuec.next();
-        if (!nextResult.done) {
-            return { name: valuec.name, value: doFormat(nextResult.value, false, 'ether', valuec.precision) };
-        }
-    }
-    return undefined;
-};
-export type VariableSetter = (value: bigint) => Promise<void>;
-
-export function* valuesStepped(start: bigint, finish: bigint, step: bigint = 1n): Generator<bigint> {
-    for (let i = start; (step > 0 && i <= finish) || (step < 0 && i >= finish); i += step) {
-        yield i;
-    }
-}
-
-export function* valuesSingle(value: bigint): Generator<bigint> {
-    yield value;
-}
-
-export function* valuesArray(values: bigint[]): Generator<bigint> {
-    for (const v of values) yield v;
-}
-
-export const Values = async (
-    name: string,
-    precision: number,
-    generator: Generator<bigint>,
-    doFunc: VariableSetter,
-): Promise<VariableCalculator> => {
-    const asyncIterator: UnnamedVariableCalculator = {
-        [Symbol.asyncIterator]: async function* (): AsyncGenerator<bigint> {
-            while (true) {
-                const value = await doNextValue();
-                if (value.done) break;
-                yield value.value;
-            }
-        },
-        next: async (): Promise<IteratorResult<bigint>> => {
-            return await doNextValue();
-        },
-    };
-
-    const doNextValue = async (): Promise<IteratorResult<bigint>> => {
-        const value = generator.next();
-        if (value.done) {
-            return { done: true, value: undefined };
-        }
-        await doFunc(value.value);
-        return { done: false, value: value.value };
-    };
-
-    return Object.assign(asyncIterator, { name: name, precision: precision });
-};
-*/
 /*
 export const inverse = async (
     y: bigint,
@@ -323,36 +267,6 @@ export const inverse = async (
     return (xLowerBound + xUpperBound) / 2n;
 };
 
-const Events = async (events: Event[]): Promise<AsyncIterableIterator<EventResult>> => {
-    const asyncIterator: AsyncIterableIterator<EventResult> = {
-        [Symbol.asyncIterator]: async function* (): AsyncGenerator<EventResult> {
-            while (true) {
-                const value = await doNextValue();
-                if (value.done) break;
-                yield value.value;
-            }
-        },
-        next: async (): Promise<IteratorResult<EventResult>> => {
-            return await doNextValue();
-        },
-    };
-
-    let nextEvent = 0;
-    const doNextValue = async (): Promise<IteratorResult<EventResult>> => {
-        // get the event from the list
-        if (nextEvent >= events.length) {
-            return { value: undefined, done: true };
-        } else {
-            const event = events[nextEvent++];
-            const result = await doEvent(event);
-            return {
-                value: result,
-                done: false,
-            };
-        }
-    };
-    return asyncIterator;
-};
 */
 
 /*  two ways of running a sequence of events:
@@ -451,45 +365,6 @@ const formatForCSV = (value: string): string =>
     // If the value contains a comma, newline, or double quote, enclose it in double quotes
     /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 
-class ErrorFormatter {
-    private runErrorsMap = new Map<string, string>(); // map of error message to error hash string, stored in file .errors.csv
-
-    public errorMap = (): string[] => {
-        return Array.from(this.runErrorsMap, ([key, value]) => `${value},${key}`);
-    };
-
-    public formatError = (e: any): string => {
-        let message = e || 'undefined error';
-        let code = this.runErrorsMap.get(message); // have we encountered this error text before?
-        if (code === undefined) {
-            // first time this message has occurred - generate the code
-            const patterns: [RegExp, (match: string) => string][] = [
-                // specific messages
-                [/^(contract runner does not support sending transactions)/, (match) => match[1]],
-                // specific messages with extra info
-                [/^(.+)\s\(.+"method":\s"([^"]+)"/, (match) => match[1] + ': ' + match[2]], // method in quotes
-                // more generic messages
-                [/'([^']+)'$/, (match) => match[1]], // message in quotes
-                [/\s*([^:(]*)(?:\s*\([^)]*\))?:?([^:(]*)$/, (match) => match[1] + match[2]], // message after last ':' unless its within ()
-                // [/:\s*([^:]+)$/, (match) => match[1]], // message after last ':'
-            ];
-            for (const [pattern, processor] of patterns) {
-                const matches = message.match(pattern);
-                if (matches) {
-                    code = processor(matches);
-                    break;
-                }
-            }
-            if (code === undefined) {
-                //const hash = createHash("sha256").update(message).digest("base64");
-                code = crypto.SHA3(message, { outputLength: 32 }).toString(crypto.enc.Base64);
-            }
-            // TODO: ensure the code/message combination is unique
-            this.runErrorsMap.set(message, code);
-        }
-        return code;
-    };
-}
 /*
 const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
     // there is
@@ -515,202 +390,15 @@ const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
     return eventDisplay;
 };
 
-THE NEW DELVEPLOT - for reference
-export const delvePlot = async (
-    name: string, // TODO: generate this
-    xlabel: string,
-    independent: Event[],
-    ylabel: string | [string, string],
-    dependents: SimulationThenMeasurement[],
-): Promise<void> => {
-    const scriptfilename = `${name}.gnuplot.gp`;
-    const datafilename = `${name}.gnuplot.csv`;
-    const datafilepath = `${eatFileName(datafilename)}`;
-    const errorfilename = `${name}.error.csv`;
-    const errorfilepath = `${eatFileName(errorfilename)}`;
-    const svgfilename = `${name}.gnuplot.svg`;
-    const svgfilepath = `${eatFileName(svgfilename)}`;
-    const pngfilename = `${name}.gnuplot.png`;
-    const pngfilepath = `${eatFileName(pngfilename)}`;
-    console.log(`delve plotting ${name}...`);
-    // let prevMeasurements: Measurements = null; // for doing  diff
-    // generate a gnuplot data file and a command
-
-    // headers, plots, data container, error report
-    const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
-    const plots: string[] = []; // plots of the data fields
-    let data: string[] = []; // the data (errors are inserted in-place)
-
-    // automatically plot the x-axis in the right order (gnuplot always does it ascending)
-    let reverse = false;
-    let prevValue = undefined;
-    const ef = new ErrorFormatter();
-    // for each x axis value
-    let first = true; // first time through, also set up
-    // TODO: make independent a series of simulations, not just a series of events
-    // for (const i of independent) {
-    for await (const event of await Events(independent)) {
-        if (!event.value) throw 'events on the x axis have to have a value';
-        // handle the event - field data, then field header
-        if (first) headers.push(event.name + '(simulation)' || 'no event name!');
-        const plotRow: string[] = [];
-        {
-            const eventDisplay = formatEventResult(ef, event);
-            //console.log(`   ${eventDisplay}`);
-            plotRow.push(eventDisplay);
-        }
-
-        // the X value
-        if (first) headers.push(event.name || 'no event name');
-        plotRow.push(formatEther(event.value));
-
-        // calculate each reading under each simulation
-        for (const dependent of dependents) {
-            // for each reading, run the simulation adding headers and plot for this dependent
-            // before running any simulation, snapshot the current state
-            const snapshot = await takeSnapshot();
-            // run the simulation adding a headeer and results to data
-            let simulationName = ''; // this is needed below
-            if (dependent.simulation) {
-                let simEventDisplays: string[] = [];
-                let simEventNames: string[] = [];
-                for await (const sim of await Events(dependent.simulation)) {
-                    simEventDisplays.push(formatEventResult(ef, sim));
-                    if (first) simEventNames.push(sim.name || 'no dependent simulation event name');
-                }
-                if (first) {
-                    simulationName = simEventNames.join('+');
-                    headers.push(simulationName);
-                }
-                const simulationDisplay = simEventDisplays.join('+');
-                plotRow.push(simulationDisplay);
-                //console.log(`         ${simulationDisplay}`);
-            }
-            // now do the calculations, do the headers and plots first
-            if (first) {
-                // the header for a dependent has part of the simulation in it's name
-                for (const calculation of dependent.calculations) {
-                    headers.push(
-                        `${calculation.match.contract}.${calculation.match.reading}${
-                            calculation.match.target
-                                ? '(' +
-                                  (contracts[calculation.match.target].name ||
-                                      users[calculation.match.target].name ||
-                                      calculation.match.target) +
-                                  ')'
-                                : ''
-                        }${dependent.simulation ? '>' + simulationName : ''}`,
-                    );
-                    // what are the y-scales
-                    let ycolumn = `(\$${headers.length.toString()})`;
-                    plots.push(
-                        `datafile using 2:${ycolumn} with lines ${calculation.lineStyle ? calculation.lineStyle : ''} ${
-                            calculation.y2axis ? 'axes x1y2' : ''
-                        }`,
-                    );
-                }
-            }
-            // get the dependent values, as a flattened, formatted row
-            const results = (
-                await calculateMeasures([...dependent.calculations.map((calculation) => calculation.match)])
-            )
-                // flatten and format per config
-                .map((cm) => formatFromConfig(cm))
-                .flatMap((cm) => cm.readings)
-                // convert them to CSV values or errors
-                .map((m) =>
-                    m.value !== undefined
-                        ? m.value
-                        : m.error !== undefined
-                        ? ef.formatError(m.error)
-                        : 'undefined error',
-                );
-            // add the results for this dependent to the row
-            plotRow.push(...results);
-            await snapshot.restore();
-        } // dependents
-        // work out if the x-axis needs to be reversed
-        if (prevValue !== undefined) {
-            reverse = event.value < prevValue;
-        } else {
-            prevValue = event.value;
-        }
-        data.push(plotRow.map((m) => formatForCSV(m)).join(','));
-        first = false;
-    } // independents
-
-    writeEatFile(datafilename, [headers.map((h) => formatForCSV(h)).join(','), ...data].join('\n'));
-    writeEatFile(
-        errorfilename,
-        ef
-            .errorMap()
-            .map((e) => formatForCSV(e))
-            .join('\n'),
-    );
-
-    let script = [
-        `datafile = "${datafilepath}"`,
-        `# additional imformation and error in ${errorfilepath}`,
-        `set datafile separator comma`,
-        `set key autotitle columnheader`,
-        `set key bmargin`, // at the bottome
-        `# set terminal pngcairo`,
-        `# set output "${pngfilepath}`,
-        `set terminal svg enhanced size 800 500 background rgb "gray90"`,
-        `set autoscale`,
-        `# set output "${svgfilepath}`,
-        `set xlabel "${xlabel}"`,
-        `set colorsequence default`,
-    ];
-    // normalise the ylabels
-    let ylabels: [string, string] = Array.isArray(ylabel) ? ylabel : [ylabel, ''];
-    ylabels.forEach((l, i) => {
-        if (l) {
-            const axis = i == 1 ? 'y2' : 'y';
-            script.push(`set ${axis}label "${l}"`);
-            if (l.endsWith('(sqrt)')) {
-                script.push(`set nonlinear ${axis} via sqrt(y) inverse y*y`);
-            }
-            script.push(`set ${axis}tics`);
-        }
-    });
-
-    if (reverse) {
-        script.push(`set xrange reverse`);
-    }
-
-// #stats datafile using 1 nooutput
-// #min = STATS_min
-// #max = STATS_max
-// #range_extension = 0.2 * (max - min)
-// #set xrange [min - range_extension : max + range_extension]
-
-// #stats datafile using 2 nooutput
-// #min = STATS_min
-// #max = STATS_max
-// #range_extension = 0.2 * (max - min)
-// #set yrange [min - range_extension : max + range_extension]
-
-// #stats datafile using 3 nooutput
-// #min = STATS_min
-// #max = STATS_max
-// #range_extension = 0.2 * (max - min)
-// #set y2range [min - range_extension : max + range_extension]
-    script.push(`plot ${plots.join(',\\\n     ')}`);
-    writeEatFile(scriptfilename, script.join('\n'));
-    console.log('delve plotting...done.');
-};
-
-*/
 /*
 THE NEW DELVEPLOT
 */
 
 type Axis = {
     label: string;
-    scale?: number; // divide the results by this and augment the label
-    nonlinear?: string;
+    scale?: number | string; // divide the results by this and augment the label
     reversed?: boolean;
+    range?: [number | undefined, number | undefined];
 };
 export type XAxis = Axis & {
     cause: Trigger[];
@@ -733,7 +421,7 @@ export type YAxes = {
     y2?: YAxis;
 };
 
-export const delvePlot = async (
+const _delvePlot = async (
     name: string, // TODO: generate this
     xAxis: XAxis,
     yAxes: YAxes,
@@ -747,25 +435,25 @@ export const delvePlot = async (
     const svgfilepath = `${eatFileName(svgfilename)}`;
     const pngfilename = `${name}.gnuplot.png`;
     const pngfilepath = `${eatFileName(pngfilename)}`;
-    console.log(`delve plotting ${name}...`);
     // let prevMeasurements: Measurements = null; // for doing  diff
     // generate a gnuplot data file and a command
 
     // plot data & scripts to go in files
     let data: string[] = []; // the data (errors are inserted in-place)
     let script = [
-        `set title "${name}"`,
+        `set title "${name}" noenhanced`,
         `datafile = "${datafilepath}"`,
         `# additional imformation and error in ${errorfilepath}`,
         `set datafile separator comma`,
-        `set key autotitle columnheader`,
+        `set key autotitle columnheader noenhanced`,
         `set key bmargin`, // at the bottome
+        `set key title " "`, // further down to avoid the x-axis label
         `# set terminal pngcairo`,
-        `# set output "${pngfilepath}`,
+        `# set output "${pngfilepath}"`,
         `set terminal svg enhanced size 800 500 background rgb "gray90"`,
         `set autoscale`,
         `set colorsequence default`,
-        `# set output "${svgfilepath}`,
+        `# set output "${svgfilepath}"`,
     ];
     [xAxis, yAxes.y, yAxes.y2].map((axis, i) => {
         const a = ['x', 'y', 'y2'][i];
@@ -773,13 +461,33 @@ export const delvePlot = async (
             if (axis.reversed) {
                 script.push(`set ${a}range reverse`);
             }
-            script.push(`set ${a}label "${axis.label}${axis.scale ? ' (' + axis.scale.toLocaleString() + 's)' : ''}"`);
+            script.push(
+                `set ${a}label "${axis.label}${
+                    axis.scale ? ' (' + axis.scale.toLocaleString() + 's)' : ''
+                }" noenhanced`,
+            );
             script.push(`set ${a}tics`);
             script.push(`set ${a}tics nomirror`);
-            if (axis.nonlinear) {
-                if (axis.nonlinear === 'sqrt')
-                    script.push(`set nonlinear ${a} via sqrt(${a[0]}) inverse ${a[0]}*${a[0]}`);
-                if (axis.nonlinear === 'log') script.push(`set nonlinear ${a} via log(${a[0]}) inverse exp(${a[0]})`);
+            if (axis.range !== undefined) {
+                let [min, max] = axis.range.map((r) =>
+                    r === undefined
+                        ? '*'
+                        : axis.scale !== undefined && typeof axis.scale === 'number'
+                        ? r / axis.scale
+                        : r,
+                );
+                script.push(`set ${a}range [${min}:${max}]`);
+            }
+            if (axis.scale !== undefined && typeof axis.scale === 'string') {
+                if (axis.scale === 'sqrt') script.push(`set nonlinear ${a} via sqrt(${a[0]}) inverse ${a[0]}*${a[0]}`);
+                else if (axis.scale === 'sqr')
+                    script.push(`set nonlinear ${a} via ${a[0]}*${a[0]} inverse sqrt(${a[0]})`);
+                else if (axis.scale === 'log') script.push(`set nonlinear ${a} via log(${a[0]}) inverse exp(${a[0]})`);
+                else if (axis.scale === 'exp') script.push(`set nonlinear ${a} via exp(${a[0]}) inverse log(${a[0]})`);
+                else if (axis.scale === 'sinh')
+                    script.push(`set nonlinear ${a} via sinh(${a[0]}) inverse asinh(${a[0]})`);
+                else if (axis.scale === 'asinh')
+                    script.push(`set nonlinear ${a} via asinh(${a[0]}) inverse sinh(${a[0]})`);
             }
         }
     });
@@ -793,7 +501,7 @@ export const delvePlot = async (
 
         // headers
         // x-axis trigger
-        headers.push(`"${xAxis.label}"`);
+        headers.push(xAxis.label);
 
         // x-axis cummulative triggers - all run once on each x axis value
         (xAxis.cumulative || []).forEach((sim) => triggerHeader(sim));
@@ -829,7 +537,7 @@ export const delvePlot = async (
         const rowData: string[] = [];
         const readersData = async (readers?: Reader[], scale?: number | undefined) => {
             for (const reader of readers || []) {
-                const readingData = await callReaderTemplate(reader); // no args
+                const readingData = await callReader(reader); // no args
                 // TODO: work with non-bigint data?
                 let display = readingDataDisplay(readingData, reader.type, reader.formatting);
                 if (scale) display = (Number(display) / Number(scale)).toString();
@@ -849,19 +557,21 @@ export const delvePlot = async (
         await triggersData(xAxis.cumulative || []);
 
         // snapshot in here, to restore after
+
+        const scaleof = (axis: Axis | undefined) => (typeof axis?.scale === 'number' ? axis.scale : undefined);
         // x-axis readers
-        await readersData([xAxis.reader], xAxis.scale);
+        await readersData([xAxis.reader], scaleof(xAxis));
 
         // y-axis simulation - re-run
         await triggersData(yAxes.simulation);
 
         await readersData(
             yAxes.y.lines.map((l) => l.reader),
-            yAxes.y.scale,
+            scaleof(yAxes.y),
         );
         await readersData(
             yAxes.y2?.lines.map((l) => l.reader),
-            yAxes.y2?.scale,
+            scaleof(yAxes.y2),
         );
 
         await snapshot.restore();
@@ -870,23 +580,25 @@ export const delvePlot = async (
 
     writeEatFile(datafilename, data.join('\n'));
 
-    // #stats datafile using 1 nooutput
-    // #min = STATS_min
-    // #max = STATS_max
-    // #range_extension = 0.2 * (max - min)
-    // #set xrange [min - range_extension : max + range_extension]
+    script.push(`# stats datafile using 1 nooutput`);
+    script.push(`# min = STATS_min`);
+    script.push(`# max = STATS_max`);
+    script.push(`# range_extension = 0.2 * (max - min)`);
+    script.push(`# set xrange [min - range_extension : max + range_extension]`);
 
-    // #stats datafile using 2 nooutput
-    // #min = STATS_min
-    // #max = STATS_max
-    // #range_extension = 0.2 * (max - min)
-    // #set yrange [min - range_extension : max + range_extension]
+    script.push(`# stats datafile using 2 nooutput`);
+    script.push(`# min = STATS_min`);
+    script.push(`# max = STATS_max`);
+    script.push(`# range_extension = 0.2 * (max - min)`);
+    script.push(`# set yrange [min - range_extension : max + range_extension]`);
 
-    // #stats datafile using 3 nooutput
-    // #min = STATS_min
-    // #max = STATS_max
-    // #range_extension = 0.2 * (max - min)
-    // #set y2range [min - range_extension : max + range_extension]
+    script.push(`# stats datafile using 3 nooutput`);
+    script.push(`# min = STATS_min`);
+    script.push(`# max = STATS_max`);
+    script.push(`# range_extension = 0.2 * (max - min)`);
+    script.push(`# set y2range [min - range_extension : max + range_extension]`);
+
     writeEatFile(scriptfilename, script.join('\n'));
-    console.log('delve plotting...done.');
 };
+
+export const delvePlot = withLogging(_delvePlot);

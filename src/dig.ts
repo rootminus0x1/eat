@@ -27,7 +27,7 @@ import {
 } from './graph';
 import { getConfig, getFormatting, stringCompare, writeFile } from './config';
 import { log, withLogging } from './logging';
-import { ReaderTemplate, callReaderTemplate } from './read';
+import { ReaderTemplate, ReadingValue, callReader, makeReader } from './read';
 
 const _dig = async (stack: string) => {
     // we reset the graph (which is a set of global variables)
@@ -420,7 +420,7 @@ const digDeep = async (
                     field: _field,
                     argTypes: func.inputs.length == 1 ? ['address'] : [],
                     type: _type,
-                    read: async (...args: any[]): Promise<any> => await contract[func.name](...args),
+                    read: async (...args: any[]): Promise<ReadingValue> => await contract[func.name](...args),
                     formatting: getFormatting(_type, _contract, func.name, _field),
                 };
                 readerTemplates.push(readerTemplate);
@@ -429,7 +429,7 @@ const digDeep = async (
                 if (func.outputs[outputIndex].type.startsWith('address') && func.inputs.length == 0) {
                     // need to execute the function
                     try {
-                        const result = await callReaderTemplate(readerTemplate);
+                        const result = await callReader(makeReader(readerTemplate));
                         if (result.value === undefined) throw Error(`failed to read ${result.error}`);
                         if (Array.isArray(result.value)) {
                             // TODO: should against reader.type.endsWith('[]')

@@ -3,7 +3,7 @@ import { performance } from 'perf_hooks';
 // global indentation level
 let indentLevel = 0;
 const indentation = 2; // spaces
-const maxArgsLength = 30;
+const maxArgsLength = 60;
 
 const indent = () => ' '.repeat(indentLevel * indentation);
 

@@ -21,27 +21,15 @@ export type ReaderTemplate = {
     function: string;
     field?: Field;
     argTypes: string[]; // types or the args
-    type: string; // solidity type of result, you know how to extract the resulta
-    read: (...args: any[]) => Promise<any>; // is this needed if we have all the above?
+    type: string; // solidity type of result, you know how to extract the result
+    read: (...args: any[]) => Promise<ReadingValue>;
+    augmentation?: string;
     formatting?: ConfigFormatApply;
 };
 
 export type Reader = ReaderTemplate & {
     args: any[]; // raw args
 };
-
-/*
-export const makeErrorReader = (error: string, extra: string = '') => ({
-    address: '',
-    contract: extra.match(/^[^.]+/),
-    function: extra.match(/[.][^.]+/),
-    field: undefined,
-    argTypes: [], // types or the args
-    type: 'string', // solidity type of result, you know how to extract the resulta
-    read: () => ({ error: `ERROR! ${error}: ${extra}` }),
-    args: [], // raw args
-});
-*/
 
 export type ReadingData = {
     value?: ReadingValue; // if it's an address or array of addresses they are translated into contract names
@@ -54,20 +42,37 @@ export type Reading = Reader &
         delta?: ReadingData;
     };
 
-const makeReader = (template: ReaderTemplate, ...args: any[]): Reader => Object.assign({ args: args }, template);
+export const makeReader = (template: ReaderTemplate, ...args: any[]): Reader => Object.assign({ args: args }, template);
 
-export const callReaderTemplate = async (reader: ReaderTemplate, ...args: any[]): Promise<ReadingData> => {
+export const makeCalculator = (
+    name: string,
+    fn: () => Promise<ReadingValue>,
+    type: string = 'uint256',
+    unit: string | number = 'ether',
+): Reader => ({
+    address: '0x0',
+    contract: "'calculator'",
+    function: name,
+    argTypes: [],
+    type: type,
+    formatting: { unit: unit },
+    args: [],
+    read: fn,
+});
+
+export const callReader = async (reader: Reader): Promise<ReadingData> => {
     let value: ReadingValue | undefined;
     let error: string | undefined;
     try {
-        let result = await reader.read(...args);
+        let result = await reader.read(...reader.args);
         if (reader.field) {
-            value = result[reader.field.index];
+            value = (result as any)[reader.field.index];
         } else {
             value = result;
         }
     } catch (e: any) {
-        error = e.message;
+        if (e.message !== undefined) error = e.message;
+        else error = e.toString();
     }
     return {
         value: value,
@@ -76,6 +81,6 @@ export const callReaderTemplate = async (reader: ReaderTemplate, ...args: any[])
 };
 
 export const makeReading = async (readerTemplate: ReaderTemplate, ...rawArgs: any[]): Promise<Reading> => {
-    const basic = await callReaderTemplate(readerTemplate, ...rawArgs);
+    const basic = await callReader(makeReader(readerTemplate, ...rawArgs));
     return Object.assign({ args: rawArgs }, readerTemplate, basic);
 };

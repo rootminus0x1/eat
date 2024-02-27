@@ -17,7 +17,10 @@ export const addressToName = (address: string): string => nodes.get(address)?.na
 // if there's no name, use the index as the name
 export const fieldToName = (field: Field): string => field.name || field.index.toString();
 
-const addField = (field?: Field): string => (field ? `.${fieldToName(field)}` : '');
+const add = (field: string | undefined, separator: string = '.'): string =>
+    field !== undefined ? `${separator}${field}` : '';
+
+const addField = (field: Field | undefined): string => (field !== undefined ? add(fieldToName(field)) : '');
 
 /*
 export const callToName = (reader: Reader, args?: any[]) => {
@@ -29,7 +32,7 @@ export const callToName = (reader: Reader, args?: any[]) => {
 */
 
 const formatArg = (value: any, type: string) => {
-    if (type === 'address') {
+    if (type === 'address' && typeof value === 'string') {
         const match = value.match(/^0x[a-fA-F0-9]{40}$/);
         if (match) return addressToName(value);
     }
@@ -54,11 +57,49 @@ export const yamlIt = (it: any): string =>
         replacer: JSONreplacer,
     });
 
+const runErrorsMap = new Map<string, string>(); // map of error message to error hash string, stored in file .errors.csv
+const errorMap = (): string[] => {
+    return Array.from(runErrorsMap, ([key, value]) => `${value},${key}`);
+};
+
+const formatError = (e: string | undefined): string => {
+    let message = e || 'undefined error';
+    let code = runErrorsMap.get(message); // have we encountered this error text before?
+    if (code === undefined) {
+        // first time this message has occurred - generate the code
+        const patterns: [RegExp, (match: RegExpMatchArray) => string][] = [
+            // specific messages
+            [/^(contract runner does not support sending transactions)/, (match) => match[1]],
+            // specific messages with extra info
+            [/^(.+)\s\(.+"method":\s"([^"]+)"/, (match) => match[1] + ': ' + match[2]], // method in quotes
+            // more generic messages
+            [/'([^']+)'$/, (match) => match[1]], // message in quotes
+            [/\s*([^:(]*)(?:\s*\([^)]*\))?:?([^:(]*)$/, (match) => match[1] + match[2]], // message after last ':' unless its within ()
+            // [/:\s*([^:]+)$/, (match) => match[1]], // message after last ':'
+        ];
+        for (const [pattern, processor] of patterns) {
+            const matches = message.match(pattern);
+            if (matches !== null) {
+                code = processor(matches);
+                break;
+            }
+        }
+        if (code === undefined) {
+            //const hash = createHash("sha256").update(message).digest("base64");
+            // code = crypto.SHA3(message, { outputLength: 32 }).toString(crypto.enc.Base64);
+            code = message;
+        }
+        // TODO: ensure the code/message combination is unique
+        runErrorsMap.set(message, code);
+    }
+    return code;
+};
+
 export const friendlyOutcome = (outcome: TriggerOutcome): string => {
-    let display = outcome.gas !== undefined ? `gas: ${outcome.gas}` : outcome.error;
+    let display = outcome.gas !== undefined ? `gas:${outcome.gas / 1000n}k` : formatError(outcome.error);
     if (outcome.value != undefined) display = `[${outcome.value}, ${display}]`;
     if (display === undefined) display = '-';
-    return `"${display}"`;
+    return display;
 };
 
 // template name - contract.function.field, generated on creation
@@ -66,7 +107,10 @@ export const functionField = (func: string, field?: Field): string => `${func}${
 
 // instanceName: contractInstance.function(friendlyArgs).field
 export const friendlyFunctionReader = (reading: Reader): string =>
-    `${reading.function}${friendlyArgs(reading.args, reading.argTypes)}${addField(reading.field)}`;
+    `${reading.function}${friendlyArgs(reading.args, reading.argTypes)}${addField(reading.field)}${add(
+        reading.augmentation,
+        '-',
+    )}`;
 
 export const getDecimals = (unit?: number | string): number => {
     if (typeof unit === 'string') {
@@ -143,30 +187,7 @@ export const readingDataValues = (
     if (rb.value !== undefined) {
         value = friendlyReadingValue(rb.value, type, formatting, delta);
     }
-    if (rb.error !== undefined) error = `"${rb.error}"`;
-    return [value, error];
-};
-
-const readingDataFormats = (
-    rb: ReadingData,
-    type: string,
-    formatting?: ConfigFormatApply,
-    delta: boolean = false,
-): [any, string | undefined] => {
-    // log(
-    //     `formatting ${r.reading}: ${r.type}, ${typeof rb.value}, ${
-    //         rb.value
-    //     }, as string: '${rb.value?.toString()}'`,
-    // );
-    let value: any = undefined;
-    let error: string | undefined = undefined;
-    if (rb.value !== undefined) {
-        const formatted = friendlyReadingValue(rb.value, type, formatting, delta);
-        let comment = ''; // `${r.type}`;
-        if (formatting) comment = ` # ${JSON.stringify(formatting).replace(/"/g, '')}`;
-        value = type.endsWith('[]') ? (formatted as string[]).map((f) => `${f}${comment}`) : `${formatted}${comment}`;
-    }
-    if (rb.error !== undefined) error = `${rb.error}`;
+    if (rb.error !== undefined) error = formatError(rb.error);
     return [value, error];
 };
 
