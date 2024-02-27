@@ -49,7 +49,7 @@ export const findReader = (id: string, fn: string, field: string = '', ...args: 
             readers[0],
         );
     }
-    throw Error('no Reader found on: ${nameOrAddress}');
+    throw Error(`no Reader found on: ${id}`);
 };
 
 export const findDeltaReader = async (id: string, fn: string, field: string = '', ...args: any[]): Promise<Reader> => {

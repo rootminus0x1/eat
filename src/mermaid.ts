@@ -28,7 +28,12 @@ const makeContractName = (
     let result: string[] = [];
     if (tokenName || tokenSymbol) result.push(`${tokenSymbol} (${tokenName})`);
     result.push(`<b>${name}</b>`);
-    if (logicName) result.push(`<i>${contractName}</i>`);
+    if (logicName) {
+        result.push(`<i>${contractName}</i>`);
+        result.push(`${logicName}`);
+    } else {
+        result.push(`${contractName}`);
+    }
     return result.join('<br>');
 };
 

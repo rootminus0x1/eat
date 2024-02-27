@@ -428,10 +428,11 @@ export class BlockchainAddress implements IBlockchainAddress<Contract> {
 
     public contractNamish = async (): Promise<string> => {
         return (
-            (await this.vyperContractName()) ||
-            (await this.implementationContractName()) ||
-            (await this.contractName()) ||
-            this.address
+            (await this.erc20Symbol()) || // if its a token, use the symbol
+            (await this.vyperContractName()) || // otherwise use the contract name, starting with the most specific, i.e. vyper name
+            (await this.implementationContractName()) || // followed by the implementation of a proxy
+            (await this.contractName()) || // followed by the actual contract at that address
+            this.address // no contract name, return the address
         );
     };
 }

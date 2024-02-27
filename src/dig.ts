@@ -232,82 +232,6 @@ const _dig = async (stack: string) => {
             users[address] = users[node.name];
         }
     }
-
-    // add in the users from the config
-    if (getConfig().users) {
-        const holdings = new Map<string, Map<string, bigint>>(); // username to {contractname, amount}
-        const totalHoldings = new Map<string, bigint>(); // contractname to total amount
-        for (const user of getConfig().users) {
-            const signer = await getSigner(user.name);
-            // The next two operations are safe to do multiply
-            users[user.name] = signer; // to be used in actions
-            // add them to the graph, too
-            nodes.set(
-                signer.address,
-                Object.assign(
-                    { address: signer.address, name: user.name, signer: signer, extraNameAddress: '' },
-                    digOne(signer.address),
-                ),
-            );
-            if (user.wallet) {
-                const userHoldings = new Map<string, bigint>();
-                for (const holding of user.wallet) {
-                    const contract = holding.contract;
-                    const amount = parseArg(holding.amount) as bigint;
-                    userHoldings.set(contract, userHoldings.get(contract) ?? 0n + amount);
-                    totalHoldings.set(contract, totalHoldings.get(contract) ?? 0n + amount);
-                }
-                holdings.set(user.name, userHoldings);
-            }
-        }
-        // now we've added the users, we can fill their wallets
-        for (const [contract, amount] of totalHoldings) {
-            await addTokenToWhale(contract, amount);
-        }
-        for (const [userName, userHoldings] of holdings) {
-            // fill the wallet
-            // TODO: use setBalance to set ETH holdings
-            for (const [tokenName, amount] of userHoldings) {
-                // just add enough to make it to at least the holding
-                const currentHolding = await contracts[tokenName].balanceOf(users[userName].address);
-                if (currentHolding < amount) {
-                    if (
-                        !(await contracts[tokenName]
-                            .connect(whale)
-                            .transfer(users[userName].address, amount - currentHolding))
-                    ) {
-                        throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
-                    }
-                }
-                // find all the contracts this user interacts with and allow them to spend there
-                if (getConfig().triggers) {
-                    for (const contract of getConfig()
-                        .triggers.filter((a) => a.user && a.user === userName)
-                        .map((a) => a.contract)) {
-                        // allow the wallet to be spent
-                        if (
-                            !(await contracts[tokenName]
-                                .connect(users[userName])
-                                .approve(contracts[contract].address, MaxUint256))
-                        ) {
-                            throw Error(
-                                `could not approve ${contracts[contract].name} to use ${userName}'s ${contracts[tokenName]}`,
-                            );
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // set up the triggers
-    if (getConfig().triggers) {
-        getConfig().triggers.forEach((ue) => {
-            // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
-            const copy = Object.assign({ ...ue });
-            console.log(`user trigger: ${ue.name}`);
-            triggerTemplate.set(ue.name, copy);
-        });
-    }
 };
 
 export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
@@ -459,3 +383,81 @@ const digDeep = async (
 };
 
 export const dig = withLogging(_dig);
+
+export const digUsers = async () => {
+    // add in the users from the config
+    if (getConfig().users) {
+        const holdings = new Map<string, Map<string, bigint>>(); // username to {contractname, amount}
+        const totalHoldings = new Map<string, bigint>(); // contractname to total amount
+        for (const user of getConfig().users) {
+            const signer = await getSigner(user.name);
+            // The next two operations are safe to do multiply
+            users[user.name] = signer; // to be used in actions
+            // add them to the graph, too
+            nodes.set(
+                signer.address,
+                Object.assign(
+                    { address: signer.address, name: user.name, signer: signer, extraNameAddress: '' },
+                    digOne(signer.address),
+                ),
+            );
+            if (user.wallet) {
+                const userHoldings = new Map<string, bigint>();
+                for (const holding of user.wallet) {
+                    const contract = holding.contract;
+                    const amount = parseArg(holding.amount) as bigint;
+                    userHoldings.set(contract, userHoldings.get(contract) ?? 0n + amount);
+                    totalHoldings.set(contract, totalHoldings.get(contract) ?? 0n + amount);
+                }
+                holdings.set(user.name, userHoldings);
+            }
+        }
+        // now we've added the users, we can fill their wallets
+        for (const [contract, amount] of totalHoldings) {
+            await addTokenToWhale(contract, amount);
+        }
+        for (const [userName, userHoldings] of holdings) {
+            // fill the wallet
+            // TODO: use setBalance to set ETH holdings
+            for (const [tokenName, amount] of userHoldings) {
+                // just add enough to make it to at least the holding
+                const currentHolding = await contracts[tokenName].balanceOf(users[userName].address);
+                if (currentHolding < amount) {
+                    if (
+                        !(await contracts[tokenName]
+                            .connect(whale)
+                            .transfer(users[userName].address, amount - currentHolding))
+                    ) {
+                        throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
+                    }
+                }
+                // find all the contracts this user interacts with and allow them to spend there
+                if (getConfig().triggers) {
+                    for (const contract of getConfig()
+                        .triggers.filter((a) => a.user && a.user === userName)
+                        .map((a) => a.contract)) {
+                        // allow the wallet to be spent
+                        if (
+                            !(await contracts[tokenName]
+                                .connect(users[userName])
+                                .approve(contracts[contract].address, MaxUint256))
+                        ) {
+                            throw Error(
+                                `could not approve ${contracts[contract].name} to use ${userName}'s ${contracts[tokenName]}`,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // set up the triggers
+    if (getConfig().triggers) {
+        getConfig().triggers.forEach((ue) => {
+            // TODO: add a do function to call doUserEvent - look at removing doUserEvent, and also substituteArgs?
+            const copy = Object.assign({ ...ue });
+            console.log(`user trigger: ${ue.name}`);
+            triggerTemplate.set(ue.name, copy);
+        });
+    }
+};
