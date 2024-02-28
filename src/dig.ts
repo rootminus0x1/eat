@@ -384,7 +384,7 @@ const digDeep = async (
 
 export const dig = withLogging(_dig);
 
-export const digUsers = async () => {
+const _digUsers = async () => {
     // add in the users from the config
     if (getConfig().users) {
         const holdings = new Map<string, Map<string, bigint>>(); // username to {contractname, amount}
@@ -461,3 +461,5 @@ export const digUsers = async () => {
         });
     }
 };
+
+export const digUsers = withLogging(_digUsers);

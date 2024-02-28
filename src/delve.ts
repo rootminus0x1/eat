@@ -74,6 +74,7 @@ const compareReadingKeys = (a: Reading, b: Reading) =>
     stringCompare(a.function, b.function) ||
     stringCompare(friendlyArgs(a.args, a.argTypes), friendlyArgs(b.args, b.argTypes)) ||
     (a.field && b.field ? numberCompare(a.field.index, b.field.index) : 0);
+
 const sortReadings = (r: Reading[]): Reading[] => r.sort(compareReadingKeys);
 
 export const doReadings = async (): Promise<Reading[]> => {
@@ -154,7 +155,7 @@ export const readingDelta = (
             if (type.includes('int')) {
                 result = (a as bigint) - (b as bigint);
                 // take into account any formatting, units and precision
-                if (formatting?.precision != undefined) {
+                if (formatting?.precision !== undefined) {
                     const decimals = getDecimals(formatting.unit); // e.g. 16, 18 or 0
                     const precision = formatting.precision || 0; // e.g. 0, 1 or -1
                     // * 10 ** (16, 17, 1)
@@ -288,12 +289,6 @@ export const inverse = async (
 */
 
 /*
-export const writeReadings = (name: string[], simulation: TriggerOutcome[], readings: Reading[], type?: string) => {
-    const fullName = [...name, (type && type.length ? type + '-' : '') + 'readers.yml'];
-    //writeYaml(fullName.join('.'), readings, formatFromConfig);
-};
-*/
-/*
 const delveSimulation = async (stack: string, simulation: Trigger[] = [], context?: Trigger): Promise<void> => {
     // This executes the given events one by one in order
     // and saves all the associated files
@@ -338,7 +333,7 @@ const _delve = async (stack: string, simulation: Trigger[] = []): Promise<[Readi
     const snapshot = await takeSnapshot(); // to be restored at the end of this
     // do each trigger
     for await (const trigger of simulation) {
-        outcomes.push(await doTrigger(trigger));
+        outcomes.push(await doTrigger(trigger, true));
     }
     const readings = await doReadings();
     await snapshot.restore();
@@ -546,7 +541,7 @@ const _delvePlot = async (
         };
         const triggersData = async (triggers?: Trigger[]) => {
             for (const trigger of triggers || []) {
-                const outcome = await doTrigger(trigger);
+                const outcome = await doTrigger(trigger, true);
                 rowData.push(friendlyOutcome(outcome));
             }
         };

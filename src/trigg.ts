@@ -5,7 +5,12 @@
  */
 
 // TODO: make them contain only raw info
+import { ContractTransactionReceipt, ContractTransactionResponse, Log, ethers } from 'ethers';
+import { GraphNode, contracts, nodes } from './graph';
 import { log } from './logging';
+import { ContractWithAddress } from './Blockchain';
+import { addressToName, friendlyArgs, nameToAddress } from './friendly';
+import { ConfigFormatApply } from './config';
 
 export type TriggerTemplate = {
     name: string;
@@ -23,33 +28,62 @@ export type TriggerOutcome = {
     Partial<{ events: any[]; gas: bigint }> &
     Partial<{ value: any }>;
 
-export const doTrigger = async (trigger: Trigger): Promise<TriggerOutcome> => {
-    let gas: bigint | undefined = undefined;
-    let value: any = undefined;
-    let error: string | undefined = undefined;
+export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): Promise<TriggerOutcome> => {
+    let result: TriggerOutcome = { trigger: trigger };
     try {
         //const args = (overrideArgs.length ? overrideArgs : trigger.args || []).map((a: any) => parseArg(a));
-        const tx = await trigger.pull(...(trigger.args || []));
-        if (typeof tx === 'object') {
+        const pullResult = await trigger.pull(...(trigger.args || []));
+        if (typeof pullResult === 'object') {
             // TODO: generate user functions elsewhere
             // const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
-            // TODO: get the returned values out
-            // would be nice to capture any log events emitted too :-) see expect.to.emit
-            const receipt = await tx.wait();
-            gas = receipt?.gasUsed;
+            const tx: ContractTransactionResponse = pullResult;
+            if (addEvents) {
+                const receipt = await tx.wait();
+
+                if (receipt) {
+                    result.gas = receipt.gasUsed;
+                    result.events = [];
+                    for (const event of receipt.logs) {
+                        let resultLog: any = event.toJSON();
+                        const contractInstance = addressToName(event.address);
+                        const node = nodes.get(event.address);
+                        if (node) {
+                            // TODO: move this to friendly?
+                            const contract = await node.getContract();
+                            if (contract) {
+                                const parsed = contract.interface.parseLog({
+                                    topics: event.topics.slice(),
+                                    data: event.data,
+                                });
+                                if (parsed) {
+                                    let parsed2 = `${contractInstance}.${parsed.name}`;
+                                    parsed2 += friendlyArgs(
+                                        parsed.args,
+                                        parsed.fragment.inputs.map((i) => i.type),
+                                        undefined,
+                                        new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
+                                    );
+                                    resultLog = parsed2;
+                                }
+                            }
+                        }
+                        result.events.push(resultLog);
+                    }
+                    //.filter((event: any) => event !== null);
+                    // TODO: parse the events, into a value?
+                    // event Liquidate(uint256 liquidated, uint256 baseGained);
+                    // return { liquidated: formatEther(events[0].args[0]), baseGained: formatEther(events[0].args[1]) };
+                }
+            }
         } else {
-            value = tx;
+            result.value = pullResult;
         }
-        // TODO: parse the results into events, etc
     } catch (e: any) {
-        error = e.message;
+        result.error = e.message;
     }
-    return {
-        trigger: trigger,
-        value: value,
-        error: error,
-        gas: gas,
-    };
+    return result;
+    {
+    }
 };
 
 // generate multiple triggers based on some sequance generator

@@ -1,10 +1,137 @@
-import { formatUnits, parseUnits } from 'ethers';
+import { ZeroAddress, formatUnits, parseUnits } from 'ethers';
 
 import { contracts, nodes } from './graph';
-import { Field, Reader, Reading, ReadingData, ReadingValue } from './read';
+import { Field, Reader, Reading, ReadingData, ReadingType, ReadingValue } from './read';
 import { ConfigFormatApply } from './config';
 import { TriggerOutcome } from './trigg';
 import * as yaml from 'js-yaml'; // config files are in yaml
+import { log } from './logging';
+
+///////////////////////////////////////////////////////////////////////////////
+// utility functions
+
+const replaceMatch = (
+    value: string,
+    replacers: [RegExp, (match: RegExpMatchArray) => string | bigint][],
+): string | bigint => {
+    for (const [pattern, processor] of replacers) {
+        const matches = value.match(pattern);
+        if (matches) {
+            return processor(matches);
+        }
+    }
+    return value;
+};
+
+export const getDecimals = (unit?: number | string): number => {
+    if (typeof unit === 'string') {
+        const baseValue = formatUnits(1n, unit);
+        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
+        return decimalPlaces;
+    } else return unit || 0;
+};
+
+export const JSONreplacer = (key: string, value: any) =>
+    typeof value === 'bigint'
+        ? value.toString() + 'n' // Append 'n' to indicate BigInt
+        : typeof value === 'function'
+        ? undefined
+        : value;
+
+///////////////////////////////////////////////////////////////////////////////
+// formattimg of specific field types
+
+// format a bigint according to unit and precision
+const formatBigInt = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
+    const doUnit = (value: bigint): string => {
+        return unit ? formatUnits(value, unit) : value.toString();
+    };
+    let result = doUnit(value);
+    if (precision !== undefined) {
+        // it's been formatted, so round to that precision
+        let decimalIndex = result.indexOf('.');
+        // Calculate the number of decimal places 123.45 di=3,l=6,cd=2; 12345 di=-1,l=5,cd=0
+        const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
+        if (currentDecimals > precision) {
+            if (result[result.length + precision - currentDecimals] >= '5') {
+                result = doUnit(BigInt(value) + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
+            }
+            // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
+            result = result.slice(undefined, precision - currentDecimals);
+            // strip a trailing "."
+            if (result[result.length - 1] === '.') result = result.slice(undefined, result.length - 1);
+            // add back the zeros
+            if (precision < 0) result = result + '0'.repeat(-precision);
+        }
+    }
+    return (addPlus && value > 0 ? '+' : '') + result;
+};
+
+// format an address
+const formatAddress = (value: string): string => {
+    if (value === ZeroAddress) return '0x0';
+    return addressToName(value);
+};
+
+const formatGas = (gas: bigint) => `${gas / 1000n}k`;
+
+const formatError = (e: string | undefined): string => {
+    let message = e || 'undefined error';
+    // TODO: use replace match above
+    const patterns: [RegExp, (match: RegExpMatchArray) => string][] = [
+        // specific messages
+        [/^(contract runner does not support sending transactions)/, (match) => match[1]],
+        // specific messages with extra info
+        [/^(.+)\s\(.+"method":\s"([^"]+)"/, (match) => match[1] + ': ' + match[2]], // method in quotes
+        // more generic messages
+        [/'([^']+)'$/, (match) => match[1]], // message in quotes
+        [/\s*([^:(]*)(?:\s*\([^)]*\))?:?([^:(]*)$/, (match) => match[1] + match[2]], // message after last ':' unless its within ()
+        // [/:\s*([^:]+)$/, (match) => match[1]], // message after last ':'
+    ];
+    for (const [pattern, processor] of patterns) {
+        const matches = message.match(pattern);
+        if (matches !== null) {
+            message = processor(matches);
+            break;
+        }
+    }
+    return message;
+};
+
+const friendlyReadingType = (
+    value: ReadingType,
+    type: string,
+    formatting?: ConfigFormatApply,
+    delta: boolean = false,
+): string => {
+    let result: string;
+    if (type === 'address') {
+        result = formatAddress(value as string);
+    } else if (type.includes('int')) {
+        result = formatBigInt(value as bigint, delta, formatting?.unit, formatting?.precision);
+    } else {
+        log(`unexpected type ${type}`);
+        result = value.toLocaleString();
+    }
+    return result;
+};
+
+const friendlyReadingValue = (
+    value: ReadingValue,
+    type: string,
+    name?: string,
+    formatting?: ConfigFormatApply,
+    delta: boolean = false,
+): string | string[] => {
+    let result: string | string[];
+    if (type.endsWith('[]') && Array.isArray(value)) {
+        result = value.map((elem) => friendlyReadingType(elem, type.slice(0, -2), formatting, delta));
+    } else {
+        result = friendlyReadingType(value as ReadingType, type, formatting, delta);
+    }
+    if (name) return `${name}:${type}=${result}`;
+    else return result;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // raw to friendly
@@ -31,150 +158,47 @@ export const callToName = (reader: Reader, args?: any[]) => {
 };
 */
 
-const formatArg = (value: any, type: string) => {
-    if (type === 'address' && typeof value === 'string') {
-        const match = value.match(/^0x[a-fA-F0-9]{40}$/);
-        if (match) return addressToName(value);
-    }
-    return value;
-};
-
-export const friendlyArgs = (rawArgs: any[], argTypes: string[]): string => {
-    let result = rawArgs.map((a: any, i: number) => formatArg(a, argTypes[i])).join(',');
+export const friendlyArgs = (
+    rawArgs: any[],
+    argTypes: string[],
+    argNames?: string[],
+    formatting?: Map<string, ConfigFormatApply>,
+): string => {
+    let result = rawArgs
+        .map((a: any, i: number) =>
+            friendlyReadingValue(a, argTypes[i], argNames ? argNames[i] : undefined, formatting?.get(argTypes[i])),
+        )
+        .join(',');
     if (result.length) result = `(${result})`;
     return result;
 };
-
-export const JSONreplacer = (key: string, value: any) =>
-    typeof value === 'bigint'
-        ? value.toString() + 'n' // Append 'n' to indicate BigInt
-        : typeof value === 'function'
-        ? undefined
-        : value;
 
 export const yamlIt = (it: any): string =>
     yaml.dump(it, {
         replacer: JSONreplacer,
     });
 
-const runErrorsMap = new Map<string, string>(); // map of error message to error hash string, stored in file .errors.csv
-const errorMap = (): string[] => {
-    return Array.from(runErrorsMap, ([key, value]) => `${value},${key}`);
-};
+// template name - contract.function.field, generated on creation
+export const functionField = (func: string, field?: Field): string => `${func}${addField(field)}`;
 
-const formatError = (e: string | undefined): string => {
-    let message = e || 'undefined error';
-    let code = runErrorsMap.get(message); // have we encountered this error text before?
-    if (code === undefined) {
-        // first time this message has occurred - generate the code
-        const patterns: [RegExp, (match: RegExpMatchArray) => string][] = [
-            // specific messages
-            [/^(contract runner does not support sending transactions)/, (match) => match[1]],
-            // specific messages with extra info
-            [/^(.+)\s\(.+"method":\s"([^"]+)"/, (match) => match[1] + ': ' + match[2]], // method in quotes
-            // more generic messages
-            [/'([^']+)'$/, (match) => match[1]], // message in quotes
-            [/\s*([^:(]*)(?:\s*\([^)]*\))?:?([^:(]*)$/, (match) => match[1] + match[2]], // message after last ':' unless its within ()
-            // [/:\s*([^:]+)$/, (match) => match[1]], // message after last ':'
-        ];
-        for (const [pattern, processor] of patterns) {
-            const matches = message.match(pattern);
-            if (matches !== null) {
-                code = processor(matches);
-                break;
-            }
-        }
-        if (code === undefined) {
-            //const hash = createHash("sha256").update(message).digest("base64");
-            // code = crypto.SHA3(message, { outputLength: 32 }).toString(crypto.enc.Base64);
-            code = message;
-        }
-        // TODO: ensure the code/message combination is unique
-        runErrorsMap.set(message, code);
-    }
-    return code;
-};
+///////////////////////////////////////////////////////////////////////////////
+// Triggers
 
 export const friendlyOutcome = (outcome: TriggerOutcome): string => {
-    let display = outcome.gas !== undefined ? `gas:${outcome.gas / 1000n}k` : formatError(outcome.error);
+    let display = outcome.gas !== undefined ? `gas:${formatGas(outcome.gas)}` : formatError(outcome.error);
     if (outcome.value != undefined) display = `[${outcome.value}, ${display}]`;
     if (display === undefined) display = '-';
     return display;
 };
 
-// template name - contract.function.field, generated on creation
-export const functionField = (func: string, field?: Field): string => `${func}${addField(field)}`;
+///////////////////////////////////////////////////////////////////////////////
+// Readers
 
-// instanceName: contractInstance.function(friendlyArgs).field
 export const friendlyFunctionReader = (reading: Reader): string =>
     `${reading.function}${friendlyArgs(reading.args, reading.argTypes)}${addField(reading.field)}${add(
         reading.augmentation,
         '-',
     )}`;
-
-export const getDecimals = (unit?: number | string): number => {
-    if (typeof unit === 'string') {
-        const baseValue = formatUnits(1n, unit);
-        const decimalPlaces = baseValue.toString().split('.')[1]?.length || 0;
-        return decimalPlaces;
-    } else return unit || 0;
-};
-
-const doFormat = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
-    const doUnit = (value: bigint): string => {
-        return unit ? formatUnits(value, unit) : value.toString();
-    };
-
-    let result = doUnit(value);
-    if (precision !== undefined) {
-        // it's been formatted, so round to that precision
-        let decimalIndex = result.indexOf('.');
-        // Calculate the number of decimal places 123.45 di=3,l=6,cd=2; 12345 di=-1,l=5,cd=0
-        const currentDecimals = decimalIndex >= 0 ? result.length - decimalIndex - 1 : 0;
-        if (currentDecimals > precision) {
-            if (result[result.length + precision - currentDecimals] >= '5') {
-                result = doUnit(BigInt(value) + 5n * 10n ** BigInt(getDecimals(unit) - precision - 1));
-            }
-            // slice off the last digits, including the decimal point if its the last character (i.e. precision == 0)
-            result = result.slice(undefined, precision - currentDecimals);
-            // strip a trailing "."
-            if (result[result.length - 1] === '.') result = result.slice(undefined, result.length - 1);
-            // add back the zeros
-            if (precision < 0) result = result + '0'.repeat(-precision);
-        }
-    }
-    return (addPlus && value > 0 ? '+' : '') + result;
-};
-
-const friendlyReadingValue = (
-    value: ReadingValue,
-    type: string,
-    formatting?: ConfigFormatApply,
-    delta: boolean = false,
-): string | string[] => {
-    let result: string | string[];
-    if (formatting?.unit !== undefined || formatting?.precision !== undefined) {
-        if (type.endsWith('[]') && Array.isArray(value)) {
-            result = value.map((elem: any) =>
-                doFormat(BigInt(elem.toString()), delta, formatting.unit as string | number, formatting.precision),
-            );
-        } else {
-            result = doFormat(
-                BigInt(value.toString()),
-                delta,
-                formatting.unit as string | number,
-                formatting.precision,
-            );
-        }
-    } else {
-        if (type.endsWith('[]') && Array.isArray(value)) {
-            result = value.map((elem: any) => formatArg(elem, type.replace('[]', '')).toString());
-        } else {
-            result = formatArg(value, type).toString();
-        }
-    }
-    return result;
-};
 
 export const readingDataValues = (
     rb: ReadingData,
@@ -185,7 +209,7 @@ export const readingDataValues = (
     let value: any = undefined;
     let error: string | undefined = undefined;
     if (rb.value !== undefined) {
-        value = friendlyReadingValue(rb.value, type, formatting, delta);
+        value = friendlyReadingValue(rb.value, type, undefined, formatting, delta);
     }
     if (rb.error !== undefined) error = formatError(rb.error);
     return [value, error];
@@ -307,19 +331,6 @@ export const transformReadingsVerbose = (orig: Reading[]): any => {
 
 ///////////////////////////////////////////////////////////////////////////////
 // friendly to raw
-
-const replaceMatch = (
-    value: string,
-    replacers: [RegExp, (match: RegExpMatchArray) => string | bigint][],
-): string | bigint => {
-    for (const [pattern, processor] of replacers) {
-        const matches = value.match(pattern);
-        if (matches) {
-            return processor(matches);
-        }
-    }
-    return value;
-};
 
 export const nameToAddress = (name: string): string => contracts[name]?.address || name;
 
