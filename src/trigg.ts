@@ -56,12 +56,14 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
                                     data: event.data,
                                 });
                                 if (parsed) {
-                                    let parsed2 = `${contractInstance}.${parsed.name}`;
+                                    let parsed2 = `${contractInstance}->${parsed.name}`;
                                     parsed2 += friendlyArgs(
                                         parsed.args,
                                         parsed.fragment.inputs.map((i) => i.type),
-                                        undefined,
-                                        new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
+                                        parsed.fragment.inputs.map((i) => i.name),
+                                        new Map<string, ConfigFormatApply>([
+                                            ['uint256', { unit: 'ether', precision: 3 }],
+                                        ]),
                                     );
                                     resultLog = parsed2;
                                 }
@@ -69,10 +71,6 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
                         }
                         result.events.push(resultLog);
                     }
-                    //.filter((event: any) => event !== null);
-                    // TODO: parse the events, into a value?
-                    // event Liquidate(uint256 liquidated, uint256 baseGained);
-                    // return { liquidated: formatEther(events[0].args[0]), baseGained: formatEther(events[0].args[1]) };
                 }
             }
         } else {

@@ -5,7 +5,7 @@ import { MaxInt256, formatEther, formatUnits } from 'ethers';
 import { ConfigFormatApply, eatFileName, getConfig, numberCompare, stringCompare, writeEatFile } from './config';
 import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
-import { withLogging, Logger, log, erase } from './logging';
+import { withLogging, Logger, log } from './logging';
 import { Reader, Reading, ReadingData, ReadingType, callReader, makeReading } from './read';
 import {
     addressToName,

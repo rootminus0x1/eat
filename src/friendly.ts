@@ -129,7 +129,7 @@ const friendlyReadingValue = (
     } else {
         result = friendlyReadingType(value as ReadingType, type, formatting, delta);
     }
-    if (name) return `${name}:${type}=${result}`;
+    if (name) return `${name}=${result}`; //`${name}:${type}=${result}`;
     else return result;
 };
 
@@ -176,6 +176,7 @@ export const friendlyArgs = (
 export const yamlIt = (it: any): string =>
     yaml.dump(it, {
         replacer: JSONreplacer,
+        flowLevel: 100,
     });
 
 // template name - contract.function.field, generated on creation
