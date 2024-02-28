@@ -1,9 +1,7 @@
 import * as crypto from 'crypto-js';
 
-import { contracts, readerTemplates, nodes, users, GraphNode } from './graph';
-import { MaxInt256, formatEther, formatUnits } from 'ethers';
+import { readerTemplates, nodes } from './graph';
 import { ConfigFormatApply, eatFileName, getConfig, numberCompare, stringCompare, writeEatFile } from './config';
-import lodash, { forEach, isNumber } from 'lodash';
 import { takeSnapshot, time } from '@nomicfoundation/hardhat-network-helpers';
 import { withLogging, Logger, log } from './logging';
 import { Reader, Reading, ReadingData, ReadingType, callReader, makeReading } from './read';
@@ -14,9 +12,9 @@ import {
     friendlyOutcome,
     getDecimals,
     readingDataDisplay,
-    readingDisplay,
 } from './friendly';
 import { Trigger, TriggerOutcome, doTrigger } from './trigg';
+import { formatUnits } from 'ethers';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -164,6 +162,16 @@ export const readingDelta = (
                     if (scaler < 0) scaler = -scaler;
                     if (scaler === 0n) {
                         result = 0n;
+                    } else {
+                        log(
+                            `a=${formatUnits(a as bigint, decimals)}, b=${formatUnits(
+                                b as bigint,
+                                decimals,
+                            )}, delta=${formatUnits(
+                                result as bigint,
+                                decimals,
+                            )} for exponent=${exponent} when units=${decimals} and precision=${precision}`,
+                        );
                     }
                 }
             } else if (type === 'bool') result = a; // changed from !reading.value to reading.value

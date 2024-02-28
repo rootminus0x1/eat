@@ -28,6 +28,7 @@ const argsStr = (maxLength: number, ...args: any[]): string => {
     return result;
 };
 
+/*
 let buffer: string = '';
 let pending: string[] = [];
 export const log = (text: string, endl: boolean = true) => {
@@ -72,6 +73,33 @@ export class Logger {
         let extra = '...';
         if (this.doPending(`${this.leader}${extra}`) > 0) extra = '';
         console.log(`${this.leader}${extra} took ${(duration / 1000).toLocaleString('en')}s.`);
+        return duration;
+    };
+}
+*/
+
+export const log = (text: string, endl: boolean = true) => {
+    console.log(text);
+};
+
+export const discardlog = () => {};
+
+export class Logger {
+    private startTime: number;
+    private leader: string;
+
+    constructor(name: string, ...args: any[]) {
+        this.leader = `${indent()}${name}`;
+        if (args) this.leader += `(${argsStr(maxArgsLength, ...args)})`;
+        console.log(`${this.leader}...`);
+        indentLevel++; // Increase indent level for nested calls
+        this.startTime = performance.now();
+    }
+
+    public done = (): number => {
+        const duration = performance.now() - this.startTime;
+        indentLevel--;
+        console.log(`${this.leader} took ${(duration / 1000).toLocaleString('en')}s.`);
         return duration;
     };
 }

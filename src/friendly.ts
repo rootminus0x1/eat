@@ -175,8 +175,11 @@ export const friendlyArgs = (
 
 export const yamlIt = (it: any): string =>
     yaml.dump(it, {
+        //indent: 4,
         replacer: JSONreplacer,
-        flowLevel: 100,
+        //flowLevel: 1000,
+        lineWidth: 200,
+        noRefs: true,
     });
 
 // template name - contract.function.field, generated on creation
