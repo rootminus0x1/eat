@@ -412,8 +412,9 @@ export type XAxis = Axis & {
 };
 
 export type Line = {
+    simulation?: Trigger[]; // simulation for the readings of this line, re-done for each reading on the line
     reader: Reader;
-    ignore0: boolean;
+    ignore0?: boolean;
     style?: string;
 };
 
@@ -422,7 +423,7 @@ export type YAxis = Axis & {
 };
 
 export type YAxes = {
-    simulation?: Trigger[];
+    simulation?: Trigger[]; // simulation for all the readings of all axes, re-done for each x-reading - not cumulative
     y: YAxis;
     y2?: YAxis;
 };
@@ -513,91 +514,111 @@ const _delvePlot = async (
     {
         // headers - scoped out so no inadvertent later access
         const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
+
         const readerHeader = (reader: Reader, axis: string = '') =>
             headers.push(`${axis}${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
-        const triggerHeader = (trigger: Trigger) => headers.push(trigger.name);
+
+        const triggerHeaders = (triggers?: Trigger[]) =>
+            (triggers || []).forEach((trigger) => headers.push(trigger.name));
 
         // headers
         // x-axis trigger
         headers.push(xAxis.label);
 
         // x-axis cummulative triggers - all run once on each x axis value
-        (xAxis.cumulative || []).forEach((sim) => triggerHeader(sim));
+        triggerHeaders(xAxis.cumulative);
 
         // x-axis reader
         const xindex = headers.length;
         readerHeader(xAxis.reader);
 
         // y-axis simulation
-        (yAxes.simulation || []).forEach((sim) => triggerHeader(sim));
+        triggerHeaders(yAxes.simulation);
 
         // y-axis readers
         const yindex = headers.length;
         // the x-axis data comes next, headers and plots
         const plots: string[] = [];
-        const lineHeader = (line: Line, index: number, indexOffset: number, isY2: boolean, hasY2: boolean) => {
-            readerHeader(line.reader, hasY2 ? (isY2 ? '[Y-axis->]' : '[<-Y-axis]') : '');
-            const column = (index: number, ignoreZeros: boolean = false): string => {
-                const c = index.toString();
-                return ignoreZeros ? `(\$${c} == 0 ? 1/0 : \$${c})` : `(\$${c})`;
-            };
-            plots.push(
-                `datafile using ${column(xindex + 1)}:${column(index + indexOffset + 1, line.ignore0)} with lines${
-                    line.style?.includes('pointtype') ? 'points' : ''
-                }${line.style ? ' ' + line.style : ''}${isY2 ? ' axes x1y2' : ''}`,
-            );
+
+        const lineHeaders = (lines: Line[] | undefined, isY2: boolean, hasY2: boolean) => {
+            for (const line of lines || []) {
+                triggerHeaders(line.simulation);
+                readerHeader(line.reader, hasY2 ? (isY2 ? '[Y-axis->]' : '[<-Y-axis]') : '');
+                const column = (index: number, ignoreZeros: boolean = false): string => {
+                    const c = index.toString();
+                    return ignoreZeros ? `(\$${c} == 0 ? 1/0 : \$${c})` : `(\$${c})`;
+                };
+                plots.push(
+                    `datafile using ${column(xindex + 1)}:${column(headers.length, line.ignore0)} with lines${
+                        line.style?.includes('pointtype') ? 'points' : ''
+                    }${line.style ? ' ' + line.style : ''}${isY2 ? ' axes x1y2' : ''}`,
+                );
+            }
         };
-        yAxes.y.lines.forEach((line, i) => lineHeader(line, i, yindex, false, yAxes.y2 !== undefined));
-        (yAxes.y2?.lines || []).forEach((line, i) => lineHeader(line, i, yindex + yAxes.y.lines.length, true, true));
+
+        lineHeaders(yAxes.y.lines, false, yAxes.y2 !== undefined);
+        lineHeaders(yAxes.y2?.lines, true, true);
         script.push(`plot ${plots.join(',\\\n     ')}`);
         data.push(headers.map((h) => formatForCSV(h)).join(','));
     }
-
-    const snapshot = await takeSnapshot(); // to be restored after all dependents have been read
+    //-----------------------------------
+    const original = await takeSnapshot(); // to be restored at the end of everything
+    //-----------------------------------
     for (const trigger of xAxis.cause) {
         const rowData: string[] = [];
-        const readersData = async (readers?: Reader[], scale?: number | undefined) => {
-            for (const reader of readers || []) {
-                const readingData = await callReader(reader); // no args
-                // TODO: work with non-bigint data?
-                let display = readingDataDisplay(readingData, reader.type, reader.formatting);
-                if (scale) display = (Number(display) / Number(scale)).toString();
-                rowData.push(display);
-            }
-        };
+
         const triggersData = async (triggers?: Trigger[]) => {
             for (const trigger of triggers || []) {
                 const outcome = await doTrigger(trigger, true);
                 rowData.push(friendlyOutcome(outcome));
             }
         };
+        const readersData = async (lines?: Line[], scale?: number | undefined) => {
+            for (const line of lines || []) {
+                //-----------------------------------
+                let lineshot = line.simulation ? await takeSnapshot() : undefined; // to be restored after all dependents have been read
+                //-----------------------------------
+                await triggersData(line.simulation);
+                const readingData = await callReader(line.reader); // no args
+                // TODO: work with non-bigint data?
+                let display = readingDataDisplay(readingData, line.reader.type, line.reader.formatting);
+                if (scale) display = (Number(display) / Number(scale)).toString();
+                rowData.push(display);
+                //-----------------------------------
+                if (lineshot !== undefined) await lineshot.restore();
+                //-----------------------------------
+            }
+        };
 
-        await triggersData([trigger]); // x axis
+        // generate the x-axis value - this is not cumulative
+        await triggersData([trigger]);
 
-        // x-axis cumulative
+        // x-axis cumulative - used to simulate a change over time, but not measured other than the yAxes readers
         await triggersData(xAxis.cumulative || []);
-
-        // snapshot in here, to restore after
 
         const scaleof = (axis: Axis | undefined) => (typeof axis?.scale === 'number' ? axis.scale : undefined);
         // x-axis readers
-        await readersData([xAxis.reader], scaleof(xAxis));
+        await readersData([{ reader: xAxis.reader }], scaleof(xAxis));
 
-        // y-axis simulation - re-run
+        // y-axis simulation - re-run on each loop
+        //-----------------------------------
+        let axisshot = yAxes.simulation ? await takeSnapshot() : undefined; // to be restored after all dependents have been read
+        //-----------------------------------
+
         await triggersData(yAxes.simulation);
 
-        await readersData(
-            yAxes.y.lines.map((l) => l.reader),
-            scaleof(yAxes.y),
-        );
-        await readersData(
-            yAxes.y2?.lines.map((l) => l.reader),
-            scaleof(yAxes.y2),
-        );
+        await readersData(yAxes.y.lines, scaleof(yAxes.y));
+        await readersData(yAxes.y2?.lines, scaleof(yAxes.y2));
 
-        await snapshot.restore();
+        //----------------------
+        if (axisshot !== undefined) await axisshot.restore();
+        //----------------------
+
         data.push(rowData.map((m) => formatForCSV(m)).join(','));
     }
+    //----------------------
+    await original.restore();
+    //----------------------
 
     writeEatFile(datafilename, data.join('\n'));
 

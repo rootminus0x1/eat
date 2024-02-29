@@ -52,16 +52,24 @@ export const findReader = (id: string, fn: string, field: string = '', ...args: 
     throw Error(`no Reader found on: ${id}`);
 };
 
+export const augment = (rt: Reader, augmentation: string) => {
+    rt.augmentation = rt.augmentation ? rt.augmentation + '-' + augmentation : augmentation;
+    return rt;
+};
+
 export const findDeltaReader = async (id: string, fn: string, field: string = '', ...args: any[]): Promise<Reader> => {
     const baseReader = findReader(id, fn, field, ...args);
     const base = await callReader(baseReader);
-    return Object.assign({ augmentation: 'changes' }, baseReader, {
-        read: async (...args: any[]): Promise<ReadingValue> => {
-            const again = await callReader(baseReader); // call it again
-            const delta = readingDelta(again, base, baseReader.formatting, baseReader.type);
-            return delta.value !== undefined ? delta.value : 'value not defined';
-        },
-    });
+    return augment(
+        Object.assign({}, baseReader, {
+            read: async (...args: any[]): Promise<ReadingValue> => {
+                const again = await callReader(baseReader); // call it again
+                const delta = readingDelta(again, base, baseReader.formatting, baseReader.type);
+                return delta.value !== undefined ? delta.value : 'value not defined';
+            },
+        }),
+        'changes',
+    );
 };
 
 export let triggerTemplate: Map<string, TriggerTemplate>;
