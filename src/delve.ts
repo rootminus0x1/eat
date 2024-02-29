@@ -163,6 +163,7 @@ export const readingDelta = (
                     if (scaler === 0n) {
                         result = 0n;
                     } else {
+                        /*
                         log(
                             `a=${formatUnits(a as bigint, decimals)}, b=${formatUnits(
                                 b as bigint,
@@ -172,6 +173,7 @@ export const readingDelta = (
                                 decimals,
                             )} for exponent=${exponent} when units=${decimals} and precision=${precision}`,
                         );
+                        */
                     }
                 }
             } else if (type === 'bool') result = a; // changed from !reading.value to reading.value
@@ -411,6 +413,7 @@ export type XAxis = Axis & {
 
 export type Line = {
     reader: Reader;
+    ignore0: boolean;
     style?: string;
 };
 
@@ -453,7 +456,9 @@ const _delvePlot = async (
         `set key title " "`, // further down to avoid the x-axis label
         `# set terminal pngcairo`,
         `# set output "${pngfilepath}"`,
-        `set terminal svg enhanced size 800 500 background rgb "gray90"`,
+        `set terminal svg enhanced size 800 ${
+            500 + 19 * (yAxes.y.lines.length + (yAxes.y2?.lines.length || 0) + 1.5) /* for the title */
+        } background rgb "gray90"`,
         `set autoscale`,
         `set colorsequence default`,
         `# set output "${svgfilepath}"`,
@@ -466,7 +471,9 @@ const _delvePlot = async (
             }
             script.push(
                 `set ${a}label "${axis.label}${
-                    axis.scale ? ' (' + axis.scale.toLocaleString() + 's)' : ''
+                    axis.scale
+                        ? ' (' + axis.scale.toLocaleString() + (axis.scale.valueOf() !== 0 ? "'s" : '') + ')'
+                        : ''
                 }" noenhanced`,
             );
             script.push(`set ${a}tics`);
@@ -482,15 +489,23 @@ const _delvePlot = async (
                 script.push(`set ${a}range [${min}:${max}]`);
             }
             if (axis.scale !== undefined && typeof axis.scale === 'string') {
-                if (axis.scale === 'sqrt') script.push(`set nonlinear ${a} via sqrt(${a[0]}) inverse ${a[0]}*${a[0]}`);
-                else if (axis.scale === 'sqr')
+                if (axis.scale === 'sqrt') {
+                    script.push(`set nonlinear ${a} via sqrt(${a[0]}) inverse ${a[0]}*${a[0]}`);
+                } else if (axis.scale === 'sqr') {
                     script.push(`set nonlinear ${a} via ${a[0]}*${a[0]} inverse sqrt(${a[0]})`);
-                else if (axis.scale === 'log') script.push(`set nonlinear ${a} via log(${a[0]}) inverse exp(${a[0]})`);
-                else if (axis.scale === 'exp') script.push(`set nonlinear ${a} via exp(${a[0]}) inverse log(${a[0]})`);
-                else if (axis.scale === 'sinh')
+                } else if (axis.scale === 'log') {
+                    script.push(`set ${a}range [0:]`); // logs don't work at 0
+                    script.push(`set nonlinear ${a} via log(${a[0]}) inverse exp(${a[0]})`);
+                } else if (axis.scale === 'log10') {
+                    script.push(`set ${a}range [0:]`); // logs don't work at 0
+                    script.push(`set nonlinear ${a} via log10(${a[0]}) inverse 10**${a[0]}`);
+                } else if (axis.scale === 'exp') {
+                    script.push(`set nonlinear ${a} via exp(${a[0]}) inverse log(${a[0]})`);
+                } else if (axis.scale === 'sinh') {
                     script.push(`set nonlinear ${a} via sinh(${a[0]}) inverse asinh(${a[0]})`);
-                else if (axis.scale === 'asinh')
+                } else if (axis.scale === 'asinh') {
                     script.push(`set nonlinear ${a} via asinh(${a[0]}) inverse sinh(${a[0]})`);
+                }
             }
         }
     });
@@ -498,8 +513,8 @@ const _delvePlot = async (
     {
         // headers - scoped out so no inadvertent later access
         const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
-        const readerHeader = (reader: Reader) =>
-            headers.push(`${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
+        const readerHeader = (reader: Reader, axis: string = '') =>
+            headers.push(`${axis}${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
         const triggerHeader = (trigger: Trigger) => headers.push(trigger.name);
 
         // headers
@@ -520,17 +535,20 @@ const _delvePlot = async (
         const yindex = headers.length;
         // the x-axis data comes next, headers and plots
         const plots: string[] = [];
-        const lineHeader = (line: Line, index: number, indexOffset: number, isY2: boolean) => {
-            readerHeader(line.reader);
-            const column = (index: number): string => `(\$${index.toString()})`;
+        const lineHeader = (line: Line, index: number, indexOffset: number, isY2: boolean, hasY2: boolean) => {
+            readerHeader(line.reader, hasY2 ? (isY2 ? '[Y-axis->]' : '[<-Y-axis]') : '');
+            const column = (index: number, ignoreZeros: boolean = false): string => {
+                const c = index.toString();
+                return ignoreZeros ? `(\$${c} == 0 ? 1/0 : \$${c})` : `(\$${c})`;
+            };
             plots.push(
-                `datafile using ${column(xindex + 1)}:${column(index + indexOffset + 1)} with lines ${
-                    line.style ? line.style : ''
-                } ${isY2 ? 'axes x1y2' : ''}`,
+                `datafile using ${column(xindex + 1)}:${column(index + indexOffset + 1, line.ignore0)} with lines${
+                    line.style?.includes('pointtype') ? 'points' : ''
+                }${line.style ? ' ' + line.style : ''}${isY2 ? ' axes x1y2' : ''}`,
             );
         };
-        yAxes.y.lines.forEach((line, i) => lineHeader(line, i, yindex, false));
-        (yAxes.y2?.lines || []).forEach((line, i) => lineHeader(line, i, yindex + yAxes.y.lines.length, true));
+        yAxes.y.lines.forEach((line, i) => lineHeader(line, i, yindex, false, yAxes.y2 !== undefined));
+        (yAxes.y2?.lines || []).forEach((line, i) => lineHeader(line, i, yindex + yAxes.y.lines.length, true, true));
         script.push(`plot ${plots.join(',\\\n     ')}`);
         data.push(headers.map((h) => formatForCSV(h)).join(','));
     }

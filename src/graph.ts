@@ -55,7 +55,7 @@ export const findReader = (id: string, fn: string, field: string = '', ...args: 
 export const findDeltaReader = async (id: string, fn: string, field: string = '', ...args: any[]): Promise<Reader> => {
     const baseReader = findReader(id, fn, field, ...args);
     const base = await callReader(baseReader);
-    return Object.assign({ augmentation: 'delta' }, baseReader, {
+    return Object.assign({ augmentation: 'changes' }, baseReader, {
         read: async (...args: any[]): Promise<ReadingValue> => {
             const again = await callReader(baseReader); // call it again
             const delta = readingDelta(again, base, baseReader.formatting, baseReader.type);

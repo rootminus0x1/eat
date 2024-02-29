@@ -153,7 +153,7 @@ export const writeReadings = (name: string, results: Reading[], simulation?: Tri
 };
 
 export const writeReadingsDelta = (name: string, results: Reading[], simulation: TriggerOutcome[]): void => {
-    _writeReadings(name + '.readings.delta.yml', results, simulation);
+    _writeReadings(name + '.readings-delta.yml', results, simulation);
 };
 
 export const writeDiagram = (name: string, diagram: string): void => {
