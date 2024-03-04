@@ -87,61 +87,6 @@ export const writeEatFile = (name: string, results: string): void => {
     writeFile(getConfig().outputFileRoot + eatFileName(name), results);
 };
 
-/*const transformReadingsOrig = (orig: Reading[]): any => {
-    let addresses: any = {};
-    let contracts: any = {};
-    let readings: any = {};
-
-    orig.forEach((r) => {
-        // save the value/delta/error
-        let value: any = undefined;
-        let error: string | undefined = undefined;
-
-        const readingDisplay = (rb: ReadingBasic, delta: boolean = false): [any, string | undefined] => {
-            let value: any = undefined;
-            let error: string | undefined = undefined;
-            if (rb.value !== undefined) {
-                const formatted = formatFromConfig(rb.value, r.type, r.formatting, delta);
-                let comment = ''; // `${r.type}`;
-                if (r.formatting) comment = ` # ${JSON.stringify(r.formatting).replace(/"/g, '')}`;
-                value = r.type.endsWith('[]')
-                    ? (formatted as string[]).map((f) => `${f}${comment}`)
-                    : `${formatted}${comment}`;
-            }
-            if (r.error !== undefined) error = `${r.error}`;
-            return [value, error];
-        };
-
-        if (r.delta !== undefined) {
-            [value, error] = r.delta ? readingDisplay(r.delta, true) : [undefined, undefined];
-        } else {
-            [value, error] = readingDisplay(r);
-        }
-
-        const display =
-            value !== undefined && error !== undefined
-                ? { value: value, error: error }
-                : value !== undefined
-                ? value
-                : error;
-
-        if (display != undefined) {
-            readings[r.reading] = display;
-
-            if (addresses[r.contractInstance] === undefined) {
-                addresses[r.contractInstance] = `${r.contract}@${r.address}`;
-            }
-
-            if (contracts[r.contract] === undefined) contracts[r.contract] = {};
-            // remove the contract instance and parameters
-            contracts[r.contract][r.reading.replace(/^[^.]*\./, '').replace(/\([^)]*\)/, '')] = r.type;
-        }
-    });
-
-    return { addresses: addresses, contracts: contracts, readings: readings };
-};
-*/
-
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
     let simData = simulation ? yamlIt({ simulation: simulation }) : '';
     // writeEatFile("old_" + fileName, simData + yamlIt(transformReadingsOrig(results)));

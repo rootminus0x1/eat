@@ -8,13 +8,14 @@ import { Reader, Reading, ReadingData, ReadingType, callReader, makeReading } fr
 import {
     addressToName,
     friendlyArgs,
-    friendlyFunctionReader,
     friendlyOutcome,
+    friendlyReader,
+    friendlyReaderFunction,
     getDecimals,
     readingDataDisplay,
 } from './friendly';
 import { Trigger, TriggerOutcome, doTrigger } from './trigg';
-import { formatUnits } from 'ethers';
+import { formatEther, formatUnits } from 'ethers';
 
 // TODO: add Contract may be useful if the contract is not part of the dig Graph
 /*
@@ -212,7 +213,7 @@ export const readingDelta = (
     return delta;
 };
 
-export const readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
+const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
     const deltas: Reading[] = [];
     let a = 0,
         b = 0;
@@ -220,6 +221,7 @@ export const readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Re
         const reading = readings[a];
         const base = baseReadings[b];
         const cmp = compareReadingKeys(reading, base);
+        // log(`${friendlyReader(reading)}`);
         if (cmp < 0) {
             // log(`${reading.reading} only in new - keeping`);
             deltas.push(reading); // a new reading, not in base
@@ -243,42 +245,143 @@ export const readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Re
     return sortReadings(deltas);
 };
 
+export const readingsDeltas = withLogging(_readingsDeltas);
+
 ////////////////////////////////////////////////////////////////////////
 // delve
-/*
+
+// assumptions:
+// range given can be of the form (v = valid, i = invalid)
+//   IVI = |iivvii|
+//   IV = |iivvvv|
+//   VI = |vvvvii|
+//   V = |vvvvvv|
+// invalid means f(x) returns undefined, valid means f(x) returns bigint
 export const inverse = async (
-    y: bigint,
-    yGetter: () => Promise<bigint>,
-    xSetter: (value: bigint) => Promise<void>,
-    xLowerBound: bigint,
-    xUpperBound: bigint,
-    xTolerance: bigint = 1n,
+    ytarget: bigint,
+    ygetter: () => Promise<bigint>,
+    xsetter: (value: bigint) => Promise<void>,
+    xbound: [bigint, bigint],
+    ytolerance: bigint = 10n ** 14n, // 4 decimals
 ): Promise<bigint | undefined> => {
+    let [xMinGiven, xMaxGiven] = xbound;
+    if (xMinGiven >= xMaxGiven) throw Error(`lower bound ${xMinGiven} must be less than ${xMaxGiven}`);
+
     const f = async (x: bigint) => {
-        await xSetter(x);
-        return yGetter();
+        try {
+            await xsetter(x);
+            const y = await ygetter();
+            //log(`f(${formatEther(x)}) -> ${formatEther(y)}`);
+            return y;
+        } catch (e: any) {
+            //log(`f(${formatEther(x)}) undefined`);
+            return undefined;
+        }
     };
 
-    // Ensure that y is within the range of the function
-    if ((await f(xLowerBound)) > y || (await f(xUpperBound)) < y) {
-        return undefined;
+    // find a value of x within xbound that f(x) is defined (!== undefined)
+    let xMinValid = (await f(xMinGiven)) !== undefined ? xMinGiven : undefined; // min X value known to be valid
+    let xMaxValid = (await f(xMaxGiven)) !== undefined ? xMaxGiven : undefined; // max X value known to be valie
+
+    // ! xMinValid && ! xMaxValid = range type IVI
+    // ! xMinValid &&   xMaxValid = range type IV
+    //   xMinValid && ! xMaxValid = range type VI
+    //   xMinValid &&   xMaxValid = range type V
+
+    if (xMinValid === undefined || xMaxValid === undefined) {
+        // not range type V
+        let xSomeValid: bigint | undefined = undefined; // some X value known to be valid, not known where in the range it is
+        if (xMinValid === undefined && xMaxValid === undefined) {
+            // range type IVI, find some value for x in the V bit
+            // must be a good value within the range with bad values on the boundaries and outside
+            // search using a gradually decreasing step size for a defined result
+            let stepSize = xMaxGiven - xMinGiven; // Initial step size based on range
+            while (xSomeValid === undefined && stepSize >= 1n) {
+                stepSize /= 2n; // half the step size;
+                for (let x = xMinGiven + stepSize; x < xMaxGiven; x += stepSize) {
+                    if (f(x) !== undefined) {
+                        xSomeValid = x;
+                        break;
+                    }
+                }
+            }
+        }
+        // by here we have at least one of xMinValid, xMaxValid or xSomeValid must not be undefined
+        if (xMinValid === undefined && xMaxValid === undefined && xSomeValid === undefined)
+            throw Error('no valid return values for ygetter(x) for x in [${xbound[0]}:${xbound[1]}');
+
+        if (xMinValid === undefined) {
+            // range type IVI or IV, need to find the boundary between I and V, on the V side
+            // seach from xMinGiven up (as likely most of the range is valid)
+            let low = xMinGiven + 1n; // we know xMinGiven is not valid
+            let high: bigint = xSomeValid !== undefined ? xSomeValid : xMaxValid!; // lowest known valid value
+            if (high === undefined) throw "shouldn't throw this";
+            while (low < high) {
+                const mid = (low + high) / 2n; // floor
+                if ((await f(mid)) === undefined) {
+                    low = mid + 1n;
+                } else {
+                    high = mid;
+                }
+            }
+            if (high === undefined) throw Error('xMinValid still undefined!');
+            xMinValid = high;
+        }
+        if (xMaxValid === undefined) {
+            // seach from xMaxGiven up (as likely most of the range is valid)
+            let low = xSomeValid !== undefined ? xSomeValid : xMinValid; // highest known valid value
+            let high = xMaxGiven - 1n;
+            if (low === undefined) throw "shouldn't throw this";
+            while (low < high) {
+                const mid = (low + high + 1n) / 2n; // ceil
+                if ((await f(mid)) === undefined) {
+                    high = mid - 1n;
+                } else {
+                    low = mid;
+                }
+            }
+            if (low === undefined) throw Error('xMinValid still undefined!');
+            xMaxValid = low;
+        }
     }
+    let yMinValid = (await f(xMinValid!)) as bigint;
+    let yMaxValid = (await f(xMaxValid!)) as bigint;
 
-    while (xUpperBound - xLowerBound > xTolerance) {
-        const midPoint = (xLowerBound + xUpperBound) / 2n;
-        const midValue = await f(midPoint);
+    // log(
+    //     `x in [${formatEther(xMinGiven)}..${formatEther(xMaxGiven)}] -> y in [${formatEther(yMinValid)}..${formatEther(
+    //         yMaxValid,
+    //     )}]`,
+    // );
 
-        if (midValue < y) {
-            xLowerBound = midPoint;
+    // Ensure that y is within the range of the function
+    if (yMinValid > ytarget || yMaxValid < ytarget)
+        throw `target y ${ytarget} is outside of the range ${yMinValid}..${yMaxValid}`;
+
+    let xhigh = xMaxValid;
+    //    let yhigh = yMaxValid;
+    let xlow = xMinValid;
+    //    let ylow = yMinValid;
+    let xmid: bigint | undefined = undefined;
+    const abs = (a: bigint) => (a < 0n ? -a : a);
+    while (xlow <= xhigh) {
+        xmid = xlow + (xhigh - xlow) / 2n;
+        const ymid = await f(xmid);
+        if (ymid === undefined) throw `f(${xmid}) failed when it shouldn't!`;
+
+        if (ytarget - ytolerance <= ymid && ymid <= ytarget + ytolerance) {
+            break; // Found a value within the tolerance
+        }
+
+        if (ymid < ytarget) {
+            xlow = xmid + 1n;
         } else {
-            xUpperBound = midPoint;
+            xhigh = xmid - 1n;
         }
     }
     // Return the midpoint as an approximation of the inverse
-    return (xLowerBound + xUpperBound) / 2n;
+    // log(`inverse(${formatEther(ytarget)}) = ${formatEther(xmid!)}`);
+    return xmid;
 };
-
-*/
 
 /*  two ways of running a sequence of events:
     simulation:
@@ -516,7 +619,7 @@ const _delvePlot = async (
         const headers: string[] = []; // headers for data file (inc events and simulations, which each take a column)
 
         const readerHeader = (reader: Reader, axis: string = '') =>
-            headers.push(`${axis}${addressToName(reader.address)}.${friendlyFunctionReader(reader)}`);
+            headers.push(`${axis}${addressToName(reader.address)}.${friendlyReaderFunction(reader)}`);
 
         const triggerHeaders = (triggers?: Trigger[]) =>
             (triggers || []).forEach((trigger) => headers.push(trigger.name));
@@ -581,9 +684,12 @@ const _delvePlot = async (
                 await triggersData(line.simulation);
                 const readingData = await callReader(line.reader); // no args
                 // TODO: work with non-bigint data?
-                let display = readingDataDisplay(readingData, line.reader.type, line.reader.formatting);
-                if (scale) display = (Number(display) / Number(scale)).toString();
-                rowData.push(display);
+                const display = readingDataDisplay(readingData, line.reader.type, line.reader.formatting);
+                if (line.reader.type.endsWith('[]'))
+                    throw Error(`cannot plot data that is an array ${addressToName(line.reader.address)}.`);
+                let displayable = display as string;
+                if (scale) displayable = (Number(displayable as string) / Number(scale)).toString();
+                rowData.push(displayable);
                 //-----------------------------------
                 if (lineshot !== undefined) await lineshot.restore();
                 //-----------------------------------

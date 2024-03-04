@@ -44,6 +44,9 @@ export const JSONreplacer = (key: string, value: any) =>
 // format a bigint according to unit and precision
 const formatBigInt = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
     const doUnit = (value: bigint): string => {
+        if (value === undefined) {
+            log(`encountered undefined in formatBigInt.doUnit`);
+        }
         return unit ? formatUnits(value, unit) : value.toString();
     };
     let result = doUnit(value);
@@ -108,6 +111,9 @@ const friendlyReadingType = (
     if (type === 'address') {
         result = formatAddress(value as string);
     } else if (type.includes('int')) {
+        if (value === undefined) {
+            log(`undefined where bigint was expected`);
+        }
         result = formatBigInt(value as bigint, delta, formatting?.unit, formatting?.precision);
     } else {
         log(`unexpected type ${type}`);
@@ -185,6 +191,8 @@ export const yamlIt = (it: any): string =>
 // template name - contract.function.field, generated on creation
 export const functionField = (func: string, field?: Field): string => `${func}${addField(field)}`;
 
+export const friendlyReader = (reader: Reader) => `${addressToName(reader.address)}.${friendlyReaderFunction(reader)}`;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Triggers
 
@@ -198,9 +206,9 @@ export const friendlyOutcome = (outcome: TriggerOutcome): string => {
 ///////////////////////////////////////////////////////////////////////////////
 // Readers
 
-export const friendlyFunctionReader = (reading: Reader): string =>
-    `${reading.function}${friendlyArgs(reading.args, reading.argTypes)}${addField(reading.field)}${add(
-        reading.augmentation,
+export const friendlyReaderFunction = (reader: Reader): string =>
+    `${reader.function}${friendlyArgs(reader.args, reader.argTypes)}${addField(reader.field)}${add(
+        reader.augmentation,
         '-',
     )}`;
 
@@ -209,13 +217,15 @@ export const readingDataValues = (
     type: string,
     formatting?: ConfigFormatApply,
     delta: boolean = false,
-): [any, string | undefined] => {
-    let value: any = undefined;
+): [string | string[] | undefined, string | undefined] => {
+    let value: string | string[] | undefined = undefined;
     let error: string | undefined = undefined;
     if (rb.value !== undefined) {
         value = friendlyReadingValue(rb.value, type, undefined, formatting, delta);
     }
-    if (rb.error !== undefined) error = formatError(rb.error);
+    if (rb.error !== undefined) {
+        error = formatError(rb.error);
+    }
     return [value, error];
 };
 
@@ -224,35 +234,36 @@ export const readingDataDisplay = (
     type: string,
     formatting?: ConfigFormatApply,
     delta: boolean = false,
-): string => {
-    let value: any = undefined;
+): string | string[] => {
+    let value: string | string[] | undefined = undefined;
     let error: string | undefined = undefined;
     [value, error] = readingDataValues(rb, type, formatting, delta);
 
-    return value !== undefined && error !== undefined
-        ? { value: value, error: error }
-        : value !== undefined
-        ? value
-        : error;
+    if (value !== undefined) {
+        if (type.endsWith('[]')) {
+            return value as string[];
+        } else {
+            return value as string;
+        }
+    } else if (error !== undefined) {
+        return error;
+    } else {
+        return 'undefined';
+    }
 };
 
-export const readingDisplay = (r: Reading): string => {
-    let value: any = undefined;
-    let delta: any = undefined;
-    let error: string | undefined = undefined;
-
-    // TODO: replace this with a call to the function above
+// TODO: remove this function
+const readingDisplay = (r: Reading): string | string[] => {
     if (r.delta !== undefined) {
-        [value, error] = readingDataValues(r.delta, r.type, r.formatting, true);
+        // deltas are a bit weird - they can have a value change and a error change, e.g. when something worked then didn't or vice versa
+        if (r.delta.value !== undefined && r.delta.error !== undefined) {
+            return JSON.stringify(r.delta).slice(1, -1).replace('"', '');
+        } else {
+            return readingDataDisplay(r.delta, r.type, r.formatting, true);
+        }
     } else {
-        [value, error] = readingDataValues(r, r.type, r.formatting);
+        return readingDataDisplay(r, r.type, r.formatting);
     }
-
-    return value !== undefined && error !== undefined
-        ? { value: value, error: error }
-        : value !== undefined
-        ? value
-        : error;
 };
 
 export const transformReadings = (orig: Reading[]): any => {
@@ -260,9 +271,12 @@ export const transformReadings = (orig: Reading[]): any => {
     let cName = '';
 
     orig.forEach((r) => {
+        // if (friendlyReader(r) === 'stETHTreasury.collateralRatio') {
+        //     log(`${friendlyReader(r)}`);
+        // }
         const display = readingDisplay(r);
 
-        if (display != undefined) {
+        if (display !== undefined) {
             // contract
             {
                 const contractInstance = addressToName(r.address);
@@ -272,7 +286,7 @@ export const transformReadings = (orig: Reading[]): any => {
                     readings[readings.length - 1][cName] = [];
                 }
                 const reading: any = {};
-                reading[friendlyFunctionReader(r)] = display;
+                reading[friendlyReaderFunction(r)] = display;
                 readings[readings.length - 1][cName].push(reading);
             }
         }
@@ -280,7 +294,7 @@ export const transformReadings = (orig: Reading[]): any => {
     return readings;
 };
 
-export const transformReadingsVerbose = (orig: Reading[]): any => {
+const transformReadingsVerbose = (orig: Reading[]): any => {
     let readings: any[] = [];
     let cName = '';
     let cIndex: number = -1;
@@ -325,7 +339,7 @@ export const transformReadingsVerbose = (orig: Reading[]): any => {
         readings[cIndex].functions[fIndex][functionField(r.function, r.field)] = r.type;
 
         const reading: any = {};
-        reading[friendlyFunctionReader(r)] = display;
+        reading[friendlyReaderFunction(r)] = display;
         fnReadings.push(reading);
     });
 

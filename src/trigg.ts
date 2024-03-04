@@ -97,3 +97,11 @@ export function makeTriggerSeries(base: TriggerTemplate, start: bigint, finish: 
     }
     return result;
 }
+
+export function makeTriggerList(maker: (arg: bigint) => Trigger, values: bigint[], tolerance: bigint = 1n): Trigger[] {
+    const result: Trigger[] = [];
+    for (let i of values) {
+        result.push(maker(i));
+    }
+    return result;
+}
