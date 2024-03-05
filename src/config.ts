@@ -90,7 +90,7 @@ export const writeEatFile = (name: string, results: string): void => {
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
     let simData = simulation ? yamlIt({ simulation: simulation }) : '';
     // writeEatFile("old_" + fileName, simData + yamlIt(transformReadingsOrig(results)));
-    writeEatFile(fileName, simData + yamlIt({ readings: transformReadings(results) }));
+    writeEatFile(fileName, simData + yamlIt({ deployments: transformReadings(results) }));
 };
 
 export const writeReadings = (name: string, results: Reading[], simulation?: TriggerOutcome[]): void => {

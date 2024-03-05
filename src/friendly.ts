@@ -266,14 +266,12 @@ const readingDisplay = (r: Reading): string | string[] => {
     }
 };
 
-export const transformReadings = (orig: Reading[]): any => {
+/*
+export const transformReadingsMinimal = (orig: Reading[]): any => {
     let readings: any[] = [];
     let cName = '';
 
     orig.forEach((r) => {
-        // if (friendlyReader(r) === 'stETHTreasury.collateralRatio') {
-        //     log(`${friendlyReader(r)}`);
-        // }
         const display = readingDisplay(r);
 
         if (display !== undefined) {
@@ -292,6 +290,32 @@ export const transformReadings = (orig: Reading[]): any => {
         }
     });
     return readings;
+};
+
+*/
+
+export const transformReadings = (orig: Reading[]): any => {
+    let deployments: any[] = [];
+    let cName = '';
+
+    orig.forEach((r) => {
+        const display = readingDisplay(r);
+
+        if (display !== undefined) {
+            // contract
+            {
+                const contractInstance = addressToName(r.address);
+                if (contractInstance !== cName) {
+                    cName = contractInstance;
+                    deployments.push({ contract: r.contract, address: r.address, readings: [] });
+                }
+                const reading: any = {};
+                reading[friendlyReaderFunction(r)] = display;
+                deployments[deployments.length - 1].readings.push(reading);
+            }
+        }
+    });
+    return deployments;
 };
 
 const transformReadingsVerbose = (orig: Reading[]): any => {
