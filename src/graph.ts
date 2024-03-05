@@ -82,7 +82,7 @@ export let users: any = {};
 export let localNodes = new Map<string, GraphNode>();
 
 export const resetGraph = () => {
-    // log('resetting graph');
+    log('resetting graph');
     nodes = new Map<string, GraphNode>(); // address to object
     links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
     backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]

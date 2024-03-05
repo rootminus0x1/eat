@@ -264,123 +264,132 @@ export const inverse = async (
     xbound: [bigint, bigint],
     ytolerance: bigint = 10n ** 14n, // 4 decimals
 ): Promise<bigint | undefined> => {
-    let [xMinGiven, xMaxGiven] = xbound;
-    if (xMinGiven >= xMaxGiven) throw Error(`lower bound ${xMinGiven} must be less than ${xMaxGiven}`);
+    const snapshot = await takeSnapshot();
+    let result: bigint | undefined = undefined;
 
-    const f = async (x: bigint) => {
-        try {
-            await xsetter(x);
-            const y = await ygetter();
-            //log(`f(${formatEther(x)}) -> ${formatEther(y)}`);
-            return y;
-        } catch (e: any) {
-            //log(`f(${formatEther(x)}) undefined`);
-            return undefined;
-        }
-    };
+    try {
+        let [xMinGiven, xMaxGiven] = xbound;
+        if (xMinGiven >= xMaxGiven) throw Error(`lower bound ${xMinGiven} must be less than ${xMaxGiven}`);
 
-    // find a value of x within xbound that f(x) is defined (!== undefined)
-    let xMinValid = (await f(xMinGiven)) !== undefined ? xMinGiven : undefined; // min X value known to be valid
-    let xMaxValid = (await f(xMaxGiven)) !== undefined ? xMaxGiven : undefined; // max X value known to be valie
+        const f = async (x: bigint) => {
+            try {
+                await xsetter(x);
+                const y = await ygetter();
+                //log(`f(${formatEther(x)}) -> ${formatEther(y)}`);
+                return y;
+            } catch (e: any) {
+                //log(`f(${formatEther(x)}) undefined`);
+                return undefined;
+            }
+        };
 
-    // ! xMinValid && ! xMaxValid = range type IVI
-    // ! xMinValid &&   xMaxValid = range type IV
-    //   xMinValid && ! xMaxValid = range type VI
-    //   xMinValid &&   xMaxValid = range type V
+        // find a value of x within xbound that f(x) is defined (!== undefined)
+        let xMinValid = (await f(xMinGiven)) !== undefined ? xMinGiven : undefined; // min X value known to be valid
+        let xMaxValid = (await f(xMaxGiven)) !== undefined ? xMaxGiven : undefined; // max X value known to be valie
 
-    if (xMinValid === undefined || xMaxValid === undefined) {
-        // not range type V
-        let xSomeValid: bigint | undefined = undefined; // some X value known to be valid, not known where in the range it is
-        if (xMinValid === undefined && xMaxValid === undefined) {
-            // range type IVI, find some value for x in the V bit
-            // must be a good value within the range with bad values on the boundaries and outside
-            // search using a gradually decreasing step size for a defined result
-            let stepSize = xMaxGiven - xMinGiven; // Initial step size based on range
-            while (xSomeValid === undefined && stepSize >= 1n) {
-                stepSize /= 2n; // half the step size;
-                for (let x = xMinGiven + stepSize; x < xMaxGiven; x += stepSize) {
-                    if (f(x) !== undefined) {
-                        xSomeValid = x;
-                        break;
+        // ! xMinValid && ! xMaxValid = range type IVI
+        // ! xMinValid &&   xMaxValid = range type IV
+        //   xMinValid && ! xMaxValid = range type VI
+        //   xMinValid &&   xMaxValid = range type V
+
+        if (xMinValid === undefined || xMaxValid === undefined) {
+            // not range type V
+            let xSomeValid: bigint | undefined = undefined; // some X value known to be valid, not known where in the range it is
+            if (xMinValid === undefined && xMaxValid === undefined) {
+                // range type IVI, find some value for x in the V bit
+                // must be a good value within the range with bad values on the boundaries and outside
+                // search using a gradually decreasing step size for a defined result
+                let stepSize = xMaxGiven - xMinGiven; // Initial step size based on range
+                while (xSomeValid === undefined && stepSize >= 1n) {
+                    stepSize /= 2n; // half the step size;
+                    for (let x = xMinGiven + stepSize; x < xMaxGiven; x += stepSize) {
+                        if (f(x) !== undefined) {
+                            xSomeValid = x;
+                            break;
+                        }
                     }
                 }
             }
-        }
-        // by here we have at least one of xMinValid, xMaxValid or xSomeValid must not be undefined
-        if (xMinValid === undefined && xMaxValid === undefined && xSomeValid === undefined)
-            throw Error('no valid return values for ygetter(x) for x in [${xbound[0]}:${xbound[1]}');
+            // by here we have at least one of xMinValid, xMaxValid or xSomeValid must not be undefined
+            if (xMinValid === undefined && xMaxValid === undefined && xSomeValid === undefined)
+                throw Error('no valid return values for ygetter(x) for x in [${xbound[0]}:${xbound[1]}');
 
-        if (xMinValid === undefined) {
-            // range type IVI or IV, need to find the boundary between I and V, on the V side
-            // seach from xMinGiven up (as likely most of the range is valid)
-            let low = xMinGiven + 1n; // we know xMinGiven is not valid
-            let high: bigint = xSomeValid !== undefined ? xSomeValid : xMaxValid!; // lowest known valid value
-            if (high === undefined) throw "shouldn't throw this";
-            while (low < high) {
-                const mid = (low + high) / 2n; // floor
-                if ((await f(mid)) === undefined) {
-                    low = mid + 1n;
-                } else {
-                    high = mid;
+            if (xMinValid === undefined) {
+                // range type IVI or IV, need to find the boundary between I and V, on the V side
+                // seach from xMinGiven up (as likely most of the range is valid)
+                let low = xMinGiven + 1n; // we know xMinGiven is not valid
+                let high: bigint = xSomeValid !== undefined ? xSomeValid : xMaxValid!; // lowest known valid value
+                if (high === undefined) throw "shouldn't throw this";
+                while (low < high) {
+                    const mid = (low + high) / 2n; // floor
+                    if ((await f(mid)) === undefined) {
+                        low = mid + 1n;
+                    } else {
+                        high = mid;
+                    }
                 }
+                if (high === undefined) throw Error('xMinValid still undefined!');
+                xMinValid = high;
             }
-            if (high === undefined) throw Error('xMinValid still undefined!');
-            xMinValid = high;
-        }
-        if (xMaxValid === undefined) {
-            // seach from xMaxGiven up (as likely most of the range is valid)
-            let low = xSomeValid !== undefined ? xSomeValid : xMinValid; // highest known valid value
-            let high = xMaxGiven - 1n;
-            if (low === undefined) throw "shouldn't throw this";
-            while (low < high) {
-                const mid = (low + high + 1n) / 2n; // ceil
-                if ((await f(mid)) === undefined) {
-                    high = mid - 1n;
-                } else {
-                    low = mid;
+            if (xMaxValid === undefined) {
+                // seach from xMaxGiven up (as likely most of the range is valid)
+                let low = xSomeValid !== undefined ? xSomeValid : xMinValid; // highest known valid value
+                let high = xMaxGiven - 1n;
+                if (low === undefined) throw "shouldn't throw this";
+                while (low < high) {
+                    const mid = (low + high + 1n) / 2n; // ceil
+                    if ((await f(mid)) === undefined) {
+                        high = mid - 1n;
+                    } else {
+                        low = mid;
+                    }
                 }
+                if (low === undefined) throw Error('xMinValid still undefined!');
+                xMaxValid = low;
             }
-            if (low === undefined) throw Error('xMinValid still undefined!');
-            xMaxValid = low;
         }
+        let yMinValid = (await f(xMinValid!)) as bigint;
+        let yMaxValid = (await f(xMaxValid!)) as bigint;
+
+        // log(
+        //     `x in [${formatEther(xMinGiven)}..${formatEther(xMaxGiven)}] -> y in [${formatEther(yMinValid)}..${formatEther(
+        //         yMaxValid,
+        //     )}]`,
+        // );
+
+        // Ensure that y is within the range of the function
+        if (yMinValid > ytarget || yMaxValid < ytarget)
+            throw `target y ${ytarget} is outside of the range ${yMinValid}..${yMaxValid}`;
+
+        let xhigh = xMaxValid;
+        //    let yhigh = yMaxValid;
+        let xlow = xMinValid;
+        //    let ylow = yMinValid;
+        let xmid: bigint | undefined = undefined;
+        const abs = (a: bigint) => (a < 0n ? -a : a);
+        while (xlow <= xhigh) {
+            xmid = xlow + (xhigh - xlow) / 2n;
+            const ymid = await f(xmid);
+            if (ymid === undefined) throw `f(${xmid}) failed when it shouldn't!`;
+
+            if (ytarget - ytolerance <= ymid && ymid <= ytarget + ytolerance) {
+                break; // Found a value within the tolerance
+            }
+
+            if (ymid < ytarget) {
+                xlow = xmid + 1n;
+            } else {
+                xhigh = xmid - 1n;
+            }
+        }
+        // Return the midpoint as an approximation of the inverse
+        // log(`inverse(${formatEther(ytarget)}) = ${formatEther(xmid!)}`);
+        result = xmid;
+    } finally {
+        snapshot.restore();
     }
-    let yMinValid = (await f(xMinValid!)) as bigint;
-    let yMaxValid = (await f(xMaxValid!)) as bigint;
 
-    // log(
-    //     `x in [${formatEther(xMinGiven)}..${formatEther(xMaxGiven)}] -> y in [${formatEther(yMinValid)}..${formatEther(
-    //         yMaxValid,
-    //     )}]`,
-    // );
-
-    // Ensure that y is within the range of the function
-    if (yMinValid > ytarget || yMaxValid < ytarget)
-        throw `target y ${ytarget} is outside of the range ${yMinValid}..${yMaxValid}`;
-
-    let xhigh = xMaxValid;
-    //    let yhigh = yMaxValid;
-    let xlow = xMinValid;
-    //    let ylow = yMinValid;
-    let xmid: bigint | undefined = undefined;
-    const abs = (a: bigint) => (a < 0n ? -a : a);
-    while (xlow <= xhigh) {
-        xmid = xlow + (xhigh - xlow) / 2n;
-        const ymid = await f(xmid);
-        if (ymid === undefined) throw `f(${xmid}) failed when it shouldn't!`;
-
-        if (ytarget - ytolerance <= ymid && ymid <= ytarget + ytolerance) {
-            break; // Found a value within the tolerance
-        }
-
-        if (ymid < ytarget) {
-            xlow = xmid + 1n;
-        } else {
-            xhigh = xmid - 1n;
-        }
-    }
-    // Return the midpoint as an approximation of the inverse
-    // log(`inverse(${formatEther(ytarget)}) = ${formatEther(xmid!)}`);
-    return xmid;
+    return result;
 };
 
 /*  two ways of running a sequence of events:

@@ -155,7 +155,7 @@ const _dig = async (stack: string) => {
     // now find duplicates
     for (const [name, addresses] of nodeNames) {
         if (addresses.length > 1) {
-            log(`name ${name} has more than one address`);
+            //log(`name ${name} has more than one address`);
             // find the links to get some name for them
             let unique = 0;
             for (const address of addresses) {
