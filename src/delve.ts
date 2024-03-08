@@ -213,7 +213,7 @@ export const readingDelta = (
     return delta;
 };
 
-const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
+export const readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[] => {
     const deltas: Reading[] = [];
     let a = 0,
         b = 0;
@@ -245,7 +245,7 @@ const _readingsDeltas = (readings: Reading[], baseReadings: Reading[]): Reading[
     return sortReadings(deltas);
 };
 
-export const readingsDeltas = withLogging(_readingsDeltas);
+// export const readingsDeltas = withLogging(_readingsDeltas);
 
 ////////////////////////////////////////////////////////////////////////
 // delve

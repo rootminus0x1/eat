@@ -81,16 +81,24 @@ const nodeMermaid = (
 const linkMermaid = (from: string, to: string, name: string, logic?: string): string => {
     const f: string[] = [];
     // replace zero addresses
-    if (to === ZeroAddress) {
-        to = `${from}-${name}0x0`;
-        cl(f, `${to}((0x0))`);
+    if (to === from) {
+        // it's a recursive pointer!
+        // TODO? just ignoring for now
+    } else {
+        if (to === ZeroAddress) {
+            // ignore null pointers
+            // make up a node for to, so all null pointers don't join to the same node
+            //to = `0x0(${from}-${name})`;
+            //cl(f, `${to}((0x0))`);
+        } else {
+            cl(f, `${from} -- ${name} --> ${to}`);
+        }
     }
-    cl(f, `${from} -- ${name} --> ${to}`);
     cl(f, '');
     return f.join('\n');
 };
 
-export const asMD = (mmd: string, blockNumber: number, asOf: string): string => {
+export const asMD = (mmd: string): string => {
     const header: string[] = [],
         footer: string[] = [];
     cl(header, '```mermaid');

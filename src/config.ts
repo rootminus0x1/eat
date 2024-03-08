@@ -8,6 +8,7 @@ import { Logger, log } from './logging';
 import { functionField, transformReadings, yamlIt } from './friendly';
 import { Field, Reading } from './read';
 import { TriggerOutcome } from './trigg';
+import { getAddress } from 'ethers';
 
 export const stringCompare = (a: string, b: string): number => a.localeCompare(b, 'en', { sensitivity: 'base' });
 export const numberCompare = (a: number, b: number): number => (a < b ? -1 : a > b ? 1 : 0);
@@ -122,6 +123,7 @@ export type ConfigFormatApply = {
 
 export type ConfigFormat = ConfigFormatMatch & ConfigFormatApply;
 
+/*
 //type Arg = string | bigint;
 export type ConfigUserEvent = {
     name: string;
@@ -130,24 +132,25 @@ export type ConfigUserEvent = {
     function: string;
     args: string[];
 };
-/*
-type ArgSubstitution = [number, Arg];
-function substituteArgs(userEvent: ConfigUserEvent, ...substitutions: ArgSubstitution[]): ConfigUserEvent {
-    const newArgs = userEvent.args ? [...userEvent.args] : [];
-    substitutions.forEach(([index, value]) => {
-        newArgs[index] = value;
-    });
-    return { ...userEvent, args: newArgs };
-}
+
+// type ArgSubstitution = [number, Arg];
+// function substituteArgs(userEvent: ConfigUserEvent, ...substitutions: ArgSubstitution[]): ConfigUserEvent {
+//     const newArgs = userEvent.args ? [...userEvent.args] : [];
+//     substitutions.forEach(([index, value]) => {
+//         newArgs[index] = value;
+//     });
+//     return { ...userEvent, args: newArgs };
+// }
 */
 export type ConfigHolding = {
-    contract: string;
+    token: string;
     amount: string | bigint;
 };
 
 export type ConfigUser = {
     name: string;
     wallet: ConfigHolding[];
+    approve: string[]; // contracts that can spend wallet content
 };
 
 export type Config = {
@@ -163,7 +166,7 @@ export type Config = {
     timestamp: number;
     datetime: string;
 
-    triggers: ConfigUserEvent[];
+    //triggers: ConfigUserEvent[]; not useful
     users: ConfigUser[];
 
     // where to look
@@ -264,10 +267,16 @@ export const getConfig = (): Config => {
             return result;
         }, {} as Config);
 
-        // finally merge in the actual config
+        // merge in the actual config
         merge(config, loadYaml(configFilePath));
 
-        // finally, finally, add additional fields
+        // fix addresses so they are checksummed (EIP-55)
+
+        config.root = config.root.map((a) => getAddress(a));
+        config.leaf = config.leaf.map((a) => getAddress(a));
+        config.twig = config.twig.map((a) => getAddress(a));
+
+        // add additional fields
         config.configFilePath = configFilePath;
         config.configName = configName;
         config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;

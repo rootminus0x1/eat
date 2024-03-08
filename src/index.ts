@@ -11,3 +11,4 @@ export * from './logging';
 export * from './read';
 export * from './trigg';
 export * from './ieat';
+export * from './friendly';

@@ -10,14 +10,14 @@ export interface IEat {
     name: string;
     addContracts: () => Promise<void>;
     //addUsers: () => Promise<void>;
-    doStuff: (base: Reading) => Promise<void>;
+    doStuff: (base: Reading[]) => Promise<void>;
 }
 
-export const eatMain = async (runs: IEat[]): Promise<void> => {
+export const eatMain = async (runs: IEat[], loud: boolean = false): Promise<void> => {
     await setupBlockchain();
 
-    await dig('blockchain');
-    //writeDiagram('blockchain', await mermaid());
+    await dig('blockchain', loud);
+    if (loud) writeDiagram('blockchain', await mermaid());
 
     const snapshot = await takeSnapshot();
     for (const run of runs) {

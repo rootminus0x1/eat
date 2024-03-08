@@ -3,7 +3,7 @@ import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
 import { ethers } from 'hardhat';
-import { Contract, FunctionFragment, MaxUint256, ZeroAddress } from 'ethers';
+import { Contract, FunctionFragment, MaxUint256, ZeroAddress, getAddress } from 'ethers';
 
 import { parseArg } from './friendly';
 
@@ -23,13 +23,13 @@ import {
     GraphNode,
     resetGraph,
     localNodes,
-    triggerTemplate,
 } from './graph';
 import { getConfig, getFormatting, stringCompare, writeFile } from './config';
 import { log, withLogging } from './logging';
 import { ReaderTemplate, ReadingValue, callReader, makeReader } from './read';
+import { listeners } from 'process';
 
-const _dig = async (stack: string) => {
+const _dig = async (stack: string, loud: boolean = false) => {
     // we reset the graph (which is a set of global variables)
     resetGraph();
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
@@ -63,6 +63,20 @@ const _dig = async (stack: string) => {
             const blockchainAddress = digOne(address.address);
             if (blockchainAddress) {
                 const dugUp = await digDeep(blockchainAddress);
+                if (loud) {
+                    const contractName = await blockchainAddress.contractName();
+                    const logicName = await blockchainAddress.implementationContractName();
+                    const tokenSymbol = await blockchainAddress.erc20Symbol();
+                    const tokenName = await blockchainAddress.erc20Name();
+                    let line: string[] = [`${address.address} :`];
+                    if (tokenName || tokenSymbol) line.push(`${tokenSymbol} (${tokenName})`);
+                    if (logicName) {
+                        line.push(`"${contractName}"->"${logicName}"`);
+                    } else {
+                        line.push(`"${contractName}"`);
+                    }
+                    log(line.join(' '));
+                }
                 tempNodes.set(
                     address.address,
                     Object.assign(
@@ -111,20 +125,18 @@ const _dig = async (stack: string) => {
                     });
                 };
 
-                // follow the roles (even on a leaf)
-                if (dugUp.roles.length) {
-                    dugUp.roles.forEach((role: Role) =>
-                        addLinks(
-                            address.address,
-                            role.addresses.map((a) => ({ address: a, name: role.name })),
-                            address.follow,
-                        ),
-                    );
-                    roles.set(address.address, dugUp.roles);
-                }
-
-                // and the links, unless its a leaf
+                // follow the roles and the links, unless its a leaf
                 if (address.follow) {
+                    if (dugUp.roles.length) {
+                        dugUp.roles.forEach((role: Role) =>
+                            addLinks(
+                                address.address,
+                                role.addresses.map((a) => ({ address: a, name: role.name })),
+                                address.follow,
+                            ),
+                        );
+                        roles.set(address.address, dugUp.roles);
+                    }
                     addLinks(address.address, dugUp.links, address.follow);
                 }
             }
@@ -219,12 +231,12 @@ const _dig = async (stack: string) => {
                     let json = undefined;
                     try {
                         json = JSON.parse(sourceCodeText.slice(1, -1)); // remove spurious { & }
+                        Object.entries(json.sources).forEach(([filePath, file]) => {
+                            writeFile(`${dir}/${filePath}`, (file as any).content);
+                        });
                     } catch (e: any) {
                         console.log(`error in ${node.name} source code: ${e}`);
                     }
-                    Object.entries(json.sources).forEach(([filePath, file]) => {
-                        writeFile(`${dir}/${filePath}`, (file as any).content);
-                    });
                 }
             }
         } else {
@@ -308,9 +320,9 @@ const digDeep = async (
                         const index = roles.findIndex((r) => r.id === role);
                         if (index == -1) {
                             let name = roleNames.get(role) || role;
-                            roles.push({ id: role, name: name, addresses: [account] });
+                            roles.push({ id: role, name: name, addresses: [getAddress(account)] });
                         } else {
-                            roles[index].addresses.push(account);
+                            roles[index].addresses.push(getAddress(account));
                         }
                     }
                 }
@@ -360,7 +372,7 @@ const digDeep = async (
                             for (let i = 0; i < result.value.length; i++) {
                                 links.push({
                                     name: outputName(func, outputIndex, i),
-                                    address: result.value[i] as string,
+                                    address: getAddress(result.value[i] as string),
                                 });
                             }
                         } else {
@@ -370,7 +382,10 @@ const digDeep = async (
                                 readerTemplate.function === 'wrapper'
                             )
                                 extraNameAddress = result.value as string;
-                            links.push({ name: outputName(func, outputIndex), address: result.value as string });
+                            links.push({
+                                name: outputName(func, outputIndex),
+                                address: getAddress(result.value as string),
+                            });
                         }
                     } catch (err) {
                         console.error(`linking - error calling ${address} ${func.name} ${func.selector}: ${err}`);
@@ -387,12 +402,14 @@ export const dig = withLogging(_dig);
 const _digUsers = async () => {
     // add in the users from the config
     if (getConfig().users) {
-        const holdings = new Map<string, Map<string, bigint>>(); // username to {contractname, amount}
-        const totalHoldings = new Map<string, bigint>(); // contractname to total amount
+        const holdings = new Map<string, Map<string, bigint>>(); // username to {token, amount}
+        const approve = new Map<string, string[]>(); // username to contracts
+        const totalHoldings = new Map<string, bigint>(); // token to total amount
         for (const user of getConfig().users) {
             const signer = await getSigner(user.name);
             // The next two operations are safe to do multiply
             users[user.name] = signer; // to be used in actions
+            users[signer.address] = signer;
             // add them to the graph, too
             nodes.set(
                 signer.address,
@@ -404,10 +421,15 @@ const _digUsers = async () => {
             if (user.wallet) {
                 const userHoldings = new Map<string, bigint>();
                 for (const holding of user.wallet) {
-                    const contract = holding.contract;
+                    const token = holding.token;
                     const amount = parseArg(holding.amount) as bigint;
-                    userHoldings.set(contract, userHoldings.get(contract) ?? 0n + amount);
-                    totalHoldings.set(contract, totalHoldings.get(contract) ?? 0n + amount);
+                    userHoldings.set(token, userHoldings.get(token) ?? 0n + amount);
+                    totalHoldings.set(token, totalHoldings.get(token) ?? 0n + amount);
+
+                    // find all the contracts this user interacts with and allow them to spend there
+                    (user.approve || []).forEach((c) =>
+                        approve.set(user.name, (approve.get(user.name) ?? []).concat(c)),
+                    );
                 }
                 holdings.set(user.name, userHoldings);
             }
@@ -430,27 +452,22 @@ const _digUsers = async () => {
                     ) {
                         throw Error(`could not transfer ${tokenName} from whale to ${userName}`);
                     }
-                }
-                // find all the contracts this user interacts with and allow them to spend there
-                if (getConfig().triggers) {
-                    for (const contract of getConfig()
-                        .triggers.filter((a) => a.user && a.user === userName)
-                        .map((a) => a.contract)) {
-                        // allow the wallet to be spent
+                    // and allow contracts to spend their money
+                    for (const contract of approve.get(userName) || []) {
                         if (
                             !(await contracts[tokenName]
                                 .connect(users[userName])
                                 .approve(contracts[contract].address, MaxUint256))
                         ) {
-                            throw Error(
-                                `could not approve ${contracts[contract].name} to use ${userName}'s ${contracts[tokenName]}`,
-                            );
+                            throw Error(`could not approve ${contract} to use all ${userName}'s ${tokenName}`);
                         }
+                        log(`approved ${contract} to use all ${userName}'s ${tokenName}`);
                     }
                 }
             }
         }
     }
+    /*
     // set up the triggers
     if (getConfig().triggers) {
         getConfig().triggers.forEach((ue) => {
@@ -460,6 +477,7 @@ const _digUsers = async () => {
             triggerTemplate.set(ue.name, copy);
         });
     }
+    */
 };
 
 export const digUsers = withLogging(_digUsers);
