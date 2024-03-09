@@ -209,6 +209,22 @@ export const friendlyOutcome = (outcome: TriggerOutcome): string => {
     return display;
 };
 
+export const transformOutcomes = (orig: TriggerOutcome[]): any => {
+    let outcomes: any[] = [];
+
+    orig.forEach((o) => {
+        const outcome: any = {};
+        outcome[`${o.trigger.name}(${friendlyArgs(o.trigger.args, o.trigger.argTypes)})`] = friendlyOutcome(o);
+        outcome.events = [];
+        o.events?.forEach((e) => {
+            // TODO: formatting from config new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
+            outcome.events.push(`${e.contract}.${e.name}(${friendlyArgs(e.argValues!, e.argTypes!, e.argNames)})`);
+        });
+        outcomes.push(outcome);
+    });
+    return outcomes;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // Readers
 

@@ -9,7 +9,7 @@ import { ContractTransactionReceipt, ContractTransactionResponse, Log, ethers } 
 import { GraphNode, contracts, nodes } from './graph';
 import { log } from './logging';
 import { ContractWithAddress } from './Blockchain';
-import { addressToName, friendlyArgs, nameToAddress } from './friendly';
+import { addressToName, friendlyArgs } from './friendly';
 import { ConfigFormatApply } from './config';
 
 export type TriggerTemplate = {
@@ -22,10 +22,19 @@ export type TriggerTemplate = {
 export type Trigger = TriggerTemplate & {
     args: any[]; // these are the args for the pull function
 };
+
+type Event = {
+    address: string;
+    raw: any;
+    contract?: string;
+    name?: string;
+} & Partial<{ error: string }> &
+    Partial<{ argNames: string[]; argValues?: any[]; argTypes?: string[] }>;
+
 export type TriggerOutcome = {
     trigger: Trigger;
 } & Partial<{ error: string }> &
-    Partial<{ events: any[]; gas: bigint }> &
+    Partial<{ events: Event[]; gas: bigint }> &
     Partial<{ value: any }>;
 
 export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): Promise<TriggerOutcome> => {
@@ -35,45 +44,41 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
         const pullResult = await trigger.pull(...(trigger.args || []));
         if (typeof pullResult === 'object') {
             // TODO: generate user functions elsewhere
-            // const tx = await contracts[event.contract].connect(users[event.user])[event.function](...args);
+            // const tx = await contracts[event.e].connect(users[event.user])[event.function](...args);
             const tx: ContractTransactionResponse = pullResult;
             if (addEvents) {
                 const receipt = await tx.wait();
-
                 if (receipt) {
                     result.gas = receipt.gasUsed;
                     result.events = [];
                     for (const event of receipt.logs) {
-                        let resultLog: any = event.toJSON();
+                        const resultEvent: Event = { address: event.address, raw: event.toJSON() };
                         const node = nodes.get(event.address);
                         if (node) {
-                            // TODO: move this to friendly?
                             const contractInstance = addressToName(event.address);
                             const contract = await node.getContract();
                             if (contract) {
+                                resultEvent.contract = await node.contractNamish();
                                 const parsed = contract.interface.parseLog({
                                     topics: event.topics.slice(),
                                     data: event.data,
                                 });
                                 if (parsed) {
-                                    let parsed2 = `${contractInstance}.${parsed.name}`;
-                                    parsed2 += friendlyArgs(
-                                        parsed.args,
-                                        parsed.fragment.inputs.map((i) => i.type),
-                                        parsed.fragment.inputs.map((i) => i.name),
-                                        new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
-                                    );
-                                    resultLog = parsed2;
+                                    resultEvent.name = parsed.name;
+                                    resultEvent.argNames = parsed.fragment.inputs.map((i) => i.name);
+                                    resultEvent.argTypes = parsed.fragment.inputs.map((i) => i.type);
+                                    resultEvent.argValues = parsed.args;
                                 } else {
-                                    resultLog += ' ! could not parse the event log based on dug up contract interface';
+                                    resultEvent.error =
+                                        ' ! could not parse the event log based on dug up contract interface';
                                 }
                             } else {
-                                resultLog += ' ! not a contract';
+                                resultEvent.error = ' ! not a contract';
                             }
                         } else {
-                            resultLog += ' ! not an address dug up';
+                            resultEvent.error = ' ! not an address dug up';
                         }
-                        result.events.push(resultLog);
+                        result.events.push(resultEvent);
                     }
                 }
             }

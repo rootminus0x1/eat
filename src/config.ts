@@ -5,7 +5,7 @@ import lodash from 'lodash'; //
 import yargs from 'yargs';
 import path from 'path';
 import { Logger, log } from './logging';
-import { functionField, transformReadings, yamlIt } from './friendly';
+import { functionField, transformOutcomes, transformReadings, yamlIt } from './friendly';
 import { Field, Reading } from './read';
 import { TriggerOutcome } from './trigg';
 import { getAddress } from 'ethers';
@@ -89,7 +89,7 @@ export const writeEatFile = (name: string, results: string): void => {
 };
 
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
-    let simData = simulation ? yamlIt({ simulation: simulation }) : '';
+    let simData = simulation ? yamlIt({ simulation: transformOutcomes(simulation) }) : '';
     // writeEatFile("old_" + fileName, simData + yamlIt(transformReadingsOrig(results)));
     writeEatFile(fileName, simData + yamlIt({ deployments: transformReadings(results) }));
 };
