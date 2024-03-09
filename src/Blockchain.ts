@@ -186,7 +186,19 @@ export const addTokenToWhale = async (tokenName: string, amount: bigint): Promis
     }
 };
 
-type ERC20Fields = { name: string | undefined; symbol: string | undefined };
+type ERC20Fields = { name?: string; symbol?: string };
+const getERC20Info = async (address: string): Promise<ERC20Fields> => {
+    try {
+        const erc20Token = new ethers.Contract(
+            address,
+            ['function name() view returns (string)', 'function symbol() view returns (string)'],
+            ethers.provider,
+        );
+        return { name: await erc20Token.name(), symbol: await erc20Token.symbol() };
+    } catch (error: any) {
+        return {};
+    }
+};
 
 type RawContractInfo = {
     sourceCode: getSourceCodeResponse | null;
@@ -252,11 +264,13 @@ class LocalBlockchainAddress<T extends BaseContract> implements IBlockchainAddre
     };
 
     public erc20Symbol = async (): Promise<string | undefined> => {
-        return undefined;
+        const erc20Info = await getERC20Info(this.contract.address);
+        return erc20Info.symbol;
     };
 
     public erc20Name = async (): Promise<string | undefined> => {
-        return undefined;
+        const erc20Info = await getERC20Info(this.contract.address);
+        return erc20Info.name;
     };
 
     public isContract = async (): Promise<boolean> => {
@@ -292,18 +306,7 @@ export class BlockchainAddress implements IBlockchainAddress<Contract> {
                 result.contractInfo = await getContractInfo(this.address);
 
                 // check for ERC20 contract and extract extra info
-                result.erc20Fields = { name: undefined, symbol: undefined };
-                try {
-                    const erc20Token = new ethers.Contract(
-                        this.address,
-                        ['function name() view returns (string)', 'function symbol() view returns (string)'],
-                        ethers.provider,
-                    );
-                    result.erc20Fields.name = await erc20Token.name();
-                    result.erc20Fields.symbol = await erc20Token.symbol();
-                } catch (error: any) {
-                    /* just ignore the errors */
-                }
+                result.erc20Fields = await getERC20Info(this.address);
                 if (
                     result.contractInfo?.sourceCode &&
                     result.contractInfo.sourceCode.Proxy > 0 &&
