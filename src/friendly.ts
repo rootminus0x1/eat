@@ -82,7 +82,7 @@ const formatAddress = (value: string): string => {
     return addressToName(value);
 };
 
-const formatGas = (gas: bigint) => `${gas / 1000n}k`;
+const formatGas = (gas: bigint) => `${gas.toLocaleString()}`;
 
 const formatError = (e: string | undefined): string => {
     let message = e || 'undefined error';
@@ -174,7 +174,7 @@ export const friendlyArgs = (
     rawArgs: any[],
     argTypes: string[],
     argNames?: string[],
-    formatting?: Map<string, ConfigFormatApply>,
+    formatting: Map<string, ConfigFormatApply> = new Map([['unit256', { unit: 18, precision: 4 }]]),
 ): string => {
     let result = rawArgs
         .map((a: any, i: number) =>
@@ -214,11 +214,13 @@ export const transformOutcomes = (orig: TriggerOutcome[]): any => {
 
     orig.forEach((o) => {
         const outcome: any = {};
-        outcome[`${o.trigger.name}(${friendlyArgs(o.trigger.args, o.trigger.argTypes)})`] = friendlyOutcome(o);
+        outcome[`${o.trigger.name}${friendlyArgs(o.trigger.args, o.trigger.argTypes)}`] = friendlyOutcome(o);
         outcome.events = [];
         o.events?.forEach((e) => {
             // TODO: formatting from config new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
-            outcome.events.push(`${e.contract}.${e.name}(${friendlyArgs(e.argValues!, e.argTypes!, e.argNames)})`);
+            outcome.events.push(
+                `${addressToName(e.address)}.${e.name}${friendlyArgs(e.argValues!, e.argTypes!, e.argNames)}`,
+            );
         });
         outcomes.push(outcome);
     });
