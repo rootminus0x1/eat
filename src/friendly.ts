@@ -1,4 +1,4 @@
-import { ZeroAddress, formatUnits, parseUnits } from 'ethers';
+import { MaxUint256, ZeroAddress, formatUnits, parseUnits } from 'ethers';
 
 import { contracts, nodes } from './graph';
 import { Field, Reader, Reading, ReadingData, ReadingType, ReadingValue } from './read';
@@ -42,11 +42,17 @@ export const JSONreplacer = (key: string, value: any) =>
 // formattimg of specific field types
 
 // format a bigint according to unit and precision
-const formatBigInt = (value: bigint, addPlus: boolean, unit?: number | string, precision?: number): string => {
+export const formatBigInt = (
+    value: bigint,
+    unit: number | string = 'ether',
+    precision?: number,
+    addPlus?: boolean,
+): string => {
     const doUnit = (value: bigint): string => {
         if (value === undefined) {
             log(`encountered undefined in formatBigInt.doUnit`);
         }
+        if (value === MaxUint256) return 'MaxUint256';
         return unit ? formatUnits(value, unit) : value.toString();
     };
     let result = doUnit(value);
@@ -114,7 +120,7 @@ const friendlyReadingType = (
         if (value === undefined) {
             log(`undefined where bigint was expected`);
         }
-        result = formatBigInt(value as bigint, delta, formatting?.unit, formatting?.precision);
+        result = formatBigInt(value as bigint, formatting?.unit, formatting?.precision, delta);
     } else {
         log(`unexpected type ${type}`);
         result = value.toLocaleString();
