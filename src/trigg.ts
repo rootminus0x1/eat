@@ -45,10 +45,10 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
                     result.events = [];
                     for (const event of receipt.logs) {
                         let resultLog: any = event.toJSON();
-                        const contractInstance = addressToName(event.address);
                         const node = nodes.get(event.address);
                         if (node) {
                             // TODO: move this to friendly?
+                            const contractInstance = addressToName(event.address);
                             const contract = await node.getContract();
                             if (contract) {
                                 const parsed = contract.interface.parseLog({
@@ -56,18 +56,22 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
                                     data: event.data,
                                 });
                                 if (parsed) {
-                                    let parsed2 = `${contractInstance}->${parsed.name}`;
+                                    let parsed2 = `${contractInstance}.${parsed.name}`;
                                     parsed2 += friendlyArgs(
                                         parsed.args,
                                         parsed.fragment.inputs.map((i) => i.type),
                                         parsed.fragment.inputs.map((i) => i.name),
-                                        new Map<string, ConfigFormatApply>([
-                                            ['uint256', { unit: 'ether', precision: 3 }],
-                                        ]),
+                                        new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
                                     );
                                     resultLog = parsed2;
+                                } else {
+                                    resultLog += ' ! could not parse the event log based on dug up contract interface';
                                 }
+                            } else {
+                                resultLog += ' ! not a contract';
                             }
+                        } else {
+                            resultLog += ' ! not an address dug up';
                         }
                         result.events.push(resultLog);
                     }

@@ -464,20 +464,6 @@ const _delve = async (stack: string, simulation: Trigger[] = []): Promise<[Readi
 
 export const delve = withLogging(_delve);
 
-/*
-type Simulation = Event[];
-
-type SimulationThenMeasurement = {
-    simulation?: Simulation; // do these
-    calculations: {
-        // then reading these
-        match: MeasurementsMatch;
-        lineStyle?: string; // drawing them this way
-        y2axis?: boolean;
-    }[];
-};
-*/
-
 const formatForCSV = (value: string): string =>
     // If the value contains a comma, newline, or double quote, enclose it in double quotes
     /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
@@ -506,9 +492,6 @@ const formatEventResult = (ef: ErrorFormatter, event: EventResult): string => {
     }
     return eventDisplay;
 };
-
-/*
-THE NEW DELVEPLOT
 */
 
 type Axis = {

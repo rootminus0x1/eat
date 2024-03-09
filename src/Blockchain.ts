@@ -93,14 +93,21 @@ export const setupBlockchain = async (): Promise<void> => {
 
 let allSigners: SignerWithAddress[] | undefined;
 let allocatedSigners = 0;
+
+//type SignerWithNameAndAddress = SignerWithAddress & { name: string };
 let addedSigners = new Map<string, SignerWithAddress>();
 
 export const getSigner = async (name: string): Promise<SignerWithAddress> => {
     if (!allSigners) throw 'need to setupBlockchain';
     let found = addedSigners.get(name);
-    if (!found) found = allSigners[allocatedSigners++] as SignerWithAddress;
-    addedSigners.set(name, found);
-    return found;
+    if (!found) {
+        const newSigner: any = allSigners[allocatedSigners++];
+        newSigner.name = name;
+        found = newSigner;
+        // found = allSigners[allocatedSigners++] /* as SignerWithAddress */;
+        addedSigners.set(name, found!);
+    }
+    return found!;
 };
 
 export const getSignerAt = async (address: string, field?: string): Promise<HardhatEthersSigner | null> => {
