@@ -27,7 +27,6 @@ import {
 import { getConfig, getFormatting, stringCompare, writeFile } from './config';
 import { log, withLogging } from './logging';
 import { ReaderTemplate, ReadingValue, callReader, makeReader } from './read';
-import { listeners } from 'process';
 
 const _dig = async (stack: string, loud: boolean = false) => {
     // we reset the graph (which is a set of global variables)
