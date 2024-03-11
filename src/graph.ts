@@ -8,12 +8,13 @@ import { fieldToName, nameToAddress } from './friendly';
 import { readingDelta } from './delve';
 
 // the nodes, also contains static information about the nodes, name, etc
+export type SuffixMatch = Map<string, string[]> | undefined;
 export type GraphNode = {
     name: string;
     signer?: SignerWithAddress;
     leaf?: boolean;
     address: string;
-    extraNameAddresses: string[];
+    suffix?: SuffixMatch;
 } & IBlockchainAddress<Contract>;
 // the links - between a from address (key) and to list of named addresses (value)
 export type Link = { name: string; address: string };

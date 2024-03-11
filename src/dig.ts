@@ -6,6 +6,7 @@ import { ethers } from 'hardhat';
 import { Contract, FunctionFragment, MaxUint256, ZeroAddress, getAddress } from 'ethers';
 
 import { parseArg } from './friendly';
+import { SuffixMatch } from './graph';
 
 const sourceDir = './eat-source';
 
@@ -83,7 +84,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
                             address: address.address,
                             name: await blockchainAddress.contractNamish(),
                             leaf: address.follow == 0,
-                            extraNameAddresses: dugUp.extraNameAddresses,
+                            suffix: dugUp.suffix,
                         },
                         blockchainAddress,
                     ),
@@ -101,7 +102,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
                         if (!addresses[comingUp].config)
                             addresses[comingUp].follow = Math.max(addresses[comingUp].follow, actualFollow);
                     } else {
-                        // add a new one but with in the config limits
+                        // add a new one but within the config limits
                         const limited = limits.get(address);
                         addresses.push({
                             address: address,
@@ -111,7 +112,10 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     }
                 };
 
-                const addLinks = (nodeAddress: string, toAdd: Link[], follow: number) => {
+                const addLinks = (nodeAddress: string, _toAdd: Link[], follow: number) => {
+                    // only add an address if it has not been pruned
+                    const toAdd = _toAdd.filter((a) => !getConfig()?.prune || !getConfig()?.prune?.includes(a.address));
+
                     // process the links
                     links.set(nodeAddress, (links.get(address.address) ?? []).concat(toAdd));
                     // and consequent backlinks and nodes
@@ -143,12 +147,24 @@ const _dig = async (stack: string, loud: boolean = false) => {
     }
 
     // make node names unique and also javascript identifiers
-    // first make them javascript identifier
     const nodeNames = new Map<string, string[]>();
     for (const [address, node] of tempNodes) {
         // augment the name with the extraNameAddress, if we ca find it
-        const extraNames = node.extraNameAddresses.map((a) => tempNodes.get(a)?.name).filter((n) => n);
-        if (extraNames.length) node.name = `${node.name}__${extraNames.join('_')}`;
+        if (node.suffix) {
+            let extraNames: string[] = [];
+            for (const [name, addresses] of node.suffix) {
+                if (addresses.length) {
+                    addresses.forEach((a, i) => {
+                        extraNames.push(tempNodes.get(a)?.name || `\$${name}_at_${i}\$`);
+                    });
+                } else {
+                    extraNames.push(`\$${name}\$`);
+                }
+            }
+            if (extraNames.length) {
+                node.name = `${node.name}__${extraNames.join('_')}`;
+            }
+        }
         // make it javascript id
         // replace multiple whitespaces with underscores
         node.name = node.name.replace(/\s+/g, '_');
@@ -164,7 +180,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
     // now find duplicates
     for (const [name, addresses] of nodeNames) {
         if (addresses.length > 1) {
-            //log(`name ${name} has more than one address`);
+            log(`name ${name} has more than one address`);
             // find the links to get some name for them
             let unique = 0;
             for (const address of addresses) {
@@ -242,6 +258,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
         }
     }
 };
+export const dig = withLogging(_dig);
 
 export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
     if (address === ZeroAddress) return null;
@@ -266,17 +283,24 @@ const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: nu
 
 const digDeep = async (
     address: IBlockchainAddress<Contract>,
-): Promise<{ readerTemplates: ReaderTemplate[]; links: Link[]; roles: Role[]; extraNameAddresses: string[] }> => {
+): Promise<{ readerTemplates: ReaderTemplate[]; links: Link[]; roles: Role[]; suffix: SuffixMatch }> => {
     const roles: Role[] = [];
     const links: Link[] = [];
     const readerTemplates: ReaderTemplate[] = [];
-    let extraNameAddresses: string[] = [];
+    let suffix: SuffixMatch = undefined;
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
     if (contract) {
         // TODO: do something with constructor arguments and initialize calls (for logics)
-
+        // set up the name suffix (in the order given by config)
+        const contractType = await address.contractNamish();
+        for (const match of getConfig().suffix || []) {
+            if (match.contract === contractType) {
+                suffix = new Map(match.fields.map((f) => [f, []]));
+                break; // just the first one.
+            }
+        }
         let functions: FunctionFragment[] = [];
         let roleFunctions: string[] = [];
         contract.interface.forEachFunction((func) => {
@@ -342,7 +366,7 @@ const digDeep = async (
                 }
                 return indices;
             }, [] as number[])) {
-                const _contract = await address.contractNamish();
+                const _contract = contractType;
                 const _field =
                     func.outputs.length != 1 ? { name: func.outputs[outputIndex].name, index: outputIndex } : undefined;
                 const _type = func.outputs[outputIndex].type;
@@ -363,13 +387,8 @@ const digDeep = async (
                     const addLink = (name: string, address: string) => {
                         // all links are searched for possible name suffixes
                         links.push({ name: name, address: getAddress(address) });
-                        for (const match of getConfig().suffix || []) {
-                            if (
-                                match.contract === readerTemplate.contract &&
-                                match.fields.includes(readerTemplate.function)
-                            ) {
-                                extraNameAddresses.push(address);
-                            }
+                        if (suffix) {
+                            suffix.get(readerTemplate.function)?.push(address);
                         }
                     };
                     // need to execute the function
@@ -390,10 +409,9 @@ const digDeep = async (
             }
         }
     }
-    return { readerTemplates: readerTemplates, links: links, roles: roles, extraNameAddresses: extraNameAddresses };
+    return { readerTemplates: readerTemplates, links: links, roles: roles, suffix: suffix };
 };
-
-export const dig = withLogging(_dig);
+//const digDeep = withLogging(_digDeep);
 
 const _digUsers = async () => {
     // add in the users from the config
@@ -409,10 +427,7 @@ const _digUsers = async () => {
             // add them to the graph, too
             nodes.set(
                 signer.address,
-                Object.assign(
-                    { address: signer.address, name: user.name, signer: signer, extraNameAddresses: [] },
-                    digOne(signer.address),
-                ),
+                Object.assign({ address: signer.address, name: user.name, signer: signer }, digOne(signer.address)),
             );
             if (user.wallet) {
                 const userHoldings = new Map<string, bigint>();
