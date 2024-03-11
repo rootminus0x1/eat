@@ -13,7 +13,7 @@ export type GraphNode = {
     signer?: SignerWithAddress;
     leaf?: boolean;
     address: string;
-    extraNameAddress: string;
+    extraNameAddresses: string[];
 } & IBlockchainAddress<Contract>;
 // the links - between a from address (key) and to list of named addresses (value)
 export type Link = { name: string; address: string };

@@ -32,8 +32,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
     // we reset the graph (which is a set of global variables)
     resetGraph();
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
-    const done = new Set<string>(); // ensure addresses are only visited once
-    const depth = getConfig().depth || 10; // don't go deeper than this, from any of the specified addresses
+    const depth = getConfig().depth || 5; // don't go deeper than this, from any of the specified addresses
     const roots = getConfig().root?.map((a) => {
         return { address: a, follow: depth, config: true };
     });
@@ -43,6 +42,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
     const leafs = getConfig().leaf?.map((a) => {
         return { address: a, follow: 0, config: true };
     });
+    const done = new Set<string>(getConfig().prune || []); // ensure addresses are only visited once and the pruned one no times
 
     // the addresses to search
     const addresses = roots || twigs || leafs;
@@ -83,14 +83,14 @@ const _dig = async (stack: string, loud: boolean = false) => {
                             address: address.address,
                             name: await blockchainAddress.contractNamish(),
                             leaf: address.follow == 0,
-                            extraNameAddress: dugUp.extraNameAddress,
+                            extraNameAddresses: dugUp.extraNameAddresses,
                         },
                         blockchainAddress,
                     ),
                 );
                 // add the readers to the contract
                 readerTemplates.set(address.address, dugUp.readerTemplates);
-                // process the roles - add them as addresses, even if they are on leaf addresses
+
                 const addAddress = (address: string, follow: number) => {
                     // need to merge them as the depth shoud take on the larger of the two
                     const actualFollow = Math.max(follow - 1, 0);
@@ -147,10 +147,8 @@ const _dig = async (stack: string, loud: boolean = false) => {
     const nodeNames = new Map<string, string[]>();
     for (const [address, node] of tempNodes) {
         // augment the name with the extraNameAddress, if we ca find it
-        if (node.extraNameAddress) {
-            const extraName = tempNodes.get(node.extraNameAddress)?.name;
-            if (extraName) node.name = `${node.name}__${extraName}`;
-        }
+        const extraNames = node.extraNameAddresses.map((a) => tempNodes.get(a)?.name).filter((n) => n);
+        if (extraNames.length) node.name = `${node.name}__${extraNames.join('_')}`;
         // make it javascript id
         // replace multiple whitespaces with underscores
         node.name = node.name.replace(/\s+/g, '_');
@@ -268,11 +266,11 @@ const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: nu
 
 const digDeep = async (
     address: IBlockchainAddress<Contract>,
-): Promise<{ readerTemplates: ReaderTemplate[]; links: Link[]; roles: Role[]; extraNameAddress: string }> => {
+): Promise<{ readerTemplates: ReaderTemplate[]; links: Link[]; roles: Role[]; extraNameAddresses: string[] }> => {
     const roles: Role[] = [];
     const links: Link[] = [];
     const readerTemplates: ReaderTemplate[] = [];
-    let extraNameAddress = '';
+    let extraNameAddresses: string[] = [];
     // would like to follow also the proxy contained addresses
     // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
     const contract = await address.getContract();
@@ -362,29 +360,28 @@ const digDeep = async (
 
                 // now add the data into links
                 if (func.outputs[outputIndex].type.startsWith('address') && func.inputs.length == 0) {
+                    const addLink = (name: string, address: string) => {
+                        // all links are searched for possible name suffixes
+                        links.push({ name: name, address: getAddress(address) });
+                        for (const match of getConfig().suffix || []) {
+                            if (
+                                match.contract === readerTemplate.contract &&
+                                match.fields.includes(readerTemplate.function)
+                            ) {
+                                extraNameAddresses.push(address);
+                            }
+                        }
+                    };
                     // need to execute the function
                     try {
                         const result = await callReader(makeReader(readerTemplate));
                         if (result.value === undefined) throw Error(`failed to read ${result.error}`);
                         if (Array.isArray(result.value)) {
-                            // TODO: should against reader.type.endsWith('[]')
                             for (let i = 0; i < result.value.length; i++) {
-                                links.push({
-                                    name: outputName(func, outputIndex, i),
-                                    address: getAddress(result.value[i] as string),
-                                });
+                                addLink(outputName(func, outputIndex, i), result.value[i] as string);
                             }
                         } else {
-                            // TODO: make this configurable from config
-                            if (
-                                readerTemplate.contract === 'BoostableRebalancePool' &&
-                                readerTemplate.function === 'wrapper'
-                            )
-                                extraNameAddress = result.value as string;
-                            links.push({
-                                name: outputName(func, outputIndex),
-                                address: getAddress(result.value as string),
-                            });
+                            addLink(outputName(func, outputIndex), result.value as string);
                         }
                     } catch (err) {
                         console.error(`linking - error calling ${address} ${func.name} ${func.selector}: ${err}`);
@@ -393,7 +390,7 @@ const digDeep = async (
             }
         }
     }
-    return { readerTemplates: readerTemplates, links: links, roles: roles, extraNameAddress: extraNameAddress };
+    return { readerTemplates: readerTemplates, links: links, roles: roles, extraNameAddresses: extraNameAddresses };
 };
 
 export const dig = withLogging(_dig);
@@ -413,7 +410,7 @@ const _digUsers = async () => {
             nodes.set(
                 signer.address,
                 Object.assign(
-                    { address: signer.address, name: user.name, signer: signer, extraNameAddress: '' },
+                    { address: signer.address, name: user.name, signer: signer, extraNameAddresses: [] },
                     digOne(signer.address),
                 ),
             );

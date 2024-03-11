@@ -153,6 +153,11 @@ export type ConfigUser = {
     approve: string[]; // contracts that can spend wallet content
 };
 
+type ExtraName = {
+    contract: string;
+    fields: string[];
+};
+
 export type Config = {
     // from the command line
     configName: string;
@@ -170,10 +175,14 @@ export type Config = {
     users: ConfigUser[];
 
     // where to look
-    root: string[];
-    leaf: string[];
-    twig: string[];
-    depth: number;
+    root?: string[];
+    twig?: string[];
+    leaf?: string[];
+    prune?: string[];
+    depth?: number;
+
+    // how to name what is found
+    suffix?: ExtraName[];
 
     // what to output
     diagram: any;
@@ -272,9 +281,10 @@ export const getConfig = (): Config => {
 
         // fix addresses so they are checksummed (EIP-55)
 
-        config.root = config.root.map((a) => getAddress(a));
-        config.leaf = config.leaf.map((a) => getAddress(a));
-        config.twig = config.twig.map((a) => getAddress(a));
+        config.root = config.root?.map((a) => getAddress(a));
+        config.twig = config.twig?.map((a) => getAddress(a));
+        config.leaf = config.leaf?.map((a) => getAddress(a));
+        config.prune = config.prune?.map((a) => getAddress(a));
 
         // add additional fields
         config.configFilePath = configFilePath;
