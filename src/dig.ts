@@ -146,6 +146,11 @@ const _dig = async (stack: string, loud: boolean = false) => {
         }
     }
 
+    const lookupContractName = async (address: string) => {
+        const c = new BlockchainAddress(address);
+        return c?.contractNamish() || undefined;
+    };
+
     // make node names unique and also javascript identifiers
     const nodeNames = new Map<string, string[]>();
     for (const [address, node] of tempNodes) {
@@ -154,9 +159,11 @@ const _dig = async (stack: string, loud: boolean = false) => {
             let extraNames: string[] = [];
             for (const [name, addresses] of node.suffix) {
                 if (addresses.length) {
-                    addresses.forEach((a, i) => {
-                        extraNames.push(tempNodes.get(a)?.name || `\$${name}_at_${i}\$`);
-                    });
+                    for (const [i, a] of addresses.entries()) {
+                        extraNames.push(
+                            tempNodes.get(a)?.name || (await lookupContractName(a)) || `\$${name}_at_${i}\$`,
+                        );
+                    }
                 } else {
                     extraNames.push(`\$${name}\$`);
                 }
