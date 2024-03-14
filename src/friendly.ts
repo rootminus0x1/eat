@@ -42,12 +42,7 @@ export const JSONreplacer = (key: string, value: any) =>
 // formattimg of specific field types
 
 // format a bigint according to unit and precision
-export const formatBigInt = (
-    value: bigint,
-    unit: number | string = 'ether',
-    precision?: number,
-    addPlus?: boolean,
-): string => {
+export const formatBigInt = (value: bigint, unit?: number | string, precision?: number, addPlus?: boolean): string => {
     const doUnit = (value: bigint): string => {
         if (value === undefined) {
             log(`encountered undefined in formatBigInt.doUnit`);

@@ -66,7 +66,14 @@ export const findDeltaReader = async (id: string, fn: string, field: string = ''
             read: async (...args: any[]): Promise<ReadingValue> => {
                 const again = await callReader(baseReader); // call it again
                 const delta = readingDelta(again, base, baseReader.formatting, baseReader.type);
-                return delta.value !== undefined ? delta.value : 'value not defined';
+                if (delta.value === undefined) {
+                    log(
+                        `undefined delta: ${id}.${fn}${field ? '.' + field : ''}(${args.map((a) =>
+                            a.toString().join(','),
+                        )})`,
+                    );
+                }
+                return delta.value || 0n; // TODO: fix this
             },
         }),
         'changes',
