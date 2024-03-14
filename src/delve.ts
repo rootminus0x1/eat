@@ -370,8 +370,9 @@ export const inverse = async (
         while (xlow <= xhigh) {
             xmid = xlow + (xhigh - xlow) / 2n;
             const ymid = await f(xmid);
-            if (ymid === undefined) throw `f(${xmid}) failed when it shouldn't!`;
-
+            if (ymid === undefined) {
+                throw `f(${xmid}) failed when it shouldn't!`;
+            }
             if (ytarget - ytolerance <= ymid && ymid <= ytarget + ytolerance) {
                 break; // Found a value within the tolerance
             }

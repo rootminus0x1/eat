@@ -10,7 +10,7 @@ import { SuffixMatch } from './graph';
 
 const sourceDir = './eat-source';
 
-import { IBlockchainAddress, BlockchainAddress, addTokenToWhale, getSignerAt, getSigner, whale } from './Blockchain';
+import { IBlockchainAddress, BlockchainAddress, addTokenToWhale, getSigner, whale, getSignerAt } from './Blockchain';
 import {
     Link,
     backLinks,
@@ -222,11 +222,26 @@ const _dig = async (stack: string, loud: boolean = false) => {
     for (const [address, node] of nodes) {
         const contract = await node.getContract(whale);
         if (contract) {
+            // get an owner signer
+            const contractRoles = roles.get(contract.address);
+            // first try the "owner" field
+            let ownerAddress: string | undefined = undefined;
+            // look up the owner property of address
+            try {
+                ownerAddress = await contract['owner']();
+            } catch (any) {
+                // or look up the DEFAULT_ADMIN_ROLE role
+                const ownerAddresses = contractRoles
+                    ?.filter((r) => r.name === 'DEFAULT_ADMIN_ROLE')
+                    .flatMap((role) => role.addresses);
+                if (ownerAddresses && ownerAddresses.length) ownerAddress = ownerAddresses[0];
+            }
+
             const richContract = Object.assign(contract, {
                 name: node.name,
                 // contractType: node.contractName,
-                ownerSigner: await getSignerAt(address, 'owner'),
-                roles: roles.get(contract.address),
+                ownerSigner: ownerAddress ? await getSignerAt(ownerAddress) : undefined,
+                roles: contractRoles,
             });
             contracts[node.name] = richContract;
             contracts[address] = richContract;
@@ -454,6 +469,7 @@ const _digUsers = async () => {
         }
         // now we've added the users, we can fill their wallets
         for (const [contract, amount] of totalHoldings) {
+            //log(`whale stealing ${formatEther(amount)} of ${contract}`);
             await addTokenToWhale(contract, amount);
         }
         for (const [userName, userHoldings] of holdings) {
@@ -461,7 +477,7 @@ const _digUsers = async () => {
             // TODO: use setBalance to set ETH holdings
             for (const [tokenName, amount] of userHoldings) {
                 // just add enough to make it to at least the holding
-                const currentHolding = await contracts[tokenName].balanceOf(users[userName].address);
+                const currentHolding: bigint = await contracts[tokenName].balanceOf(users[userName].address);
                 if (currentHolding < amount) {
                     if (
                         !(await contracts[tokenName]
@@ -479,7 +495,7 @@ const _digUsers = async () => {
                         ) {
                             throw Error(`could not approve ${contract} to use all ${userName}'s ${tokenName}`);
                         }
-                        log(`approved ${contract} to use all ${userName}'s ${tokenName}`);
+                        //log(`approved ${contract} to use all ${userName}'s ${tokenName}`);
                     }
                 }
             }

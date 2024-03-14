@@ -1,6 +1,6 @@
 import { takeSnapshot } from '@nomicfoundation/hardhat-network-helpers';
 import { setupBlockchain } from './Blockchain';
-import { writeDiagram } from './config';
+import { writeDiagram, writeReadings } from './config';
 import { dig, digUsers } from './dig';
 import { mermaid } from './mermaid';
 import { Reading } from './read';
@@ -17,7 +17,7 @@ export const eatMain = async (runs: IEat[], loud: boolean = false): Promise<void
     await setupBlockchain();
 
     await dig('blockchain', loud);
-    if (loud) writeDiagram('blockchain', await mermaid());
+    writeDiagram('blockchain', await mermaid());
 
     const snapshot = await takeSnapshot();
     for (const run of runs) {
@@ -32,6 +32,7 @@ export const eatMain = async (runs: IEat[], loud: boolean = false): Promise<void
 
         // now collect a base set of readings
         const [base] = await delve(run.name);
+        writeReadings(`${run.name}-base`, base);
 
         // and do stuff, comparing it to base, as needed
         await run.doStuff(base);

@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
-import { BaseContract, Contract, ZeroAddress, parseEther } from 'ethers';
+import { BaseContract, Contract, DeferredTopicFilter, ZeroAddress, parseEther } from 'ethers';
 
 import { ethers, network } from 'hardhat';
 import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
@@ -78,7 +78,7 @@ export const parseTime = (amount: number, units: string): number => {
 };
 
 export const setupBlockchain = async (): Promise<void> => {
-    resetGraph();
+    resetGraph(); // initialise the graph
     // go to the block
     await reset(process.env.MAINNET_RPC_URL, getConfig().block);
     getConfig().timestamp = await time.latest();
@@ -106,37 +106,56 @@ export const getSigner = async (name: string): Promise<SignerWithAddress> => {
         found = newSigner;
         // found = allSigners[allocatedSigners++] /* as SignerWithAddress */;
         addedSigners.set(name, found!);
+        await setBalance(newSigner.address, parseEther('100')); // 100 ether should be enough
     }
     return found!;
 };
 
-export const getSignerAt = async (address: string, field?: string): Promise<HardhatEthersSigner | null> => {
-    let theAddress = undefined;
-    if (field) {
-        // look up the property of address
-        let contract = new ethers.Contract(address, [`function ${field}() view returns (address)`], whale);
-        // call the field function
-        try {
-            theAddress = await contract[field]();
-        } catch (any) {}
-    } else {
-        theAddress = address;
-    }
+export const getSignerAt = async (address: string): Promise<HardhatEthersSigner | null> => {
     let signer: HardhatEthersSigner | null = null;
-    if (theAddress) {
+    if (address) {
         try {
-            signer = await ethers.getImpersonatedSigner(theAddress);
-            await setBalance(signer.address, parseEther('10')); // 10 ether should be enough
+            signer = await ethers.getImpersonatedSigner(address);
+            // need to give the impersonated signer some eth (aparently need 0.641520744180000000 eth to do some actions!)
+            await setBalance(signer.address, parseEther('100')); // 100 ether should be enough
         } catch (any) {}
-        // need to give the impersonated signer some eth (aparently need 0.641520744180000000 eth to do some actions!)
     }
     return signer;
 };
 
+async function* queryFilter(contract: Contract, criteria: DeferredTopicFilter) {
+    let toBlock = getConfig().block;
+    let fromBlock = 0;
+    let step = toBlock; // do the whole lot in one go
+
+    let successfulToBlock: number = toBlock + 1;
+
+    while (toBlock >= 0) {
+        try {
+            const events = await contract.queryFilter(criteria, fromBlock, toBlock);
+            // Yield individual events
+            for (const event of events.reverse()) {
+                yield event;
+            }
+            // Adjust toBlock for the next iteration to continue backward
+            successfulToBlock = toBlock;
+            toBlock = fromBlock - 1;
+        } catch (error) {
+            // On exception, halve the step size and recalculate fromBlock
+            step = Math.max(Math.floor(step / 2), 1); // Ensure step size doesn't become 0
+            toBlock = successfulToBlock - 1; // Attempt smaller range from the last successful end
+        } finally {
+            fromBlock = Math.max(toBlock - step + 1, 0);
+        }
+    }
+}
+
+// TODO: remove the whale and just transfer to any named owner. Need to transfer the exact amount though. Maybe use the whale as an interediary?
+
 export const addTokenToWhale = async (tokenName: string, amount: bigint): Promise<void> => {
     //console.log(`stealing ${formatEther(amount)} of ${tokenName}, ${contracts[tokenName].address} ...`);
     // Get historical transactions for the proxy contract
-    /* TODO: keep this for when contracts doesn't have the token in it?
+    /* TODO: keep this for when the contracts structure doesn't have the token in it?
     const tokenContract = new ethers.Contract(
         tokenAddress,
         [
@@ -149,20 +168,11 @@ export const addTokenToWhale = async (tokenName: string, amount: bigint): Promis
     */
     const tokenContract = contracts[tokenName] as Contract;
 
-    // Get the Transfer events
-    const transferEvents = await tokenContract.queryFilter(tokenContract.filters.Transfer(), 0xaf2c74, 0xb4d9f4);
-
+    const done = new Set(nodes.keys()); // don't do interesting addresses
     let currentBalance: bigint = await tokenContract.balanceOf(whale); // to meet the target amount
 
-    const done = new Set(nodes.keys()); // don't do interesting addresses
-    for (const event of transferEvents.sort((a: any, b: any) => {
-        // most recent first
-        if (a.blockNumber !== b.blockNumber) {
-            return b.blockNumber - a.blockNumber; // Reverse block number order
-        } else {
-            return b.transactionIndex - a.transactionIndex; // Reverse transaction index order
-        }
-    })) {
+    for await (const event of queryFilter(tokenContract, tokenContract.filters.Transfer())) {
+        if (currentBalance >= amount) break;
         const parsedEvent = tokenContract.interface.parseLog({
             topics: [...event.topics],
             data: event.data,
@@ -170,18 +180,21 @@ export const addTokenToWhale = async (tokenName: string, amount: bigint): Promis
         if (parsedEvent) {
             // steal the transferree's tokens, avoiding known interesting addresses
             const to = parsedEvent.args.to;
-            if (!done.has(to)) {
+            if (to !== '0x0000000000000000000000000000000000000000' && !done.has(to)) {
                 done.add(to); // don't do this one again
                 const pawn = await ethers.getImpersonatedSigner(to);
                 try {
                     let pawnHolding: bigint = await tokenContract.balanceOf(pawn);
-                    await (tokenContract.connect(pawn) as any).transfer(whale.address, pawnHolding);
-                    currentBalance = await tokenContract.balanceOf(whale);
+                    if (pawnHolding > 0n) {
+                        await setBalance(pawn.address, 27542757796200000000n); // pawn needs some juice
+                        await (tokenContract.connect(pawn) as any).transfer(whale.address, (pawnHolding * 9n) / 10n); // leave them a pittance
+                        currentBalance = await tokenContract.balanceOf(whale);
+                    }
                 } catch (e: any) {
-                    //console.log(e.message);
+                    // we don't care there's an error, as the pawn may not still have
+                    log(e.message);
                 }
             }
-            if (currentBalance >= amount) break;
         }
     }
 };

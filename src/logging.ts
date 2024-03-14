@@ -96,10 +96,10 @@ export class Logger {
         this.startTime = performance.now();
     }
 
-    public done = (): number => {
+    public done = (success: boolean = true): number => {
         const duration = performance.now() - this.startTime;
         indentLevel--;
-        console.log(`${this.leader} took ${(duration / 1000).toLocaleString('en')}s.`);
+        console.log(`${this.leader}${success ? '' : ' FAILED'} took ${(duration / 1000).toLocaleString('en')}s.`);
         return duration;
     };
 }
@@ -107,10 +107,13 @@ export class Logger {
 export const withLogging = (fn: any) => {
     return async (...args: any[]) => {
         const timer = new Logger(fn.name, args);
+        let success = false;
         try {
-            return await fn(...args); // Execute the original function
+            const result = await fn(...args); // Execute the original function
+            success = true;
+            return result;
         } finally {
-            timer.done();
+            timer.done(success);
         }
     };
 };
