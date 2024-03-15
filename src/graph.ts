@@ -68,9 +68,9 @@ export const findDeltaReader = async (id: string, fn: string, field: string = ''
                 const delta = readingDelta(again, base, baseReader.formatting, baseReader.type);
                 if (delta.value === undefined) {
                     log(
-                        `undefined delta: ${id}.${fn}${field ? '.' + field : ''}(${args.map((a) =>
-                            a.toString().join(','),
-                        )})`,
+                        `undefined delta: ${id}.${fn}${field ? '.' + field : ''}(${args
+                            .map((a) => a.toString())
+                            .join(',')})`,
                     );
                 }
                 return delta.value || 0n; // TODO: fix this
@@ -90,7 +90,7 @@ export let users: any = {};
 export let localNodes = new Map<string, GraphNode>();
 
 export const resetGraph = () => {
-    log('resetting graph');
+    // log('resetting graph');
     nodes = new Map<string, GraphNode>(); // address to object
     links = new Map<string, Link[]>(); // address to array of links, from -> to:Link[]
     backLinks = new Map<string, Link[]>(); // reverse of above, to -> from:Link[]
