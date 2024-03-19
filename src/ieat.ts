@@ -25,50 +25,6 @@ const logCustomError = (signature: string) => {
 export const eatMain = async (runs: IEat[], loud: boolean = false): Promise<void> => {
     await setupBlockchain();
 
-    logCustomError('ErrorCallerNotFUSD()');
-
-    /// @dev Thrown when token mint is paused.
-    logCustomError('ErrorMintPaused()');
-
-    /// @dev Thrown when fToken mint is paused in stability mode.
-    logCustomError('ErrorFTokenMintPausedInStabilityMode()');
-
-    /// @dev Thrown when mint with zero amount base token.
-    logCustomError('ErrorMintZeroAmount()');
-
-    /// @dev Thrown when the amount of fToken is not enough.
-    logCustomError('ErrorInsufficientFTokenOutput()');
-
-    /// @dev Thrown when the amount of xToken is not enough.
-    logCustomError('ErrorInsufficientXTokenOutput()');
-
-    /// @dev Thrown when token redeem is paused.
-    logCustomError('ErrorRedeemPaused()');
-
-    /// @dev Thrown when xToken redeem is paused in stability mode.
-    logCustomError('ErrorXTokenRedeemPausedInStabilityMode()');
-
-    /// @dev Thrown when redeem with zero amount fToken or xToken.
-    logCustomError('ErrorRedeemZeroAmount()');
-
-    /// @dev Thrown when the amount of base token is not enough.
-    logCustomError('ErrorInsufficientBaseOutput()');
-
-    /// @dev Thrown when the stability ratio is too large.
-    logCustomError('ErrorStabilityRatioTooLarge()');
-
-    /// @dev Thrown when the default fee is too large.
-    logCustomError('ErrorDefaultFeeTooLarge()');
-
-    /// @dev Thrown when the delta fee is too small.
-    logCustomError('ErrorDeltaFeeTooSmall()');
-
-    /// @dev Thrown when the sum of default fee and delta fee is too large.
-    logCustomError('ErrorTotalFeeTooLarge()');
-
-    /// @dev Thrown when the given address is zero.
-    logCustomError('ErrorZeroAddress()');
-
     await dig('blockchain', loud);
     writeDiagram('blockchain', await mermaid());
     await digSource();
