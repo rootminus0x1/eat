@@ -169,7 +169,7 @@ export const friendlyArgs = (
     rawArgs: any[],
     argTypes: string[],
     argNames?: string[],
-    formatting: Map<string, ConfigFormatApply> = new Map([['uint256', { unit: 18, precision: 4 }]]),
+    formatting?: Map<string, ConfigFormatApply> /* = new Map([['uint256', { unit: 18, precision: 4 }]])*/,
 ): string => {
     let result = rawArgs
         .map((a: any, i: number) =>

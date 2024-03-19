@@ -26,8 +26,9 @@ import {
     localNodes,
 } from './graph';
 import { getConfig, getFormatting, stringCompare, writeFile } from './config';
-import { log, withLogging } from './logging';
+import { Logger, log, withLogging } from './logging';
 import { ReaderTemplate, ReadingValue, callReader, makeReader } from './read';
+import { sep } from 'path';
 
 const _dig = async (stack: string, loud: boolean = false) => {
     // we reset the graph (which is a set of global variables)
@@ -245,35 +246,6 @@ const _dig = async (stack: string, loud: boolean = false) => {
             });
             contracts[node.name] = richContract;
             contracts[address] = richContract;
-            // write out source file(s)
-            // TODO: one file per contract type?
-            const sourceCodeText = await node.getSourceCode();
-            // TODO: handle vyper code
-            if (sourceCodeText !== undefined) {
-                const dir = `${sourceDir}/${getConfig().configName}/${node.name}`;
-                if (sourceCodeText.length == 0 || sourceCodeText[0] !== '{') {
-                    // it's text (some older contracts are this)
-                    // handle vyper & solidity code
-                    let extension = '.txt';
-                    if (sourceCodeText.match(/(^|\n)\@external\s\n/)) {
-                        extension = '.vy';
-                    } else {
-                        extension = '.sol';
-                    }
-                    writeFile(`${dir}${extension}`, sourceCodeText);
-                } else {
-                    // else it's probably json
-                    let json = undefined;
-                    try {
-                        json = JSON.parse(sourceCodeText.slice(1, -1)); // remove spurious { & }
-                        Object.entries(json.sources).forEach(([filePath, file]) => {
-                            writeFile(`${dir}/${filePath}`, (file as any).content);
-                        });
-                    } catch (e: any) {
-                        console.log(`error in ${node.name} source code: ${e}`);
-                    }
-                }
-            }
         } else {
             users[node.name] = await ethers.getImpersonatedSigner(address);
             users[address] = users[node.name];
@@ -515,3 +487,77 @@ const _digUsers = async () => {
 };
 
 export const digUsers = withLogging(_digUsers);
+
+export const digSource = async () => {
+    for (const [address, node] of nodes) {
+        const contract = await node.getContract(whale);
+        if (contract && (await node.contractNamish()) !== 'GnosisSafe') {
+            log(`writing source for ${await node.contractName()}`);
+            // write out source file(s)
+            const sourceCodeText = await node.getSourceCode();
+            if (sourceCodeText !== undefined) {
+                const dir = `${sourceDir}/${getConfig().configName}/${node.name}`;
+                if (sourceCodeText.length == 0 || sourceCodeText[0] !== '{') {
+                    // it's text (some older contracts are this)
+                    // handle vyper & solidity code
+                    let extension = '.txt';
+                    if (sourceCodeText.match(/(^|\n)\@external\s\n/)) {
+                        extension = '.vy';
+                    } else {
+                        extension = '.sol';
+                    }
+                    writeFile(`${dir}${extension}`, sourceCodeText);
+                } else {
+                    // else it's probably json
+                    let json = undefined;
+                    try {
+                        json = JSON.parse(sourceCodeText.slice(1, -1)); // remove spurious { & }
+                        Object.entries(json.sources).forEach(([filePath, file]) => {
+                            //const logger = new Logger(filePath);
+                            const source = ((file as any).content as string).replace(
+                                // imports from an absolute path
+                                //import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable-v4/access/AccessControlUpgradeable.sol";
+
+                                /import\s+({[^}]*}\s+from\s+)?['"]([^.][^'"]+)['"]\s*;/g,
+                                (importMatch: string, importThings: string, importPath: string): string => {
+                                    // Calculate the relative path from filePath to importPath
+                                    /*
+                                    const from = `${filePath}`;
+                                    const to = `${importPath}`;
+                                    log(`${dir}/${filePath}:`);
+                                    log(`   ${from} -> ${to}`);
+                                    const relativePath: string = relative(to, from);
+
+                                    const absoluteImportPath = resolve(dirname(filePath), importPath);
+
+                                    // Now, calculate the relative path from the source file directory to the imported file
+                                    // For the purpose of demonstration, we'll just return the absolute path
+                                    // Replace this with the correct base directory as needed
+                                    const relativePath = relative(dirname(filePath), absoluteImportPath);
+                                    */
+                                    const directories: string[] = filePath.split(sep);
+                                    // Exclude any empty strings resulting from leading or trailing slashes
+                                    const filteredDirectories: string[] = directories.filter(
+                                        (directory) => directory !== '',
+                                    );
+                                    const depth: number = filteredDirectories.length;
+
+                                    const relativePath = ('..' + sep).repeat(depth - 1) + importPath;
+
+                                    if (importThings === undefined) importThings = '';
+                                    const replacement = `import ${importThings}'${relativePath}';`;
+                                    // log(`   ${importMatch} => ${replacement}`);
+                                    return replacement;
+                                },
+                            );
+                            //logger.done();
+                            writeFile(`${dir}/${filePath}`, source);
+                        });
+                    } catch (e: any) {
+                        console.log(`error in ${node.name} source code: ${e}`);
+                    }
+                }
+            }
+        }
+    }
+};

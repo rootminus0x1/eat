@@ -40,7 +40,14 @@ export class Logger {
 
     constructor(name: string, ...args: any[]) {
         this.leader = `${indent()}${name}`;
-        if (args) this.leader += `(${argsStr(maxArgsLength, ...args)})`;
+        if (args.length) {
+            let params = argsStr(maxArgsLength, ...args);
+            if (this.leader.endsWith('()')) {
+                this.leader = this.leader.slice(0, -1) + params + ')';
+            } else {
+                this.leader = this.leader.slice(0, -1) + '[' + params + ']';
+            }
+        }
         console.log(`${this.leader} =>`);
         indentLevel++; // Increase indent level for nested calls
         this.startTime = performance.now();
@@ -54,9 +61,10 @@ export class Logger {
     };
 }
 
+// TODO: make this generic rather than untyped
 export const withLogging = (fn: any) => {
     return async (...args: any[]) => {
-        const timer = new Logger(fn.name, args);
+        const timer = new Logger(fn.name + '()', args);
         let success = false;
         try {
             const result = await fn(...args); // Execute the original function
