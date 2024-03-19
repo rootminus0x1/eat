@@ -1,6 +1,10 @@
+import { Contract, Interface } from 'ethers';
+
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
+import { ErrorDecoder } from 'ethers-decode-error';
+import type { DecodedError } from 'ethers-decode-error';
+
 import { IBlockchainAddress } from './Blockchain';
-import { Contract } from 'ethers';
 import { log } from './logging';
 import { Reader, ReaderTemplate, ReadingValue, callReader } from './read';
 import { TriggerTemplate } from './trigg';
@@ -89,6 +93,22 @@ export let contracts: any;
 export let users: any = {};
 export let localNodes = new Map<string, GraphNode>();
 
+let errorDecoder: ErrorDecoder | undefined = undefined;
+
+export const decodeError = async (err: any): Promise<DecodedError> => {
+    if (errorDecoder === undefined) {
+        const abis: Interface[] = [];
+        for (const [address, node] of nodes) {
+            const contract = await node.getContract();
+            if (contract?.interface) {
+                abis.push(contract?.interface);
+            }
+        }
+        errorDecoder = ErrorDecoder.create(abis);
+    }
+    return await errorDecoder.decode(err);
+};
+
 export const resetGraph = () => {
     // log('resetting graph');
     nodes = new Map<string, GraphNode>(); // address to object
@@ -100,4 +120,5 @@ export const resetGraph = () => {
 
     // for use in code - no type checking at the moment
     contracts = {};
+    errorDecoder = undefined;
 };

@@ -6,11 +6,12 @@
 
 // TODO: make them contain only raw info
 import { ContractTransactionReceipt, ContractTransactionResponse, Log, ethers } from 'ethers';
-import { GraphNode, contracts, nodes } from './graph';
+import { decodeError, nodes } from './graph';
 import { log } from './logging';
 import { ContractWithAddress } from './Blockchain';
 import { addressToName, friendlyArgs } from './friendly';
 import { ConfigFormatApply } from './config';
+import { DecodedError } from 'ethers-decode-error';
 
 export type TriggerTemplate = {
     name: string;
@@ -86,11 +87,11 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
             result.value = pullResult;
         }
     } catch (e: any) {
-        result.error = e.message;
+        const decodedError: DecodedError = await decodeError(e);
+        console.log(`Error: "${e.message}" => Decoded: ${decodedError.reason}`);
+        result.error = decodedError.reason || e.message;
     }
     return result;
-    {
-    }
 };
 
 // generate multiple triggers based on some sequance generator
