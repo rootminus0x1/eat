@@ -13,7 +13,7 @@ export interface IEat {
     name: string;
     addContracts: () => Promise<void>;
     //addUsers: () => Promise<void>;
-    doStuff: (base: Reading[]) => Promise<void>;
+    doStuff: () => Promise<void>;
 }
 
 const logCustomError = (signature: string) => {
@@ -40,12 +40,8 @@ export const eatMain = async (runs: IEat[], loud: boolean = false): Promise<void
         // diagramming it all
         writeDiagram(`${run.name}-base`, await mermaid());
 
-        // now collect a base set of readings
-        const [base] = await delve(run.name);
-        writeReadings(`${run.name}-base`, base);
-
         // and do stuff, comparing it to base, as needed
-        await run.doStuff(base);
+        await run.doStuff();
 
         await snapshot.restore();
     }

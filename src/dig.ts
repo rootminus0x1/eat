@@ -83,7 +83,8 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     Object.assign(
                         {
                             address: address.address,
-                            name: await blockchainAddress.contractNamish(),
+                            contract: await blockchainAddress.contractNamish(),
+                            name: await blockchainAddress.contractNamish(), // will be updated later removing dups
                             leaf: address.follow == 0,
                             suffix: dugUp.suffix,
                         },
@@ -492,7 +493,7 @@ export const digSource = async () => {
     for (const [address, node] of nodes) {
         const contract = await node.getContract(whale);
         if (contract && (await node.contractNamish()) !== 'GnosisSafe') {
-            log(`writing source for ${await node.contractName()}`);
+            // log(`writing source for ${await node.contractName()}`);
             // write out source file(s)
             const sourceCodeText = await node.getSourceCode();
             if (sourceCodeText !== undefined) {

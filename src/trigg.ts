@@ -47,10 +47,10 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
             // TODO: generate user functions elsewhere
             // const tx = await contracts[event.e].connect(users[event.user])[event.function](...args);
             const tx: ContractTransactionResponse = pullResult;
-            if (addEvents) {
-                const receipt = await tx.wait();
-                if (receipt) {
-                    result.gas = receipt.gasUsed;
+            const receipt = await tx.wait();
+            if (receipt) {
+                result.gas = receipt.gasUsed;
+                if (addEvents) {
                     result.events = [];
                     for (const event of receipt.logs) {
                         const resultEvent: Event = { address: event.address, raw: event.toJSON() };
@@ -88,7 +88,7 @@ export const doTrigger = async (trigger: Trigger, addEvents: boolean = false): P
         }
     } catch (e: any) {
         const decodedError: DecodedError = await decodeError(e);
-        console.log(`Error: "${e.message}" => Decoded: ${decodedError.reason}`);
+        //log(`Error: "${e.message}" => Decoded: ${decodedError.reason}`);
         result.error = decodedError.reason || e.message;
     }
     return result;

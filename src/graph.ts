@@ -15,10 +15,11 @@ import { readingDelta } from './delve';
 export type SuffixMatch = Map<string, string[]> | undefined;
 export type GraphNode = {
     name: string;
+    contract?: string;
     signer?: SignerWithAddress;
     leaf?: boolean;
     address: string;
-    suffix?: SuffixMatch;
+    suffix?: SuffixMatch; // used to help uniquify a name
 } & IBlockchainAddress<Contract>;
 // the links - between a from address (key) and to list of named addresses (value)
 export type Link = { name: string; address: string };

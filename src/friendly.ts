@@ -2,7 +2,7 @@ import { MaxUint256, ZeroAddress, formatUnits, parseUnits } from 'ethers';
 
 import { contracts, nodes } from './graph';
 import { Field, Reader, Reading, ReadingData, ReadingType, ReadingValue } from './read';
-import { ConfigFormatApply } from './config';
+import { ConfigFormatApply, getFormatting } from './config';
 import { TriggerOutcome } from './trigg';
 import * as yaml from 'js-yaml'; // config files are in yaml
 import { log } from './logging';
@@ -43,11 +43,15 @@ export const JSONreplacer = (key: string, value: any) =>
 
 // format a bigint according to unit and precision
 export const formatBigInt = (value: bigint, unit?: number | string, precision?: number, addPlus?: boolean): string => {
+    // TODO: find out why there is a rounding error at 21 digits!
+    // if (value === MaxUint256) return 'MaxUint256';
+    if (value >= MaxUint256 / 10n ** 21n) {
+        return 'MaxUint256';
+    }
     const doUnit = (value: bigint): string => {
         if (value === undefined) {
             log(`encountered undefined in formatBigInt.doUnit`);
         }
-        if (value === MaxUint256) return 'MaxUint256';
         return unit ? formatUnits(value, unit) : value.toString();
     };
     let result = doUnit(value);
@@ -147,6 +151,7 @@ const ifDefined = (prefix: string, value: any | undefined, suffix: string) =>
     value === undefined ? '' : prefix + value.toString() + suffix;
 
 export const addressToName = (address: string): string => nodes.get(address)?.name || address;
+export const addressToContractName = (address: string): string | undefined => nodes.get(address)?.contract || undefined;
 
 // if there's no name, use the index as the name
 export const fieldToName = (field: Field): string => field.name || field.index.toString();
@@ -169,12 +174,10 @@ export const friendlyArgs = (
     rawArgs: any[],
     argTypes: string[],
     argNames?: string[],
-    formatting?: Map<string, ConfigFormatApply> /* = new Map([['uint256', { unit: 18, precision: 4 }]])*/,
+    formatting?: (ConfigFormatApply | undefined)[], // for each arg
 ): string => {
     let result = rawArgs
-        .map((a: any, i: number) =>
-            friendlyReadingValue(a, argTypes[i], argNames ? argNames[i] : undefined, formatting?.get(argTypes[i])),
-        )
+        .map((a: any, i: number) => friendlyReadingValue(a, argTypes[i], argNames?.[i], formatting?.[i]))
         .join(',');
     if (result.length) result = `(${result})`;
     return result;
@@ -190,7 +193,8 @@ export const yamlIt = (it: any): string =>
     });
 
 // template name - contract.function.field, generated on creation
-export const functionField = (func: string, field?: Field): string => `${func}${addField(field)}`;
+export const functionField = (func: string | undefined, field?: Field): string =>
+    `${func === undefined ? '*' : func}${addField(field)}`;
 
 export const friendlyReader = (reader: Reader) => `${addressToName(reader.address)}.${friendlyReaderFunction(reader)}`;
 
@@ -212,9 +216,12 @@ export const transformOutcomes = (orig: TriggerOutcome[]): any => {
         outcome[`${o.trigger.name}${friendlyArgs(o.trigger.args, o.trigger.argTypes)}`] = friendlyOutcome(o);
         outcome.events = [];
         o.events?.forEach((e) => {
-            // TODO: formatting from config new Map<string, ConfigFormatApply>([['uint256', { unit: 'ether' }]]),
+            // get the formatting for each parameter
+            const formats = e.argNames?.map((a, i) =>
+                getFormatting(e.argTypes?.[i], addressToContractName(e.address), e.name, { name: a, index: i }),
+            );
             outcome.events.push(
-                `${addressToName(e.address)}.${e.name}${friendlyArgs(e.argValues!, e.argTypes!, e.argNames)}`,
+                `${addressToName(e.address)}.${e.name}${friendlyArgs(e.argValues!, e.argTypes!, e.argNames, formats)}`,
             );
         });
         outcomes.push(outcome);
@@ -413,4 +420,4 @@ export const parseArg = (configArg: any): any => {
     return arg;
 };
 
-export const rawArgs = (friendlyArgs: string[]): any[] => friendlyArgs.map((a: any) => parseArg(a));
+export const rawArgs = (friendly: string[]): any[] => friendly.map((a: any) => parseArg(a));

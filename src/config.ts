@@ -16,9 +16,14 @@ export const numberCompare = (a: number, b: number): number => (a < b ? -1 : a >
 const regexpEscape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 type formatSpec = { unit?: number | string; precision?: number } | undefined;
 
-export const getFormatting = (type: string, contract: string, func: string, field?: Field) => {
+export const getFormatting = (
+    type: string | undefined,
+    contract: string | undefined,
+    invokable: string | undefined,
+    field?: Field,
+): ConfigFormatApply | undefined => {
     if (getConfig().format) {
-        const reading = functionField(func, field);
+        const reading = functionField(invokable, field);
         let mergedFormat: ConfigFormatApply = {};
         for (const format of getConfig().format) {
             // TODO: could some things,
@@ -26,7 +31,7 @@ export const getFormatting = (type: string, contract: string, func: string, fiel
             // or numbers
             // merge all the formats that apply
             if (
-                (!format.type || type === format.type) &&
+                (!format.type || !type || type === format.type) &&
                 (!format.reading || reading === format.reading) &&
                 (!format.contract || contract === format.contract)
             ) {
@@ -111,9 +116,11 @@ export const writeMarkDown = (name: string, diagram: string): void => {
 };
 
 export type ConfigFormatMatch = {
-    type?: string;
+    type?: string; // type of value
     contract?: string; // contract type
     reading?: string; // tail part of the reading name
+    event?: string;
+    field?: string; // field of the reading or event
 };
 
 export type ConfigFormatApply = {
