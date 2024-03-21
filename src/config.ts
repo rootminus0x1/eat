@@ -196,13 +196,13 @@ const sortFormats = (formats: ConfigFormat[]): any => {
                 const valueof = (x: ConfigFormat): number => {
                     let value = 0;
                     // must do "no format" before format, then do .unit before .precision
-                    if (!x.unit && !x.precision) value += 3000;
-                    if (x.unit) value += 2000; // do .unit before .precision
-                    if (x.precision) value += 1000;
+                    if (!x.unit && !x.precision) value += 10000;
                     // then do it in order of matches against .contract/.name and then .type
                     if (x.contract) value += 100;
                     if (x.reading) value += 100;
                     if (x.type) value += 10;
+                    if (x.unit) value += 1;
+                    if (x.precision) value += 1;
                     return value;
                 };
                 const av = valueof(a.format);
@@ -273,7 +273,7 @@ export const getConfig = (): Config => {
         if (argv.showformat) config.show = ['format'];
 
         // output the config actually used for debug purposes
-        if (argv.showconfig) writeEatFile('flat-config.yml', yaml.dump(config));
+        /*if (argv.showconfig)*/ writeEatFile('flat-config.yml', yaml.dump(config));
     }
     return config;
 };
