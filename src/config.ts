@@ -14,7 +14,6 @@ export const stringCompare = (a: string, b: string): number => a.localeCompare(b
 export const numberCompare = (a: number, b: number): number => (a < b ? -1 : a > b ? 1 : 0);
 
 const regexpEscape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-type formatSpec = { unit?: number | string; precision?: number } | undefined;
 
 export const getFormatting = (
     type: string | undefined,
@@ -130,25 +129,6 @@ export type ConfigFormatApply = {
 
 export type ConfigFormat = ConfigFormatMatch & ConfigFormatApply;
 
-/*
-//type Arg = string | bigint;
-export type ConfigUserEvent = {
-    name: string;
-    user: string;
-    contract: string;
-    function: string;
-    args: string[];
-};
-
-// type ArgSubstitution = [number, Arg];
-// function substituteArgs(userEvent: ConfigUserEvent, ...substitutions: ArgSubstitution[]): ConfigUserEvent {
-//     const newArgs = userEvent.args ? [...userEvent.args] : [];
-//     substitutions.forEach(([index, value]) => {
-//         newArgs[index] = value;
-//     });
-//     return { ...userEvent, args: newArgs };
-// }
-*/
 export type ConfigHolding = {
     token: string;
     amount: string | bigint;
@@ -166,6 +146,8 @@ type ExtraName = {
 };
 
 export type Config = {
+    import: string[];
+
     // from the command line
     configName: string;
     configFilePath: string;
@@ -191,7 +173,7 @@ export type Config = {
     // how to name what is found
     suffix?: ExtraName[];
 
-    // what to output
+    // how to output
     diagram: any;
     plot: any;
 
@@ -232,17 +214,31 @@ const sortFormats = (formats: ConfigFormat[]): any => {
     );
 };
 
-const getConfigName = (configFilePath: string) =>
-    path.basename(configFilePath, '.config' + path.extname(configFilePath));
-
 const loadYaml = (configFilePath: string) => yaml.load(fs.readFileSync(configFilePath).toString());
 
-const merge = (object: any, source: any) =>
+const merge = (object: any, source: any): any =>
     lodash.mergeWith(object, source, (o: any, s: any) => {
         if (lodash.isArray(o)) return o.concat(s);
     });
 
 let config: Config | undefined;
+
+const importConfig = (configRoot: string, configName: string): Config => {
+    const thisFilePath = configRoot + '/' + configName + '.config.yml';
+    let thisConfig = loadYaml(thisFilePath) as Config;
+    thisConfig.configFilePath = thisFilePath;
+    thisConfig.configName = configName;
+
+    if (thisConfig.import) {
+        const imported = thisConfig.import.reduce(
+            (result, fileName: string) => merge(result, importConfig(configRoot, fileName)),
+            {} as Config,
+        );
+        thisConfig = merge(imported, thisConfig);
+    }
+    log(thisFilePath);
+    return thisConfig;
+};
 
 export const getConfig = (): Config => {
     if (!config) {
@@ -252,51 +248,22 @@ export const getConfig = (): Config => {
                 showformat: { type: 'boolean', default: false },
                 showunformatted: { type: 'boolean', default: false },
                 quiet: { type: 'boolean', default: false },
-                defaultconfigs: { type: 'string', default: 'test/default-configs' },
+                configs: { type: 'string', default: 'test/configs' },
             })
             .parse();
 
-        // load the default-configs
-        let defaults: ConfigItem[] = [];
-        try {
-            fs.readdirSync(argv.defaultconfigs)
-                .sort()
-                .forEach((fileName) =>
-                    defaults.push({
-                        name: getConfigName(fileName),
-                        config: loadYaml(argv.defaultconfigs + '/' + fileName) as Config,
-                    }),
-                );
-        } catch (error: any) {}
-
         // load the requested config
-        const configFilePath = path.resolve(argv._[0]);
-        log(configFilePath);
-
-        const configName = getConfigName(configFilePath);
-
-        // find matching defaults and merge them
-        config = defaults.reduce((result, d) => {
-            if (configName.startsWith(d.name)) {
-                merge(result, d.config);
-            }
-            return result;
-        }, {} as Config);
-
-        // merge in the actual config
-        merge(config, loadYaml(configFilePath));
+        config = importConfig(argv.configs, '');
+        merge(config, importConfig(argv.configs, argv._[0]));
 
         // fix addresses so they are checksummed (EIP-55)
-
         config.root = config.root?.map((a) => getAddress(a));
         config.twig = config.twig?.map((a) => getAddress(a));
         config.leaf = config.leaf?.map((a) => getAddress(a));
         config.prune = config.prune?.map((a) => getAddress(a));
 
         // add additional fields
-        config.configFilePath = configFilePath;
-        config.configName = configName;
-        config.outputFileRoot = `${path.dirname(configFilePath)}/results/`;
+        config.outputFileRoot = `${path.dirname(config.configFilePath)}/results/`;
         config.sourceCodeRoot = `contacts/`;
 
         // make sure more specific formats take precedence over less specific
