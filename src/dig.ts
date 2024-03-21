@@ -3,7 +3,7 @@ import * as dotenvExpand from 'dotenv-expand';
 dotenvExpand.expand(dotenv.config());
 
 import { ethers } from 'hardhat';
-import { Contract, FunctionFragment, MaxUint256, ZeroAddress, getAddress } from 'ethers';
+import { Contract, FunctionFragment, MaxUint256, ZeroAddress, formatEther, getAddress } from 'ethers';
 
 import { parseArg } from './friendly';
 import { SuffixMatch } from './graph';
@@ -427,9 +427,9 @@ const _digUsers = async () => {
                 for (const holding of user.wallet) {
                     const token = holding.token;
                     const amount = parseArg(holding.amount) as bigint;
-                    userHoldings.set(token, userHoldings.get(token) ?? 0n + amount);
-                    totalHoldings.set(token, totalHoldings.get(token) ?? 0n + amount);
-
+                    userHoldings.set(token, (userHoldings.get(token) || 0n) + amount);
+                    totalHoldings.set(token, (totalHoldings.get(token) || 0n) + amount);
+                    //log(`total holdings of ${token} now ${totalHoldings.get(token)}`);
                     // find all the contracts this user interacts with and allow them to spend there
                     (user.approve || []).forEach((c) =>
                         approve.set(user.name, (approve.get(user.name) ?? []).concat(c)),
@@ -439,9 +439,9 @@ const _digUsers = async () => {
             }
         }
         // now we've added the users, we can fill their wallets
-        for (const [contract, amount] of totalHoldings) {
-            //log(`whale stealing ${formatEther(amount)} of ${contract}`);
-            await addTokenToWhale(contract, amount);
+        for (const [tokenName, amount] of totalHoldings) {
+            log(`whale stealing ${formatEther(amount)} of ${tokenName}`);
+            await addTokenToWhale(tokenName, amount);
         }
         for (const [userName, userHoldings] of holdings) {
             // fill the wallet
@@ -450,6 +450,7 @@ const _digUsers = async () => {
                 // just add enough to make it to at least the holding
                 const currentHolding: bigint = await contracts[tokenName].balanceOf(users[userName].address);
                 if (currentHolding < amount) {
+                    //log(`${userName} getting ${formatEther(amount)} of ${tokenName}`);
                     if (
                         !(await contracts[tokenName]
                             .connect(whale)
@@ -459,6 +460,7 @@ const _digUsers = async () => {
                     }
                     // and allow contracts to spend their money
                     for (const contract of approve.get(userName) || []) {
+                        //log(`${tokenName} approving ${contract} to use ${userName}'s`);
                         if (
                             !(await contracts[tokenName]
                                 .connect(users[userName])
