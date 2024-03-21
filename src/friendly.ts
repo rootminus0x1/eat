@@ -213,15 +213,19 @@ export const transformOutcomes = (orig: TriggerOutcome[]): any => {
 
     orig.forEach((o) => {
         const outcome: any = {};
-        outcome[`${o.trigger.name}${friendlyArgs(o.trigger.args, o.trigger.argTypes)}`] = friendlyOutcome(o);
+        const tformats = o.trigger.argTypes.map((a, i) =>
+            a.includes('int') ? { unit: 'ether', precision: 4 } : undefined,
+        );
+        outcome[`${o.trigger.name}${friendlyArgs(o.trigger.args, o.trigger.argTypes, undefined, tformats)}`] =
+            friendlyOutcome(o);
         outcome.events = [];
         o.events?.forEach((e) => {
             // get the formatting for each parameter
-            const formats = e.argNames?.map((a, i) =>
+            const eformats = e.argNames?.map((a, i) =>
                 getFormatting(e.argTypes?.[i], addressToContractName(e.address), e.name, { name: a, index: i }),
             );
             outcome.events.push(
-                `${addressToName(e.address)}.${e.name}${friendlyArgs(e.argValues!, e.argTypes!, e.argNames, formats)}`,
+                `${addressToName(e.address)}.${e.name}${friendlyArgs(e.argValues!, e.argTypes!, e.argNames, eformats)}`,
             );
         });
         outcomes.push(outcome);
