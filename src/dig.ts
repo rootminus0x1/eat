@@ -8,8 +8,6 @@ import { Contract, FunctionFragment, MaxUint256, ZeroAddress, getAddress } from 
 import { parseArg } from './friendly';
 import { SuffixMatch } from './graph';
 
-const sourceDir = './eat-source';
-
 import { IBlockchainAddress, BlockchainAddress, addTokenToWhale, getSigner, whale, getSignerAt } from './Blockchain';
 import {
     Link,
@@ -497,7 +495,7 @@ export const digSource = async () => {
             // write out source file(s)
             const sourceCodeText = await node.getSourceCode();
             if (sourceCodeText !== undefined) {
-                const dir = `${sourceDir}/${getConfig().configName}/${node.name}`;
+                const dir = `${getConfig().sourceCodeRoot}/${getConfig().configName}/${node.name}`;
                 if (sourceCodeText.length == 0 || sourceCodeText[0] !== '{') {
                     // it's text (some older contracts are this)
                     // handle vyper & solidity code

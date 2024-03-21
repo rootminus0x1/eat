@@ -89,7 +89,7 @@ export const eatFileName = (name: string): string => {
 // TODO: make a specific writer for plot files and unexport this
 export const writeEatFile = (name: string, results: string): void => {
     log(`writing ${eatFileName(name)}`);
-    writeFile(getConfig().outputFileRoot + eatFileName(name), results);
+    writeFile(getConfig().outputFileRoot + '/' + eatFileName(name), results);
 };
 
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
@@ -249,6 +249,7 @@ export const getConfig = (): Config => {
                 showunformatted: { type: 'boolean', default: false },
                 quiet: { type: 'boolean', default: false },
                 configs: { type: 'string', default: 'test/configs' },
+                results: { type: 'string', default: 'test/results' },
             })
             .parse();
 
@@ -263,8 +264,8 @@ export const getConfig = (): Config => {
         config.prune = config.prune?.map((a) => getAddress(a));
 
         // add additional fields
-        config.outputFileRoot = `${path.dirname(config.configFilePath)}/results/`;
-        config.sourceCodeRoot = `contacts/`;
+        config.outputFileRoot = argv.results;
+        config.sourceCodeRoot = './eat-source';
 
         // make sure more specific formats take precedence over less specific
         if (config.format) config.format = sortFormats(config.format);
