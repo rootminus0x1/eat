@@ -62,6 +62,7 @@ export type ConfigItem = { name: string; config: Config };
 export const ensureDirectory = (filePath: string) => {
     // ensure the directory exists
     const dir = path.dirname(filePath);
+    //log(`ensureDirectory(${filePath}) => ${dir}`);
     try {
         // Check if the directory already exists
         fs.accessSync(dir);
@@ -89,7 +90,7 @@ export const eatFileName = (name: string): string => {
 // TODO: make a specific writer for plot files and unexport this
 export const writeEatFile = (name: string, results: string): void => {
     log(`writing ${eatFileName(name)}`);
-    writeFile(getConfig().outputFileRoot + '/' + eatFileName(name), results);
+    writeFile(getConfig().outputRoot + '/' + eatFileName(name), results);
 };
 
 const _writeReadings = (fileName: string, results: Reading[], simulation?: TriggerOutcome[]) => {
@@ -151,8 +152,9 @@ export type Config = {
     // from the command line
     configName: string;
     configFilePath: string;
-    outputFileRoot: string;
+    outputRoot: string;
     sourceCodeRoot: string;
+    cacheRoot: string;
 
     // blockchain setup
     // TODO: support any of the 3 ways to specify a block number and generate the other two
@@ -248,14 +250,16 @@ export const getConfig = (): Config => {
                 showformat: { type: 'boolean', default: false },
                 showunformatted: { type: 'boolean', default: false },
                 quiet: { type: 'boolean', default: false },
-                configs: { type: 'string', default: 'test/configs' },
-                results: { type: 'string', default: 'test/results' },
+                root: { type: 'string', default: 'eat' },
             })
             .parse();
 
+        const eatRoot = argv.root;
+        const configsRoot = eatRoot + '/configs';
+
         // load the requested config
-        config = importConfig(argv.configs, '');
-        merge(config, importConfig(argv.configs, argv._[0]));
+        config = importConfig(configsRoot, '');
+        merge(config, importConfig(configsRoot, argv._[0]));
 
         // fix addresses so they are checksummed (EIP-55)
         config.root = config.root?.map((a) => getAddress(a));
@@ -264,8 +268,9 @@ export const getConfig = (): Config => {
         config.prune = config.prune?.map((a) => getAddress(a));
 
         // add additional fields
-        config.outputFileRoot = argv.results;
-        config.sourceCodeRoot = './eat-source';
+        config.outputRoot = eatRoot + '/results';
+        config.sourceCodeRoot = eatRoot + '/source-code';
+        config.cacheRoot = eatRoot + '/cache';
 
         // make sure more specific formats take precedence over less specific
         if (config.format) config.format = sortFormats(config.format);

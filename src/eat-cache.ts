@@ -1,16 +1,14 @@
 import * as fs from 'fs';
-import { ensureDirectory } from './config';
-
-const cacheDir = './eat-cache';
+import { ensureDirectory, getConfig } from './config';
 
 const cachePath = (key: string): string => {
-    return cacheDir + '/' + Buffer.from(key).toString('base64');
+    return getConfig().cacheRoot + '/' + Buffer.from(key).toString('base64');
 };
 
 export const getCachedValue = async (key: string): Promise<string | undefined> => {
-    ensureDirectory(cacheDir);
     // get the value
     const path = cachePath(key);
+    ensureDirectory(path);
     return fs.existsSync(path) ? fs.readFileSync(path, 'utf-8') : undefined;
 };
 
