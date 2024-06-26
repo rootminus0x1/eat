@@ -27,6 +27,8 @@ export const eatMain = async (runs: IEat[], loud: boolean = false): Promise<void
 
     await dig('blockchain', loud);
     writeDiagram('blockchain', await mermaid());
+    const [readings] = await delve();
+    writeReadings('blockchain', readings);
     await digSource();
 
     const snapshot = await takeSnapshot();

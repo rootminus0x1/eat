@@ -98,18 +98,12 @@ const digDeep = async (
                 (f.stateMutability === 'view' || f.stateMutability === 'pure') &&
                 (f.inputs.length == 0 || (f.inputs.length == 1 && f.inputs[0].type === 'address')),
         )) {
-            let it = false;
-            if (func.name === 'getReceivers') {
-                it = true;
-                log(`>>>${func.name}`);
-            }
             // TODO: expand this to work with all arg types and all arg numbers for general use
             const argTypes = func.inputs.length == 1 ? [func.inputs[0].type] : undefined;
             // get all the functions that return a numeric or address or arrays of them
             for (const outputIndex of func.outputs.reduce((indices, elem, index) => {
                 // TODO:  add bool, bytes1 .. bytes32, and enums?
                 if (elem.type === 'address' || elem.type === 'address[]' || /^u?int\d+(\[\])?$/.test(elem.type)) {
-                    if (it) log(`output[${index}]=${elem.type}`);
                     indices.push(index);
                 }
                 return indices;
@@ -129,9 +123,7 @@ const digDeep = async (
                     formatting: getFormatting(_type, _contract, func.name, _field),
                 };
                 readerTemplates.push(readerTemplate);
-                if (it) log(`${JSON.stringify(readerTemplate)}`);
             }
-            if (it) log('<<<');
         }
     }
     return { readerTemplates: readerTemplates, roles: roles };
@@ -169,7 +161,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
     });
 
     const tempNodes = new Map<string, GraphNode>();
-    const pendingReaderTemplates = new Map<string, ReaderTemplate>();
+    const pendingReaderTemplates = new Map<string, { follow: number; readerTemplate: ReaderTemplate }>();
     while (addresses && addresses.length > 0) {
         addresses.sort((a, b) => b.follow - a.follow); // biggest follow first
         const address = addresses[0];
@@ -265,7 +257,6 @@ const _dig = async (stack: string, loud: boolean = false) => {
                             name = `${name}[${arrayIndex}]`;
                         }
                         // process the links
-                        log(`adding link from ${nodeAddress} to ${linkAddress} as ${name}`);
                         links.set(
                             nodeAddress,
                             (links.get(nodeAddress) ?? []).concat({
@@ -286,16 +277,25 @@ const _dig = async (stack: string, loud: boolean = false) => {
                 if (address.follow && dugUp.roles.length) {
                     dugUp.roles.forEach((role: Role) =>
                         role.addresses.forEach((roleHolderAddress: string) => {
-                            log(`add link for role ${role.name}`);
                             addLink(address.address, address.follow, roleHolderAddress, role.name);
                         }),
                     );
                     roles.set(address.address, dugUp.roles);
                 }
 
-                // create links by executing the returned readers that return more address(es) only adding them if we are following
-                // also get the suffix addresses for this node name (which are looked up later as the suffix addresses may also have suffixes)
                 let results: { nodeAddress: string; follow: number; reading: Reading }[] = [];
+
+                // create links by executing this address against all previous (pending) readers that take an address
+                for (const [priorAddress, prior] of pendingReaderTemplates) {
+                    results.push({
+                        nodeAddress: priorAddress,
+                        follow: prior.follow,
+                        reading: await makeReading(prior.readerTemplate, address.address),
+                    });
+                }
+
+                // create links by executing the returned readers that return more address(es) only adding them if the address isn't a leaf
+                // also get the suffix addresses for this node name (which are looked up later once the graph is full)
                 for (const readerTemplate of dugUp.readerTemplates.filter((rt) => rt.type.startsWith('address'))) {
                     if (readerTemplate.argTypes.length == 0) {
                         // zero parameters
@@ -307,15 +307,18 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     } else if (readerTemplate.argTypes.length == 1 && readerTemplate.argTypes[0] === 'address') {
                         // one address parameter
                         // run the reader against all the known addresses
-                        // for (const knownAddress of tempNodes.keys()) {
-                        //     results.push({
-                        //         nodeAddress: address.address,
-                        //         follow: address.follow,
-                        //         reading: await makeReading(readerTemplate, knownAddress),
-                        //     });
-                        // }
-                        // // also save the reader so that it can be run against all future addresses as they come through the main loop
-                        // pendingReaderTemplates.set(address.address, readerTemplate);
+                        for (const knownAddress of tempNodes.keys()) {
+                            results.push({
+                                nodeAddress: address.address,
+                                follow: address.follow,
+                                reading: await makeReading(readerTemplate, knownAddress),
+                            });
+                        }
+                        // also save the reader so that it can be run against all future addresses as they come through the main loop
+                        pendingReaderTemplates.set(address.address, {
+                            follow: address.follow,
+                            readerTemplate: readerTemplate,
+                        });
                     }
                 }
                 for (const result of results) {
@@ -323,9 +326,6 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     const addSuffix = (value: string) => {
                         if (suffix && result.reading.argTypes.length == 0) {
                             if (suffix.get(result.reading.function) !== undefined) {
-                                log(
-                                    `add suffix for ${address.address}, results from ${result.reading.function} = ${value}`,
-                                );
                                 suffix.get(result.reading.function)?.push(value);
                             }
                         }
@@ -335,31 +335,39 @@ const _dig = async (stack: string, loud: boolean = false) => {
                         throw Error(
                             `failed to add link (${result.reading.function}) for ${result.nodeAddress}: ${result.reading.error}`,
                         );
+
+                    if (result.reading.function === 'getReceivers') {
+                        log(`getReceivers(${result.reading.args[0]}) = ${result.reading.type}`);
+                    }
                     // need to work for functions that return scalars or vectors
                     if (Array.isArray(result.reading.value)) {
                         // TODO: check against readerTemplate.type.endsWith("[]")
                         for (let i = 0; i < result.reading.value.length; i++) {
-                            log(`add link for ${result.reading.function}[${i}] = ${result.reading.value[i] as string}`);
+                            const value = result.reading.value[i] as string;
+                            if (value !== ZeroAddress) {
+                                addLink(
+                                    address.address,
+                                    address.follow,
+                                    value,
+                                    result.reading.function,
+                                    result.reading.field,
+                                    i,
+                                );
+                                addSuffix(value);
+                            }
+                        }
+                    } else {
+                        const value = result.reading.value as string;
+                        if (value !== ZeroAddress) {
                             addLink(
                                 address.address,
                                 address.follow,
-                                result.reading.value[i] as string,
+                                value,
                                 result.reading.function,
                                 result.reading.field,
-                                i,
                             );
-                            addSuffix(result.reading.value[i] as string);
+                            addSuffix(value);
                         }
-                    } else {
-                        log(`add link for ${result.reading.function}= ${result.reading.value as string}`);
-                        addLink(
-                            address.address,
-                            address.follow,
-                            result.reading.value as string,
-                            result.reading.function,
-                            result.reading.field,
-                        );
-                        addSuffix(result.reading.value as string);
                     }
                 }
 
