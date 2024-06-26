@@ -10,7 +10,6 @@ import { SuffixMatch } from './graph';
 
 import { IBlockchainAddress, BlockchainAddress, addTokenToWhale, getSigner, whale, getSignerAt } from './Blockchain';
 import {
-    Link,
     backLinks,
     contracts,
     links,
@@ -24,22 +23,139 @@ import {
     localNodes,
 } from './graph';
 import { getConfig, getFormatting, stringCompare, writeFile } from './config';
-import { Logger, log, withLogging } from './logging';
-import { ReaderTemplate, ReadingValue, callReader, makeReader } from './read';
+import { log, withLogging } from './logging';
+import { Field, ReaderTemplate, Reading, ReadingValue, makeReading } from './read';
 import { sep } from 'path';
+
+export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
+    if (address === ZeroAddress) return null;
+    const local = localNodes.get(address);
+    if (local) return local;
+    return new BlockchainAddress(address);
+};
+
+const digDeep = async (
+    address: IBlockchainAddress<Contract>,
+): Promise<{ readerTemplates: ReaderTemplate[]; roles: Role[] }> => {
+    const roles: Role[] = [];
+
+    const readerTemplates: ReaderTemplate[] = [];
+    const contract = await address.getContract();
+    if (contract) {
+        // TODO: do something with constructor arguments and initialize calls (for logics)
+        let functions: FunctionFragment[] = [];
+        let roleFunctions: string[] = [];
+        contract.interface.forEachFunction((func) => {
+            // so we can call the functions async in a loop later
+            functions.push(func);
+            // all uppercase with the word role in it (this is just a convention)
+            if (
+                func.inputs.length == 0 &&
+                func.outputs.length == 1 &&
+                func.outputs[0].type === 'bytes32' &&
+                /^[A-Z_]*_ROLE[A-Z_]*$/.test(func.name)
+            ) {
+                roleFunctions.push(func.name);
+            }
+        });
+
+        // get the role names
+        let roleNames = new Map<bigint, string>();
+        for (const rolefn of roleFunctions) {
+            const role = await contract[rolefn]();
+            roleNames.set(role, rolefn);
+        }
+
+        // get roles granted by this contract
+        if (contract.filters.RoleGranted) {
+            const grantedEvents = await contract.queryFilter(contract.filters.RoleGranted()); //, 0xaf2c74, 0xb4d9f4);
+            for (const event of grantedEvents) {
+                const parsedEvent = contract.interface.parseLog({
+                    topics: [...event.topics],
+                    data: event.data,
+                });
+                if (parsedEvent) {
+                    const role = parsedEvent.args.role;
+                    const account = parsedEvent.args.account;
+                    // does this account still have this role?
+                    //this is the openzeppelin access manager
+                    if (await contract.hasRole(role, account)) {
+                        const index = roles.findIndex((r) => r.id === role);
+                        if (index == -1) {
+                            let name = roleNames.get(role) || role;
+                            roles.push({ id: role, name: name, addresses: [getAddress(account)] });
+                        } else {
+                            roles[index].addresses.push(getAddress(account));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Explore each parameterless, or single address parameter, view (or pure) functions in the contract's interface
+        for (const func of functions.filter(
+            (f) =>
+                (f.stateMutability === 'view' || f.stateMutability === 'pure') &&
+                (f.inputs.length == 0 || (f.inputs.length == 1 && f.inputs[0].type === 'address')),
+        )) {
+            let it = false;
+            if (func.name === 'getReceivers') {
+                it = true;
+                log(`>>>${func.name}`);
+            }
+            // TODO: expand this to work with all arg types and all arg numbers for general use
+            const argTypes = func.inputs.length == 1 ? [func.inputs[0].type] : undefined;
+            // get all the functions that return a numeric or address or arrays of them
+            for (const outputIndex of func.outputs.reduce((indices, elem, index) => {
+                // TODO:  add bool, bytes1 .. bytes32, and enums?
+                if (elem.type === 'address' || elem.type === 'address[]' || /^u?int\d+(\[\])?$/.test(elem.type)) {
+                    if (it) log(`output[${index}]=${elem.type}`);
+                    indices.push(index);
+                }
+                return indices;
+            }, [] as number[])) {
+                const _contract = await address.contractNamish();
+                const _field =
+                    func.outputs.length != 1 ? { name: func.outputs[outputIndex].name, index: outputIndex } : undefined;
+                const _type = func.outputs[outputIndex].type;
+                const readerTemplate: ReaderTemplate = {
+                    address: contract.address,
+                    contract: _contract,
+                    function: func.name,
+                    field: _field,
+                    argTypes: func.inputs.length == 1 ? ['address'] : [],
+                    type: _type,
+                    read: async (...args: any[]): Promise<ReadingValue> => await contract[func.name](...args),
+                    formatting: getFormatting(_type, _contract, func.name, _field),
+                };
+                readerTemplates.push(readerTemplate);
+                if (it) log(`${JSON.stringify(readerTemplate)}`);
+            }
+            if (it) log('<<<');
+        }
+    }
+    return { readerTemplates: readerTemplates, roles: roles };
+};
+//const digDeep = withLogging(_digDeep);
+
+type DigAddress = {
+    address: string;
+    follow: number;
+    config: boolean;
+};
 
 const _dig = async (stack: string, loud: boolean = false) => {
     // we reset the graph (which is a set of global variables)
     resetGraph();
     type Address = { address: string; follow: number /* 0 = leaf 1 = twig else depth */; config?: boolean };
     const depth = getConfig().depth || 5; // don't go deeper than this, from any of the specified addresses
-    const roots = getConfig().root?.map((a) => {
+    const roots: DigAddress[] | undefined = getConfig().root?.map((a) => {
         return { address: a, follow: depth, config: true };
     });
-    const twigs = getConfig().twig?.map((a) => {
+    const twigs: DigAddress[] | undefined = getConfig().twig?.map((a) => {
         return { address: a, follow: 1, config: true };
     });
-    const leafs = getConfig().leaf?.map((a) => {
+    const leafs: DigAddress[] | undefined = getConfig().leaf?.map((a) => {
         return { address: a, follow: 0, config: true };
     });
     const done = new Set<string>(getConfig().prune || []); // ensure addresses are only visited once and the pruned one no times
@@ -53,6 +169,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
     });
 
     const tempNodes = new Map<string, GraphNode>();
+    const pendingReaderTemplates = new Map<string, ReaderTemplate>();
     while (addresses && addresses.length > 0) {
         addresses.sort((a, b) => b.follow - a.follow); // biggest follow first
         const address = addresses[0];
@@ -67,7 +184,24 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     const logicName = await blockchainAddress.implementationContractName();
                     const tokenSymbol = await blockchainAddress.erc20Symbol();
                     const tokenName = await blockchainAddress.erc20Name();
-                    let line: string[] = [`${address.address} :`];
+
+                    let line: string[] = [`${address.address}:`];
+
+                    const addressType = (a: string) => {
+                        let line: string[] = [];
+                        if (getConfig()?.leaf && getConfig()?.leaf?.includes(a)) line.push('leaf');
+                        if (getConfig()?.twig && getConfig()?.twig?.includes(a)) line.push('twig');
+                        if (getConfig()?.root && getConfig()?.root?.includes(a)) line.push('root');
+                        if (getConfig()?.prune && getConfig()?.prune?.includes(a)) line.push('PRUNED');
+                        return line.join('-');
+                    };
+                    line.push(addressType(address.address));
+
+                    if (backLinks.get(address.address) !== undefined) {
+                        const sources = backLinks.get(address.address)!;
+                        line.push(`<${sources![0].address}(${sources![0].name}) ${addressType(sources![0].address)}`);
+                    }
+
                     if (tokenName || tokenSymbol) line.push(`${tokenSymbol} (${tokenName})`);
                     if (logicName) {
                         line.push(`"${contractName}"->"${logicName}"`);
@@ -76,22 +210,21 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     }
                     log(line.join(' '));
                 }
-                tempNodes.set(
-                    address.address,
-                    Object.assign(
-                        {
-                            address: address.address,
-                            contract: await blockchainAddress.contractNamish(),
-                            name: await blockchainAddress.contractNamish(), // will be updated later removing dups
-                            leaf: address.follow == 0,
-                            suffix: dugUp.suffix,
-                        },
-                        blockchainAddress,
-                    ),
-                );
+
+                // set up the name suffix (in the order given by config)
+                let suffix: SuffixMatch = undefined;
+                const contractType = await blockchainAddress.contractNamish();
+                for (const match of getConfig().suffix || []) {
+                    if (match.contract === contractType) {
+                        suffix = new Map(match.fields.map((f) => [f, []]));
+                        break; // just the first one.
+                    }
+                }
+
                 // add the readers to the contract
                 readerTemplates.set(address.address, dugUp.readerTemplates);
 
+                // function to add an address to be explored
                 const addAddress = (address: string, follow: number) => {
                     // need to merge them as the depth shoud take on the larger of the two
                     const actualFollow = Math.max(follow - 1, 0);
@@ -102,7 +235,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
                         if (!addresses[comingUp].config)
                             addresses[comingUp].follow = Math.max(addresses[comingUp].follow, actualFollow);
                     } else {
-                        // add a new one but within the config limits
+                        // add a new address to be processed but within the config limits
                         const limited = limits.get(address);
                         addresses.push({
                             address: address,
@@ -112,36 +245,137 @@ const _dig = async (stack: string, loud: boolean = false) => {
                     }
                 };
 
-                const addLinks = (nodeAddress: string, _toAdd: Link[], follow: number) => {
-                    // only add an address if it has not been pruned
-                    const toAdd = _toAdd.filter((a) => !getConfig()?.prune || !getConfig()?.prune?.includes(a.address));
+                // function to add a link and explore it (calls addAddress, above)
+                const addLink = (
+                    nodeAddress: string,
+                    follow: number,
+                    linkAddress: string,
+                    funcName: string,
+                    field?: Field,
+                    arrayIndex?: number,
+                ) => {
+                    // only add an address if we are following and that address has not been pruned
+                    if (follow && !(getConfig()?.prune && getConfig()?.prune?.includes(linkAddress))) {
+                        let name = funcName;
 
-                    // process the links
-                    links.set(nodeAddress, (links.get(address.address) ?? []).concat(toAdd));
-                    // and consequent backlinks and nodes
-                    toAdd.forEach((link) => {
-                        backLinks.set(
-                            link.address,
-                            (backLinks.get(link.address) ?? []).concat({ address: nodeAddress, name: link.name }),
+                        if (field !== undefined) {
+                            name = `${name}.${field.name === '' ? field.index : field.name}`;
+                        }
+                        if (arrayIndex !== undefined) {
+                            name = `${name}[${arrayIndex}]`;
+                        }
+                        // process the links
+                        log(`adding link from ${nodeAddress} to ${linkAddress} as ${name}`);
+                        links.set(
+                            nodeAddress,
+                            (links.get(nodeAddress) ?? []).concat({
+                                name: name,
+                                address: getAddress(linkAddress),
+                            }),
                         );
-                        addAddress(link.address, follow);
-                    });
+                        // and consequent backlinks and nodes
+                        backLinks.set(
+                            linkAddress,
+                            (backLinks.get(linkAddress) ?? []).concat({ address: nodeAddress, name: name }),
+                        );
+                        addAddress(linkAddress, follow);
+                    }
                 };
 
-                // follow the roles and the links, unless its a leaf
-                if (address.follow) {
-                    if (dugUp.roles.length) {
-                        dugUp.roles.forEach((role: Role) =>
-                            addLinks(
-                                address.address,
-                                role.addresses.map((a) => ({ address: a, name: role.name })),
-                                address.follow,
-                            ),
-                        );
-                        roles.set(address.address, dugUp.roles);
-                    }
-                    addLinks(address.address, dugUp.links, address.follow);
+                // follow the roles unless it's a leaf
+                if (address.follow && dugUp.roles.length) {
+                    dugUp.roles.forEach((role: Role) =>
+                        role.addresses.forEach((roleHolderAddress: string) => {
+                            log(`add link for role ${role.name}`);
+                            addLink(address.address, address.follow, roleHolderAddress, role.name);
+                        }),
+                    );
+                    roles.set(address.address, dugUp.roles);
                 }
+
+                // create links by executing the returned readers that return more address(es) only adding them if we are following
+                // also get the suffix addresses for this node name (which are looked up later as the suffix addresses may also have suffixes)
+                let results: { nodeAddress: string; follow: number; reading: Reading }[] = [];
+                for (const readerTemplate of dugUp.readerTemplates.filter((rt) => rt.type.startsWith('address'))) {
+                    if (readerTemplate.argTypes.length == 0) {
+                        // zero parameters
+                        results.push({
+                            nodeAddress: address.address,
+                            follow: address.follow,
+                            reading: await makeReading(readerTemplate),
+                        });
+                    } else if (readerTemplate.argTypes.length == 1 && readerTemplate.argTypes[0] === 'address') {
+                        // one address parameter
+                        // run the reader against all the known addresses
+                        // for (const knownAddress of tempNodes.keys()) {
+                        //     results.push({
+                        //         nodeAddress: address.address,
+                        //         follow: address.follow,
+                        //         reading: await makeReading(readerTemplate, knownAddress),
+                        //     });
+                        // }
+                        // // also save the reader so that it can be run against all future addresses as they come through the main loop
+                        // pendingReaderTemplates.set(address.address, readerTemplate);
+                    }
+                }
+                for (const result of results) {
+                    // function to add a suffix
+                    const addSuffix = (value: string) => {
+                        if (suffix && result.reading.argTypes.length == 0) {
+                            if (suffix.get(result.reading.function) !== undefined) {
+                                log(
+                                    `add suffix for ${address.address}, results from ${result.reading.function} = ${value}`,
+                                );
+                                suffix.get(result.reading.function)?.push(value);
+                            }
+                        }
+                    };
+
+                    if (result.reading.value === undefined)
+                        throw Error(
+                            `failed to add link (${result.reading.function}) for ${result.nodeAddress}: ${result.reading.error}`,
+                        );
+                    // need to work for functions that return scalars or vectors
+                    if (Array.isArray(result.reading.value)) {
+                        // TODO: check against readerTemplate.type.endsWith("[]")
+                        for (let i = 0; i < result.reading.value.length; i++) {
+                            log(`add link for ${result.reading.function}[${i}] = ${result.reading.value[i] as string}`);
+                            addLink(
+                                address.address,
+                                address.follow,
+                                result.reading.value[i] as string,
+                                result.reading.function,
+                                result.reading.field,
+                                i,
+                            );
+                            addSuffix(result.reading.value[i] as string);
+                        }
+                    } else {
+                        log(`add link for ${result.reading.function}= ${result.reading.value as string}`);
+                        addLink(
+                            address.address,
+                            address.follow,
+                            result.reading.value as string,
+                            result.reading.function,
+                            result.reading.field,
+                        );
+                        addSuffix(result.reading.value as string);
+                    }
+                }
+
+                tempNodes.set(
+                    address.address,
+                    Object.assign(
+                        {
+                            address: address.address,
+                            contract: await blockchainAddress.contractNamish(),
+                            name: await blockchainAddress.contractNamish(), // will be updated later removing dups
+                            leaf: address.follow == 0,
+                            suffix: suffix,
+                        },
+                        blockchainAddress,
+                    ),
+                );
             }
         }
     }
@@ -165,7 +399,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
                         );
                     }
                 } else {
-                    extraNames.push(`\$${name}\$`);
+                    extraNames.push(`\$${name}\$`); // this is an error condition really
                 }
             }
             if (extraNames.length) {
@@ -253,158 +487,7 @@ const _dig = async (stack: string, loud: boolean = false) => {
 };
 export const dig = withLogging(_dig);
 
-export const digOne = (address: string): IBlockchainAddress<Contract> | null => {
-    if (address === ZeroAddress) return null;
-    const local = localNodes.get(address);
-    if (local) return local;
-    return new BlockchainAddress(address);
-};
-
-// TODO: put this in friedly?
-const outputName = (func: FunctionFragment, outputIndex: number, arrayIndex?: number): string => {
-    let result = func.name;
-    if (func.outputs.length > 1) {
-        result = `${result}.${func.outputs[outputIndex].name === '' ? outputIndex : func.outputs[outputIndex].name}`;
-    }
-    if (arrayIndex !== undefined) {
-        result = `${result}[${arrayIndex}]`;
-    }
-    return result;
-};
-
 //const regexpEscape = (word: string) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-const digDeep = async (
-    address: IBlockchainAddress<Contract>,
-): Promise<{ readerTemplates: ReaderTemplate[]; links: Link[]; roles: Role[]; suffix: SuffixMatch }> => {
-    const roles: Role[] = [];
-    const links: Link[] = [];
-    const readerTemplates: ReaderTemplate[] = [];
-    let suffix: SuffixMatch = undefined;
-    // would like to follow also the proxy contained addresses
-    // unfortunately for some proxies (e.g. openzeppelin's TransparentUpgradeableProxy) only the admin can call functions on the proxy
-    const contract = await address.getContract();
-    if (contract) {
-        // TODO: do something with constructor arguments and initialize calls (for logics)
-        // set up the name suffix (in the order given by config)
-        const contractType = await address.contractNamish();
-        for (const match of getConfig().suffix || []) {
-            if (match.contract === contractType) {
-                suffix = new Map(match.fields.map((f) => [f, []]));
-                break; // just the first one.
-            }
-        }
-        let functions: FunctionFragment[] = [];
-        let roleFunctions: string[] = [];
-        contract.interface.forEachFunction((func) => {
-            // so we can call the functions async in a loop later
-            functions.push(func);
-            // all uppercase with the word role in it (this is just a convention)
-            if (
-                func.inputs.length == 0 &&
-                func.outputs.length == 1 &&
-                func.outputs[0].type === 'bytes32' &&
-                /^[A-Z_]*_ROLE[A-Z_]*$/.test(func.name)
-            ) {
-                roleFunctions.push(func.name);
-            }
-        });
-
-        // get the role names
-        let roleNames = new Map<bigint, string>();
-        for (const rolefn of roleFunctions) {
-            const role = await contract[rolefn]();
-            roleNames.set(role, rolefn);
-        }
-
-        // get roles granted by this contract
-        if (contract.filters.RoleGranted) {
-            const grantedEvents = await contract.queryFilter(contract.filters.RoleGranted()); //, 0xaf2c74, 0xb4d9f4);
-            for (const event of grantedEvents) {
-                const parsedEvent = contract.interface.parseLog({
-                    topics: [...event.topics],
-                    data: event.data,
-                });
-                if (parsedEvent) {
-                    const role = parsedEvent.args.role;
-                    const account = parsedEvent.args.account;
-                    // does this account still have this role?
-                    //this is the openzeppelin access manager
-                    if (await contract.hasRole(role, account)) {
-                        const index = roles.findIndex((r) => r.id === role);
-                        if (index == -1) {
-                            let name = roleNames.get(role) || role;
-                            roles.push({ id: role, name: name, addresses: [getAddress(account)] });
-                        } else {
-                            roles[index].addresses.push(getAddress(account));
-                        }
-                    }
-                }
-            }
-        }
-
-        // Explore each parameterless, or single address parameter, view (or pure) functions in the contract's interface
-        for (const func of functions.filter(
-            (f) =>
-                (f.stateMutability === 'view' || f.stateMutability === 'pure') &&
-                (f.inputs.length == 0 || (f.inputs.length == 1 && f.inputs[0].type === 'address')),
-        )) {
-            // TODO: expand this to work with all arg types and all arg numbers for general use
-            const argTypes = func.inputs.length == 1 ? [func.inputs[0].type] : undefined;
-            // get all the functions that return a numeric or address or arrays of them
-            for (const outputIndex of func.outputs.reduce((indices, elem, index) => {
-                // TODO:  add bool, bytes1 .. bytes32, and enums?
-                if (elem.type === 'address' || elem.type === 'address[]' || /^u?int\d+(\[\])?$/.test(elem.type)) {
-                    indices.push(index);
-                }
-                return indices;
-            }, [] as number[])) {
-                const _contract = contractType;
-                const _field =
-                    func.outputs.length != 1 ? { name: func.outputs[outputIndex].name, index: outputIndex } : undefined;
-                const _type = func.outputs[outputIndex].type;
-                const readerTemplate: ReaderTemplate = {
-                    address: contract.address,
-                    contract: _contract,
-                    function: func.name,
-                    field: _field,
-                    argTypes: func.inputs.length == 1 ? ['address'] : [],
-                    type: _type,
-                    read: async (...args: any[]): Promise<ReadingValue> => await contract[func.name](...args),
-                    formatting: getFormatting(_type, _contract, func.name, _field),
-                };
-                readerTemplates.push(readerTemplate);
-
-                // now add the data into links
-                if (func.outputs[outputIndex].type.startsWith('address') && func.inputs.length == 0) {
-                    const addLink = (name: string, address: string) => {
-                        // all links are searched for possible name suffixes
-                        links.push({ name: name, address: getAddress(address) });
-                        if (suffix) {
-                            suffix.get(readerTemplate.function)?.push(address);
-                        }
-                    };
-                    // need to execute the function
-                    try {
-                        const result = await callReader(makeReader(readerTemplate));
-                        if (result.value === undefined) throw Error(`failed to read ${result.error}`);
-                        if (Array.isArray(result.value)) {
-                            for (let i = 0; i < result.value.length; i++) {
-                                addLink(outputName(func, outputIndex, i), result.value[i] as string);
-                            }
-                        } else {
-                            addLink(outputName(func, outputIndex), result.value as string);
-                        }
-                    } catch (err) {
-                        console.error(`linking - error calling ${address} ${func.name} ${func.selector}: ${err}`);
-                    }
-                }
-            }
-        }
-    }
-    return { readerTemplates: readerTemplates, links: links, roles: roles, suffix: suffix };
-};
-//const digDeep = withLogging(_digDeep);
 
 const _digUsers = async () => {
     // add in the users from the config
@@ -486,7 +569,6 @@ const _digUsers = async () => {
     }
     */
 };
-
 export const digUsers = withLogging(_digUsers);
 
 export const digSource = async () => {
@@ -510,7 +592,7 @@ export const digSource = async () => {
                     writeFile(`${dir}${extension}`, sourceCodeText);
                 } else {
                     // else it's probably json
-                    let json = undefined;
+                    let json: any = {};
                     try {
                         json = JSON.parse(sourceCodeText.slice(1, -1)); // remove spurious { & }
                         Object.entries(json.sources).forEach(([filePath, file]) => {
