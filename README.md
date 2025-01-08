@@ -17,7 +17,9 @@ Poke the ethereum blockchain (or a local fork of it) and observe consequences of
 
 ### add this as a git submodule
 
-`$ git add submodule <this repository, or a fork> lib/eat`
+`$ git submodule add <this repository(http://github.com/rootminus0x1/eat), or a fork> lib/eat`
+
+you can store it in a place other than lib/eat and update the commands referring to lib/eat below
 
 ### make sure all the dependencies in the eat/package.json are included in your project
 
@@ -39,9 +41,9 @@ note that you can just delete this directory to clear the cache
 
 ### run it
 
-`$ node_ts path/to/eat/src/dig <my local dig config>`
+`$ node_ts lib/eat/src/dig <my local dig config>`
 
-`$ node_ts path/to/eat/src/delve.ts <my local delve config>`
+`$ node_ts lib/eat/src/delve.ts <my local delve config>`
 
 each outputs a set of files that match the config file name
 these outputs should be checked into source control, as they form a regression test for changes
