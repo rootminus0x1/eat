@@ -41,9 +41,9 @@ note that you can just delete this directory to clear the cache
 
 ### run it
 
-`$ node_ts lib/eat/src/dig <my local dig config>`
+`$ yarn ts-node lib/eat/src/dig <my local dig config>`
 
-`$ node_ts lib/eat/src/delve.ts <my local delve config>`
+`$ yarn ts-node lib/eat/src/delve.ts <my local delve config>`
 
 each outputs a set of files that match the config file name
 these outputs should be checked into source control, as they form a regression test for changes
